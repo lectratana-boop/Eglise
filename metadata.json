@@ -1,0 +1,6 @@
+{
+  "name": "Fiangonana Mifandray",
+  "description": "App ho an'ny fiangonana Malagasy - Baiboly, Fandaharam-potoana, Membra, ary Fanomezana.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
