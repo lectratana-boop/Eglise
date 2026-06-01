@@ -12,10 +12,104 @@ interface BiblePageProps {
   isElderlyMode: boolean;
 }
 
+// Map common Malagasy variants and short codes to official names
+function normalizeBookName(name: string): string {
+  const norm = name.toLowerCase().trim();
+  if (norm === "romanina" || norm === "rom") return "romana";
+  if (norm === "apokalipsy" || norm === "apok") return "apokalypsy";
+  if (norm === "salamo" || norm === "sal") return "salamo";
+  if (norm === "ohabolana" || norm === "ohab") return "ohabolana";
+  if (norm === "genesisy" || norm === "gen") return "genesisy";
+  if (norm === "eksodosy" || norm === "eks") return "eksodosy";
+  if (norm === "levitikosy" || norm === "lev") return "levitikosy";
+  if (norm === "nomery" || norm === "nom") return "nomery";
+  if (norm === "deoteronomia" || norm === "deot") return "deoteronomia";
+  if (norm === "josoa" || norm === "jos") return "josoa";
+  if (norm === "mpitsara" || norm === "mpit") return "mpitsara";
+  if (norm === "rota" || norm === "rot") return "rota";
+  if (norm === "matio" || norm === "mat") return "matio";
+  if (norm === "marka" || norm === "mar") return "marka";
+  if (norm === "lioka" || norm === "lio") return "lioka";
+  if (norm === "jaona" || norm === "jao") return "jaona";
+  if (norm === "isaia" || norm === "isa") return "isaia";
+  if (norm === "jeremia" || norm === "jer") return "jeremia";
+  return norm;
+}
+
+// Try parsing reference e.g., "Jaona 3:16", "Salamo 23"
+function parseBibleReference(query: string) {
+  const normalized = query.toLowerCase().trim();
+  if (!normalized) return null;
+
+  let matchedBook = null;
+  let matchedBookNameLength = 0;
+
+  for (const b of BIBLE_BOOKS) {
+    const bNameLower = b.name.toLowerCase();
+    const bNormName = normalizeBookName(bNameLower);
+    const engNameLower = b.englishName.toLowerCase();
+
+    // Check query starts with Malagasy book name, English book name, or short code
+    if (normalized.startsWith(bNameLower)) {
+      if (bNameLower.length > matchedBookNameLength) {
+        matchedBook = b;
+        matchedBookNameLength = bNameLower.length;
+      }
+    } else if (normalized.startsWith(engNameLower)) {
+      if (engNameLower.length > matchedBookNameLength) {
+        matchedBook = b;
+        matchedBookNameLength = engNameLower.length;
+      }
+    } else {
+      // Test other variations using normalizeBookName
+      const shortCode = bNameLower.substring(0, 3);
+      if (normalized.startsWith(shortCode) && shortCode.length >= 3) {
+        if (shortCode.length > matchedBookNameLength) {
+          matchedBook = b;
+          matchedBookNameLength = shortCode.length;
+        }
+      }
+    }
+  }
+
+  // Also support containing the word anywhere in case of typos
+  if (!matchedBook) {
+    for (const b of BIBLE_BOOKS) {
+      const bNameLower = b.name.toLowerCase();
+      if (normalized.includes(bNameLower)) {
+        matchedBook = b;
+        matchedBookNameLength = bNameLower.length;
+        break;
+      }
+    }
+  }
+
+  if (!matchedBook) return null;
+
+  // Extract remaining string to get chapter and verse numbers
+  // Example: "jaona 3:16" => matchedBookNameLength of "jaona" is 5 => remaining is " 3:16"
+  const remaining = normalized.substring(matchedBookNameLength).trim();
+  const digits = remaining.match(/\d+/g);
+
+  const result: { book: typeof BIBLE_BOOKS[0]; chapter?: number; verse?: number } = {
+    book: matchedBook
+  };
+
+  if (digits && digits.length > 0) {
+    result.chapter = parseInt(digits[0], 10);
+    if (digits.length > 1) {
+      result.verse = parseInt(digits[1], 10);
+    }
+  }
+
+  return result;
+}
+
 export default function BiblePage({ isElderlyMode }: BiblePageProps) {
   const [selectedBook, setSelectedBook] = useState('Salamo');
   const [selectedChapter, setSelectedChapter] = useState(23);
   const [testamentTab, setTestamentTab] = useState<'Taloha' | 'Vaovao'>('Taloha');
+  const [showSelector, setShowSelector] = useState(true);
   
   // Book search filter
   const [bookQuery, setBookQuery] = useState('');
@@ -92,35 +186,94 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
   // Perform search across both pre-stored and dynamically structured content
   const handleSearch = () => {
     if (!searchQuery.trim()) return [];
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
     const results: { book: string; chapter: number; verseNumber: number; text: string }[] = [];
+    const maxResults = 80;
 
-    // Search inside authentic BIBLE_DATA
-    BIBLE_DATA.forEach(b => {
-      b.verses.forEach(v => {
-        if (v.text.toLowerCase().includes(query) || b.book.toLowerCase().includes(query)) {
-          results.push({
-            book: b.book,
-            chapter: b.chapter,
-            verseNumber: v.number,
-            text: v.text
+    // 1. Try to parse as reference search (e.g. "Jaona 3:16", "Salamo 23")
+    const parsedRef = parseBibleReference(searchQuery);
+    if (parsedRef) {
+      const bookObj = parsedRef.book;
+      const targetChapter = parsedRef.chapter || 1;
+      
+      if (targetChapter > 0 && targetChapter <= bookObj.chapters) {
+        const verses = getChapterVerses(bookObj.name, targetChapter);
+        
+        if (parsedRef.verse) {
+          const targetVerse = parsedRef.verse;
+          const matchingVerse = verses.find(v => v.number === targetVerse);
+          if (matchingVerse) {
+            results.push({
+              book: bookObj.name,
+              chapter: targetChapter,
+              verseNumber: targetVerse,
+              text: matchingVerse.text
+            });
+          } else if (verses.length > 0) {
+            // Verse not found, suggest starting from first verse of that chapter
+            results.push({
+              book: bookObj.name,
+              chapter: targetChapter,
+              verseNumber: 1,
+              text: `Hanomboka hamaky an'i ${bookObj.name} Toko ${targetChapter} (Andininy faha-${targetVerse} tsy hita)`
+            });
+          }
+        } else {
+          // Just book and chapter, show the first few verses of that chapter
+          const previewVerses = verses.slice(0, 15);
+          previewVerses.forEach(v => {
+            results.push({
+              book: bookObj.name,
+              chapter: targetChapter,
+              verseNumber: v.number,
+              text: v.text
+            });
           });
         }
-      });
-    });
+      }
+    }
 
-    // Also parse books that match the search term
+    // 2. Perform text-based keyphrase search across all chapters (only for queries > 2 letters to keep it extremely fast)
+    if (query.length >= 3) {
+      for (const b of BIBLE_BOOKS) {
+        if (results.length >= maxResults) break;
+        for (let ch = 1; ch <= b.chapters; ch++) {
+          if (results.length >= maxResults) break;
+          const verses = getChapterVerses(b.name, ch);
+          for (const v of verses) {
+            if (v.text.toLowerCase().includes(query)) {
+              const alreadyExists = results.some(
+                r => r.book === b.name && r.chapter === ch && r.verseNumber === v.number
+              );
+              if (!alreadyExists) {
+                results.push({
+                  book: b.name,
+                  chapter: ch,
+                  verseNumber: v.number,
+                  text: v.text
+                });
+              }
+              if (results.length >= maxResults) break;
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Suggest books matching the name
     BIBLE_BOOKS.forEach(b => {
-      if (b.name.toLowerCase().includes(query)) {
-        // add first verse of first chapter to suggest browsing
+      if (results.length < maxResults && b.name.toLowerCase().includes(query)) {
         const verses = getChapterVerses(b.name, 1);
         if (verses.length > 0) {
-          results.push({
-            book: b.name,
-            chapter: 1,
-            verseNumber: 1,
-            text: `Vakio ny bokin'i ${b.name} : ${verses[0].text.substring(0, 80)}...`
-          });
+          const alreadyExists = results.some(r => r.book === b.name && r.chapter === 1 && r.verseNumber === 1);
+          if (!alreadyExists) {
+            results.push({
+              book: b.name,
+              chapter: 1,
+              verseNumber: 1,
+              text: `Hanomboka hamaky ny bokin'i ${b.name} : Toko voalohany`
+            });
+          }
         }
       }
     });
@@ -189,11 +342,12 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
         </div>
       </div>
 
-      {/* Main interface split layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+      {/* Main interface layout */}
+      <div className="space-y-4">
         
-        {/* Book Selector pane (Left 5 cols) */}
-        <div className="md:col-span-5 space-y-3">
+        {/* Book Selector pane (Full-Width view) */}
+        {showSelector && (
+          <div className="w-full space-y-3">
           
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm space-y-3.5">
             
@@ -315,6 +469,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
                           onClick={() => {
                             setSelectedChapter(chap);
                             setActiveVerseNum(null);
+                            setShowSelector(false); // Hide selector to showcase scripture full width
                           }}
                           className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono font-black text-xs transition-all cursor-pointer ${
                             isSelected
@@ -354,6 +509,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
                           setSelectedChapter(res.chapter);
                           setActiveVerseNum(res.verseNumber);
                           setSearchQuery('');
+                          setShowSelector(false); // Hide selector to showcase match full-width
                         }}
                         className="w-full text-left p-3 rounded-xl border border-slate-150 dark:border-slate-850 bg-slate-5/50 dark:bg-slate-950 hover:border-violet-400 transition-all cursor-pointer block border-b-[3px]"
                       >
@@ -372,14 +528,26 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
             )}
           </div>
         </div>
+      )}
 
-        {/* Reading screen pane (Right 7 cols) */}
-        <div className="md:col-span-7">
+      {/* Reading screen pane (Full-Width exclusive view) */}
+      {!showSelector && (
+        <div className="w-full">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-full">
             
             {/* Title / Audio header area */}
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2">
+                {!showSelector && (
+                  <button
+                    onClick={() => setShowSelector(true)}
+                    className="p-1 px-2.5 text-[10px] font-black bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-500 dark:to-indigo-500 hover:from-violet-700 hover:to-indigo-750 text-white rounded-lg transition-all flex items-center gap-1 active:scale-95 cursor-pointer shrink-0 shadow-xs border-b-[2px] border-indigo-800"
+                    title="Miverina hifidy toko hafa"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Mifidy toko</span>
+                  </button>
+                )}
                 <span className="text-2xl shrink-0">📖</span>
                 <div>
                   <h3 className={`${isElderlyMode ? 'text-2xl' : 'text-base'} font-black text-slate-800 dark:text-slate-100`}>
@@ -462,6 +630,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
 
           </div>
         </div>
+      )}
 
       </div>
     </div>

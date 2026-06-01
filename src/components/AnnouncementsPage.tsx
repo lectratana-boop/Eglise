@@ -94,7 +94,7 @@ export default function AnnouncementsPage({
       {/* Sorting section */}
       <div className="flex gap-2 border-b border-slate-205 dark:border-slate-750 pb-4">
         {([
-          { key: 'rehetra', text: 'Rehetra (All)' },
+          { key: 'rehetra', text: 'Rehetra' },
           { key: 'fivoriana', text: 'Fivoriana ' },
           { key: 'hetsika', text: 'Hetsika' },
           { key: 'hafa', text: 'Sokajy Hafa' }

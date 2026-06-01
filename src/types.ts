@@ -11,6 +11,8 @@ export interface Church {
   logo: 'cross' | 'bible' | 'dove' | 'heart' | 'star';
   description: string;
   sharedProgramEnabled?: boolean; // synchronisé avec le programme national de la dénomination
+  customVerseText?: string;
+  customVerseRef?: string;
 }
 
 export interface Member {

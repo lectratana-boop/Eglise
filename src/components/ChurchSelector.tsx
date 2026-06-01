@@ -24,7 +24,7 @@ export default function ChurchSelector({
 }: ChurchSelectorProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [name, setName] = useState('');
-  const [type, setType] = useState('FJKM (Église réformée)');
+  const [type, setType] = useState('FJKM (Protestanta)');
   const [location, setLocation] = useState('');
   const [logo, setLogo] = useState<'cross' | 'bible' | 'dove' | 'heart' | 'star'>('cross');
   const [description, setDescription] = useState('');
@@ -235,16 +235,16 @@ export default function ChurchSelector({
                   onChange={(e) => setType(e.target.value)}
                   className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-slate-800 dark:text-slate-100 p-3 outline-none shadow-sm transition-all text-base cursor-pointer"
                 >
-                  <option value="FJKM (Église réformée)">FJKM (Église réformée)</option>
-                  <option value="Église catholique de Madagascar">Église catholique de Madagascar</option>
-                  <option value="FFPM (Fédération regroupant plusieurs églises protestantes)">FFPM (Protestanta mivondrona)</option>
-                  <option value="FLM (Église luthérienne)">FLM (Église luthérienne)</option>
-                  <option value="Anglican Church in Madagascar">Anglican Church in Madagascar</option>
-                  <option value="Assemblées de Dieu Madagascar">Assemblées de Dieu Madagascar</option>
-                  <option value="Pentecôtistes Unis de Madagascar">Pentecôtistes Unis de Madagascar</option>
+                  <option value="FJKM (Protestanta)">FJKM (Protestanta)</option>
+                  <option value="EKAR (Katolika)">EKAR (Katolika)</option>
+                  <option value="FFPM (Protestanta)">FFPM (Protestanta mivondrona)</option>
+                  <option value="FLM (Loterana)">FLM (Loterana)</option>
+                  <option value="Anglikana">Anglikana</option>
+                  <option value="Assemblées de Dieu">Assemblées de Dieu</option>
+                  <option value="Pentekotista">Pentekotista</option>
                   <option value="Jesosy Mamonjy">Jesosy Mamonjy</option>
                   <option value="Apokalipsy">Apokalipsy</option>
-                  <option value="Églises évangéliques indépendantes locales">Églises évangéliques indépendantes locales</option>
+                  <option value="Fiangonana evanjelika mahaleotena">Fiangonana evanjelika mahaleotena</option>
                 </select>
               </div>
 

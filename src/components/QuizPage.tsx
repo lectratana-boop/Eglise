@@ -192,7 +192,7 @@ export default function QuizPage({ isElderlyMode }: QuizPageProps) {
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/60 p-5 rounded-xl space-y-2 mt-4 animate-fadeIn">
               <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 font-bold text-sm">
                 <Info className="w-4 h-4" />
-                <span>FAHAMARINANA BIBLAKA (Explication):</span>
+                <span>FANAZAVANA ARA-BAIBOLY:</span>
               </div>
               <p className="text-sm text-blue-600 dark:text-blue-300 leading-relaxed italic">
                 "{currentQuestion.explanation}"

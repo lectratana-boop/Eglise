@@ -25,6 +25,7 @@ import AnnouncementsPage from './components/AnnouncementsPage';
 import AgendaPage from './components/AgendaPage';
 import SongPage from './components/SongPage';
 import YouthPage from './components/YouthPage';
+import ChurchLogo from './components/ChurchLogo';
 
 // Lucide icons
 import {
@@ -47,6 +48,8 @@ import {
   X,
   PhoneCall
 } from 'lucide-react';
+
+const DEFAULT_SLOGAN = "Fampiharana ho an'ny fiangonana eto Madagasikara: Baiboly Masina, fandalinana, fihirana, ary varavarana fifandraisana mivantana eo amin'ny mpino sy ny fiangonana rehetra.";
 
 const DAILY_PROMISES = [
   { text: "Aza matahotra, fa momba anao Aho; aza miherikerika fotsiny, fa Izaho no Andriamanitrao; mampahery anao Aho sady mamonjy anao.", ref: "Isaia 41:10" },
@@ -111,10 +114,26 @@ export default function App() {
   // Daily promise dynamic index
   const [promiseIndex, setPromiseIndex] = useState(0);
 
+  // Local edit states for active church
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editVerseText, setEditVerseText] = useState('');
+  const [editVerseRef, setEditVerseRef] = useState('');
+
   // Sync state to localStorage on modification
   useEffect(() => {
     localStorage.setItem('mifandray_churches', JSON.stringify(churches));
   }, [churches]);
+
+  useEffect(() => {
+    const activeChObj = churches.find(c => c.id === activeChurchId) || churches[0];
+    if (activeChObj) {
+      setEditName(activeChObj.name || '');
+      setEditDescription(activeChObj.description || '');
+      setEditVerseText(activeChObj.customVerseText || '');
+      setEditVerseRef(activeChObj.customVerseRef || '');
+    }
+  }, [activeChurchId]);
 
   useEffect(() => {
     localStorage.setItem('mifandray_members', JSON.stringify(members));
@@ -201,7 +220,43 @@ export default function App() {
     setDonations(prev => [fresh, ...prev]);
   };
 
+  const handleUpdateChurch = () => {
+    if (!editName.trim()) {
+      alert("Tsy azo avela ho foana ny anaran'ny fiangonana!");
+      return;
+    }
+    setChurches(prev => prev.map(ch => {
+      if (ch.id === activeChurchId) {
+        return {
+          ...ch,
+          name: editName,
+          description: editDescription,
+          customVerseText: editVerseText,
+          customVerseRef: editVerseRef
+        };
+      }
+      return ch;
+    }));
+    alert("Voatahiry tsara ny fanovana momba ny fiangonana!");
+  };
+
+  const handleDeleteActiveChurch = () => {
+    if (churches.length <= 1) {
+      alert("Tsy azo fafana ity fiangonana ity satria tsy maintsy misy fiangonana iray farafahakeliny amin'ny fampiharana!");
+      return;
+    }
+    if (confirm(`Tena te-hamafa ny fiangonana "${activeChurch.name}" tokoa ve ianao?`)) {
+      const remainingChurches = churches.filter(ch => ch.id !== activeChurchId);
+      setChurches(remainingChurches);
+      setActiveChurchId(remainingChurches[0].id);
+      alert("Voafafa soa aman-tsara ny fiangonana!");
+    }
+  };
+
   const activeChurch = churches.find(c => c.id === activeChurchId) || churches[0];
+
+  const activeVerseText = activeChurch.customVerseText || DAILY_PROMISES[promiseIndex].text;
+  const activeVerseRef = activeChurch.customVerseRef || DAILY_PROMISES[promiseIndex].ref;
 
   const handleRandomPromise = () => {
     const nextIdx = (promiseIndex + 1) % DAILY_PROMISES.length;
@@ -213,17 +268,17 @@ export default function App() {
     { key: 'Accueil', label: 'Tongasoa', icon: <Home className="w-5 h-5" /> },
     { key: 'Bible', label: 'Baiboly', icon: <BookOpen className="w-5 h-5" /> },
     { key: 'Chorales', label: 'Fihirana', icon: <Music className="w-5 h-5" /> },
-    { key: 'Dimes', label: 'Gifting', icon: <Heart className="w-5 h-5" /> },
+    { key: 'Dimes', label: 'Fanomezana', icon: <Heart className="w-5 h-5" /> },
   ];
 
   // Secondary item drawer elements
   const secondaryMenuItems = [
-    { key: 'Annonces', label: 'Filazana (News)', icon: <Megaphone className="w-5 h-5" />, color: 'from-violet-500 to-purple-600' },
+    { key: 'Annonces', label: 'Filazana', icon: <Megaphone className="w-5 h-5" />, color: 'from-violet-500 to-purple-600' },
     { key: 'Events', label: 'Fandaharana', icon: <Calendar className="w-5 h-5" />, color: 'from-amber-400 to-orange-500' },
-    { key: 'Jeunes', label: 'Sokajy Tanora', icon: <Users className="w-5 h-5" />, color: 'from-orange-500 to-rose-500' },
-    { key: 'Sermons', label: 'Prezikazy (Live)', icon: <Mic className="w-5 h-5" />, color: 'from-emerald-500 to-teal-600' },
+    { key: 'Jeunes', label: 'Sampana Tanora', icon: <Users className="w-5 h-5" />, color: 'from-orange-500 to-rose-500' },
+    { key: 'Sermons', label: 'Toriteny', icon: <Mic className="w-5 h-5" />, color: 'from-emerald-500 to-teal-600' },
     { key: 'Quiz', label: 'Lalao Quiz', icon: <Award className="w-5 h-5" />, color: 'from-yellow-400 to-amber-500' },
-    { key: 'Settings', label: 'Fikirana (Admin)', icon: <Settings className="w-5 h-5" />, color: 'from-slate-500 to-slate-700' }
+    { key: 'Settings', label: 'Fitantanana', icon: <Settings className="w-5 h-5" />, color: 'from-slate-500 to-slate-700' }
   ];
 
   return (
@@ -252,44 +307,37 @@ export default function App() {
         </div>
 
         {/* COMPREHENSIVE PHONE TOP HEADER ACTION RAIL */}
-        <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800 px-4 py-3 flex items-center justify-between gap-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">✝️</span>
-            <div>
-              <h1 className="text-sm font-black tracking-tight text-transparent bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-300 bg-clip-text font-sans">
-                Fiangonana eto Madagascar
-              </h1>
-              <p className="text-[8px] font-bold font-mono text-slate-405 uppercase leading-none mt-0.5 animate-pulse">
-                Fampiharana ho an'ny Fiangonana Malagasy
-              </p>
-            </div>
+        <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800 px-4 py-2.5 flex items-center justify-between gap-1 shrink-0">
+          <div className="flex-1 flex justify-start py-0.5">
+            {activeTab !== 'Accueil' && (
+              <ChurchLogo layout="horizontal" badgeSize="h-8.5 w-8.5" />
+            )}
           </div>
 
           {/* Quick Accessibilities inside header */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0 justify-end">
             {/* Elderly Friendly Toggle button */}
             <button
               id="btn-toggle-accessibility"
               onClick={() => setIsElderlyMode(!isElderlyMode)}
-              className={`p-1.5 rounded-lg border transition-all text-[9.5px] font-black cursor-pointer flex items-center justify-center gap-0.5 ${
+              className={`p-1 rounded-lg border transition-all text-[8.5px] font-black cursor-pointer flex items-center justify-center gap-0.5 ${
                 isElderlyMode
-                  ? 'bg-amber-500 text-white border-amber-600'
+                  ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
                   : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-705'
               }`}
               title="Mora vakina be taona"
             >
-              <Accessibility className="w-3.5 h-3.5" />
-              <span>{isElderlyMode ? "ON" : "Alders"}</span>
+              <Accessibility className="w-3 h-3" />
             </button>
 
             {/* Theme switcher */}
             <button
               id="btn-toggle-dark-mode"
               onClick={() => setDarkMode(!darkMode)}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-705 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 hover:shadow-sm"
+              className="p-1 rounded-lg border border-slate-200 dark:border-slate-705 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 hover:shadow-sm"
               title="Loko maizina"
             >
-              {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-650" />}
+              {darkMode ? <Sun className="w-3 h-3 text-amber-500 fill-amber-400" /> : <Moon className="w-3 h-3 text-slate-650" />}
             </button>
           </div>
         </header>
@@ -308,22 +356,22 @@ export default function App() {
 
           {/* 1. TONGASOA (HOME SCREEN) */}
           {activeTab === 'Accueil' && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-fadeIn">
               
+              {/* Elegant Official Logo Badge at the top of the Tongasoa view */}
+              <ChurchLogo layout="square" className="bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 p-5" />
+
               {/* Interactive greeting with dynamic island feel */}
               <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-4 text-white shadow-md relative overflow-hidden">
-                <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-2 py-0.5 rounded">
-                  Feno FAHASOAVANA
-                </span>
-                <h2 className={`${isElderlyMode ? 'text-2xl' : 'text-lg'} font-black mt-2 leading-tight`}>
-                  Fiangonana eto Madagascar — <span className="text-yellow-300">{activeChurch.name}</span>
+                <h2 className={`${isElderlyMode ? 'text-2xl' : 'text-lg'} font-black leading-tight text-white/95`}>
+                  🏡 <span className="text-yellow-300">{activeChurch.name}</span>
                 </h2>
-                <p className="text-[11px] text-violet-100 leading-snug mt-1">
-                  Fampiharana ho an'ny fiangonana eto Madagasikara: Baiboly Masina, fandalinana, fihirana, ary varavarana fifandraisana mivantana eo amin'ny mpino sy ny fiangonana rehetra.
+                <p className="text-[11.5px] text-violet-100 leading-snug mt-2 font-medium">
+                  {activeChurch.description || DEFAULT_SLOGAN}
                 </p>
-
+ 
                 {/* Inline Church Space Selector */}
-                <div className="mt-3 bg-black/20 p-2 rounded-xl backdrop-blur-sm border border-white/10">
+                <div className="mt-3.5 bg-black/20 p-2 rounded-xl backdrop-blur-sm border border-white/10">
                   <span className="block text-[8px] uppercase tracking-wider font-extrabold text-violet-200 mb-1">
                     Hifidy fiangonana hafa :
                   </span>
@@ -340,96 +388,115 @@ export default function App() {
                   </select>
                 </div>
               </div>
-
+ 
               {/* Dynamic Promise of today with robust design */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-900 dark:to-slate-900 border border-amber-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black uppercase bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400 py-0.5 px-2 rounded">
-                    Andininy anio (Promise)
+                  <span className="text-[9px] font-black uppercase bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400 py-0.5 px-2 rounded font-sans">
+                    Andininy anio
                   </span>
                   <button
                     onClick={handleRandomPromise}
-                    className="py-1 px-2.5 bg-amber-500 border-b-[3px] border-amber-700 text-white text-[9px] font-black rounded-lg active:translate-y-[1px] active:border-b-[1px]"
+                    className="py-1 px-2.5 bg-amber-500 border-b-[3px] border-amber-700 text-white text-[9px] font-black rounded-lg active:translate-y-[1px] active:border-b-[1px] cursor-pointer"
                   >
                     Hafa 🔄
                   </button>
                 </div>
                 
                 <blockquote className={`${isElderlyMode ? 'text-lg font-black' : 'text-xs font-semibold'} text-slate-800 dark:text-slate-100 italic font-sans leading-relaxed`}>
-                  "{DAILY_PROMISES[promiseIndex].text}"
+                  "{activeVerseText}"
                 </blockquote>
                 
                 <p className="text-[10px] font-mono font-black text-amber-700 dark:text-amber-450 text-right">
-                  — {DAILY_PROMISES[promiseIndex].ref}
+                  — {activeVerseRef}
                 </p>
-
+ 
                 {/* TTS Reader for daily promise */}
                 <button
                   onClick={() => {
-                    const utterance = new SpeechSynthesisUtterance(DAILY_PROMISES[promiseIndex].text);
+                    const utterance = new SpeechSynthesisUtterance(activeVerseText);
                     utterance.lang = 'fr-FR';
                     utterance.rate = isElderlyMode ? 0.8 : 0.9;
                     window.speechSynthesis.speak(utterance);
                   }}
-                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-[10px] font-black rounded-xl cursor-pointer flex items-center justify-center gap-1 border border-slate-200/50 dark:border-slate-800"
+                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-705 dark:text-slate-200 text-[10px] font-black rounded-xl cursor-pointer flex items-center justify-center gap-1 border border-slate-200/50 dark:border-slate-800"
                 >
                   🔊 Henoy amin'ny Feo
                 </button>
               </div>
-
+ 
               {/* Grid of latest News & Events inline preview */}
               <div className="grid grid-cols-1 gap-3">
                 
-                {/* News preview (Annonces) */}
-                <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2.5">
-                  <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-1.5">
-                    <span className="text-[10px] font-black uppercase text-slate-400">Vaovao sy Filazana (News)</span>
-                    <button onClick={() => setActiveTab('Annonces')} className="text-[9px] font-bold text-violet-605">Hijery</button>
+                {/* Expanded News preview (Annonces) utilizing empty screen space at bottom */}
+                <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3.5">
+                  <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">📢</span>
+                      <span className="text-[11px] font-extrabold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Vaovao sy Filazana</span>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('Annonces')}
+                      className="text-[9.5px] font-extrabold text-violet-650 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300 px-2.5 py-1 rounded-lg cursor-pointer transition-all active:scale-95 border border-violet-100 dark:border-violet-900/40"
+                    >
+                      Hijery rehetra ➔
+                    </button>
                   </div>
+ 
+                  <div className="space-y-4 pt-1">
+                    {announcements.filter(a => a.churchId === activeChurchId).map((ann) => {
+                      const categoryColors = ann.category === 'fivoriana' 
+                        ? 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-350 border border-purple-200/50 dark:border-purple-800/40' 
+                        : ann.category === 'hetsika'
+                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-350 border border-amber-200/50 dark:border-amber-800/40'
+                        : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-805 dark:text-indigo-350 border border-indigo-200/50 dark:border-indigo-800/40';
 
-                  <div className="space-y-2">
-                    {announcements.filter(a => a.churchId === activeChurchId).slice(0, 1).map(ann => (
-                      <div key={ann.id} className="space-y-1">
-                        <span className="text-[8px] bg-indigo-100 text-indigo-805 dark:bg-indigo-950 px-1 py-0.5 rounded font-black uppercase">
-                          {ann.category}
-                        </span>
-                        <h4 className="text-xs font-black text-slate-800 dark:text-white leading-tight">{ann.title}</h4>
-                        <p className="text-[10.5px] text-slate-500 leading-snug line-clamp-2">{ann.content}</p>
-                      </div>
-                    ))}
+                      const categoryLabel = ann.category === 'fivoriana' 
+                        ? 'Fivoriana 🗓️' 
+                        : ann.category === 'hetsika'
+                        ? 'Hetsika 🌟'
+                        : 'Filazana hafa 📢';
+
+                      const dateParts = ann.date ? ann.date.split('-') : [];
+                      const formattedDate = dateParts.length === 3 
+                        ? `Alahady, ${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`
+                        : ann.date;
+
+                      return (
+                        <div
+                          key={ann.id}
+                          className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-slate-800/60 space-y-2 relative group overflow-hidden transition-all hover:shadow-xs"
+                        >
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <span className={`text-[8.5px] px-2 py-0.5 rounded-full font-black uppercase ${categoryColors}`}>
+                              {categoryLabel}
+                            </span>
+                            {formattedDate && (
+                              <span className="text-[8.5px] font-mono text-slate-400 dark:text-slate-500 font-bold">
+                                📅 {formattedDate}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <h4 className="text-xs font-black text-slate-800 dark:text-white leading-snug group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                            {ann.title}
+                          </h4>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                            {ann.content}
+                          </p>
+                        </div>
+                      );
+                    })}
                     {announcements.filter(a => a.churchId === activeChurchId).length === 0 && (
-                      <p className="text-[10px] text-slate-400 font-bold dark:text-slate-505">Tsy misy filazana vaovao.</p>
+                      <div className="text-center py-8">
+                        <p className="text-[11px] text-slate-400 font-bold dark:text-slate-500">📭 Tsy misy filazana vaovao amin'izao fotoana izao.</p>
+                      </div>
                     )}
                   </div>
                 </div>
-
-                {/* Fast access shortcuts */}
-                <div>
-                  <span className="block text-[9.5px] font-black text-indigo-400 dark:text-indigo-350 uppercase tracking-widest mb-2 px-1">Hiditra haingana (Shortcuts):</span>
-                  <div className="grid grid-cols-2 gap-2 text-center">
-                    <button
-                      onClick={() => setActiveTab('Bible')}
-                      className="p-3 bg-violet-500 border-b-[4px] border-violet-800 text-white rounded-xl font-bold cursor-pointer transition-all active:translate-y-[2px] active:border-b-[1px] flex flex-col items-center justify-center gap-1.5"
-                    >
-                      <span className="text-xl">📖</span>
-                      <span className="text-[11px] font-black">Vakio Baiboly</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => {
-                        setActiveTab('Accueil');
-                        setShowMoreMenu(true);
-                      }}
-                      className="p-3 bg-orange-500 border-b-[4px] border-orange-850 text-white rounded-xl font-bold cursor-pointer transition-all active:translate-y-[2px] active:border-b-[1px] flex flex-col items-center justify-center gap-1.5"
-                    >
-                      <span className="text-xl">☰</span>
-                      <span className="text-[11px] font-black">Hetsika & Prezy</span>
-                    </button>
-                  </div>
-                </div>
-
+ 
               </div>
-
+ 
             </div>
           )}
 
@@ -493,6 +560,89 @@ export default function App() {
 
           {activeTab === 'Settings' && (
             <div className="space-y-4">
+              {/* Fitantanana ny Fiangonana Active Admin Card */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-xs space-y-3">
+                <span className="text-[9px] font-black uppercase bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 py-0.5 px-2 rounded font-sans">
+                  Fitantanana ny Fiangonana
+                </span>
+                <h3 className="font-extrabold text-sm text-slate-850 dark:text-white leading-none mt-1">
+                  Fikirana: <span className="text-violet-600 dark:text-violet-400">{activeChurch.name}</span>
+                </h3>
+                <p className="text-[10px] text-slate-400">Afaka ovaovanao eto ny anarana, teny faneva (slogan), ary ny andinin-tsoratra masina ny fiangonanao.</p>
+
+                <div className="space-y-3.5 border-t border-slate-100 dark:border-slate-800 pt-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                      Anaran'ny Fiangonana
+                    </label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500 font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                      Slogan / Mombamomba ny Fiangonana
+                    </label>
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      rows={2}
+                      className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-805 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500 leading-snug"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 border-t border-slate-100 dark:border-slate-800/60 pt-2.5">
+                    <span className="block text-[10px] font-black text-slate-400 uppercase">Andininy anio an'ny Fiangonana</span>
+                    
+                    <div>
+                      <label className="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">
+                        Teny avy amin'ny Soratra Masina
+                      </label>
+                      <textarea
+                        value={editVerseText}
+                        onChange={(e) => setEditVerseText(e.target.value)}
+                        placeholder="Soraty eto raha hanoratra andininy vaovao..."
+                        rows={2}
+                        className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-805 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500 italic"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">
+                        Andalan-tsoratra (Ref)
+                      </label>
+                      <input
+                        type="text"
+                        value={editVerseRef}
+                        onChange={(e) => setEditVerseRef(e.target.value)}
+                        placeholder="Ohatra: Salamo 23:1"
+                        className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-805 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={handleUpdateChurch}
+                      className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 font-bold text-white text-[10.5px] rounded-lg cursor-pointer transition-all active:translate-y-[1px] border-b-[3px] border-violet-800"
+                    >
+                      Tehirizina ny fanovana 💾
+                    </button>
+                    <button
+                      onClick={handleDeleteActiveChurch}
+                      className="py-2 px-3 bg-red-100 hover:bg-red-200 text-red-700 hover:text-red-800 font-bold text-[10.5px] rounded-lg cursor-pointer transition-all active:scale-95 border border-red-200"
+                      title="Hamafa ity fiangonana ity"
+                    >
+                      Hofafana ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Member lists nested in settings admin screen */}
               <div>
                 <MembersPage

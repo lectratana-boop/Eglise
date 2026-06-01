@@ -159,7 +159,7 @@ export default function SermonsPage({
         {/* Type tabs (Gros bouton styling) */}
         <div className="flex gap-2">
           {(['rehetra', 'audio', 'video'] as const).map((type) => {
-            const label = type === 'rehetra' ? 'Rehetra (All)' : type === 'audio' ? 'Audio Toriteny' : 'Video mivantana';
+            const label = type === 'rehetra' ? 'Rehetra' : type === 'audio' ? 'Audio Toriteny' : 'Video mivantana';
             return (
               <button
                 key={type}
@@ -239,7 +239,7 @@ export default function SermonsPage({
 
                 <div className="border-t border-slate-100 dark:border-slate-700 mt-4 pt-3 flex items-center justify-between">
                   <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wide">
-                    Live Broadcast Available
+                    Azo henoina mivantana
                   </span>
                   
                   <button

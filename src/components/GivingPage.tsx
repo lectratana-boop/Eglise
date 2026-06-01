@@ -97,7 +97,7 @@ export default function GivingPage({
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {(['Dimy', 'Fanatitra', 'Fanampiny'] as const).map((t) => {
-                const label = t === 'Dimy' ? 'Dimy Ampahafolo (Dîme)' : t === 'Fanatitra' ? 'Fanatitra (Offrandes)' : 'Hetsika / Manokana';
+                const label = t === 'Dimy' ? 'Dimy Ampahafolo' : t === 'Fanatitra' ? 'Fanatitra sy Rakitra' : 'Hetsika manokana';
                 return (
                   <button
                     type="button"

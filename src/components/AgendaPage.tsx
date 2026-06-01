@@ -16,7 +16,7 @@ interface AgendaPageProps {
 }
 
 const NATIONAL_EVENTS: Record<string, { title: string; time: string; location: string; description: string }[]> = {
-  "FJKM (Église réformée)": [
+  "FJKM (Protestanta)": [
     {
       title: "Kulto Fianarana Teny (Sekoly Alahady)",
       time: "07:30 - 08:30",
@@ -30,7 +30,7 @@ const NATIONAL_EVENTS: Record<string, { title: string; time: string; location: s
       description: "Kulto ofisialy mitovy sekansy litorjika, miaraka amin'ny litera-pifidianana nasionaly sy ny fihirana ofisialy."
     }
   ],
-  "Église catholique de Madagascar": [
+  "EKAR (Katolika)": [
     {
       title: "Lamesa voalohany (Alahady maraina)",
       time: "06:30 - 08:00",
@@ -44,7 +44,7 @@ const NATIONAL_EVENTS: Record<string, { title: string; time: string; location: s
       description: "Lamesa lehibe iombonan'ny Paroasy rehetra miaraka amin'ny hira sy fanoroam-peo masina ofisialy."
     }
   ],
-  "FFPM (Fédération regroupant plusieurs églises protestantes)": [
+  "FFPM (Protestanta)": [
     {
       title: "Kulto Iombonana Protestanta FFPM",
       time: "08:00 - 10:45",
@@ -52,7 +52,7 @@ const NATIONAL_EVENTS: Record<string, { title: string; time: string; location: s
       description: "Litorjia iombonana mampifandray ny finoana sy herin'ny Protestanta Malagasy (FJKM, FLM)."
     }
   ],
-  "FLM (Église luthérienne)": [
+  "FLM (Loterana)": [
     {
       title: "Kulto Katedraly Loterana (Fifohazana)",
       time: "08:30 - 11:15",
