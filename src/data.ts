@@ -9,26 +9,29 @@ export const INITIAL_CHURCHES: Church[] = [
   {
     id: "fjkm-isotry",
     name: "FJKM Isotry Fitiavana",
-    type: "FJKM",
+    type: "FJKM (Église réformée)",
     location: "Isotry, Antananarivo",
     logo: "cross",
-    description: "Fiangonana Jesosy Kristy eto Madagasikara ao Isotry Fitiavana. Tempoly feno fitiavana ary manambara ny Vaovao Mahafaly ho an'ny olona rehetra."
+    description: "Fiangonana Jesosy Kristy eto Madagasikara ao Isotry Fitiavana. Tempoly feno fitiavana ary manambara ny Vaovao Mahafaly ho an'ny olona rehetra.",
+    sharedProgramEnabled: true
   },
   {
     id: "ekar-antanimena",
     name: "EKAR Antanimena",
-    type: "EKAR",
+    type: "Église catholique de Madagascar",
     location: "Antanimena, Antananarivo",
     logo: "dove",
-    description: "Eglizy Katolika Apostolika Romana - Paroasy Masina Maria mpanjakavavin'ny lanitra, Antanimena. Toeram-pivoriana sy fandalinana ny finoana katolika."
+    description: "Eglizy Katolika Apostolika Romana - Paroasy Masina Maria mpanjakavavin'ny lanitra, Antanimena. Toeram-pivoriana sy fandalinana ny finoana katolika.",
+    sharedProgramEnabled: true
   },
   {
     id: "flm-ambatovinaky",
     name: "FLM Ambatovinaky",
-    type: "FLM",
+    type: "FLM (Église luthérienne)",
     location: "Ambatovinaky, Antananarivo",
     logo: "bible",
-    description: "Fiangonana Loterana Malagasy - Katedraly Ambatovinaky. Renivohitry ny tantara sy ny finoana loterana eto Madagasikara, mitory ny fahamarinana."
+    description: "Fiangonana Loterana Malagasy - Katedraly Ambatovinaky. Renivohitry ny tantara sy ny finoana loterana eto Madagasikara, mitory ny fahamarinana.",
+    sharedProgramEnabled: true
   }
 ];
 

@@ -6,10 +6,11 @@
 export interface Church {
   id: string;
   name: string;
-  type: string; // e.g., FJKM, EKAR, FLM, Hafa
+  type: string; // FJKM, EKAR (Katolike), etc.
   location: string;
   logo: 'cross' | 'bible' | 'dove' | 'heart' | 'star';
   description: string;
+  sharedProgramEnabled?: boolean; // synchronisé avec le programme national de la dénomination
 }
 
 export interface Member {

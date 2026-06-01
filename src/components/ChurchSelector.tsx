@@ -24,10 +24,11 @@ export default function ChurchSelector({
 }: ChurchSelectorProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [name, setName] = useState('');
-  const [type, setType] = useState('FJKM');
+  const [type, setType] = useState('FJKM (Église réformée)');
   const [location, setLocation] = useState('');
   const [logo, setLogo] = useState<'cross' | 'bible' | 'dove' | 'heart' | 'star'>('cross');
   const [description, setDescription] = useState('');
+  const [sharedProgramEnabled, setSharedProgramEnabled] = useState(true);
 
   const activeChurch = churches.find(c => c.id === activeChurchId) || churches[0];
 
@@ -42,11 +43,13 @@ export default function ChurchSelector({
       type,
       location,
       logo,
-      description: description || `Fiangonana ${type} miorina ao ${location}.`
+      description: description || `Fiangonana ${type} miorina ao ${location}.`,
+      sharedProgramEnabled
     });
     setName('');
     setLocation('');
     setDescription('');
+    setSharedProgramEnabled(true);
     setIsCreating(false);
   };
 
@@ -232,11 +235,16 @@ export default function ChurchSelector({
                   onChange={(e) => setType(e.target.value)}
                   className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-slate-800 dark:text-slate-100 p-3 outline-none shadow-sm transition-all text-base cursor-pointer"
                 >
-                  <option value="FJKM">FJKM (Protestanta)</option>
-                  <option value="EKAR">EKAR (Katolika)</option>
-                  <option value="FLM">FLM (Loterana)</option>
-                  <option value="EEM">EEM (Anglikana)</option>
-                  <option value="Finoana hafa">Finoana hafa / Fiangonana tsy miankina</option>
+                  <option value="FJKM (Église réformée)">FJKM (Église réformée)</option>
+                  <option value="Église catholique de Madagascar">Église catholique de Madagascar</option>
+                  <option value="FFPM (Fédération regroupant plusieurs églises protestantes)">FFPM (Protestanta mivondrona)</option>
+                  <option value="FLM (Église luthérienne)">FLM (Église luthérienne)</option>
+                  <option value="Anglican Church in Madagascar">Anglican Church in Madagascar</option>
+                  <option value="Assemblées de Dieu Madagascar">Assemblées de Dieu Madagascar</option>
+                  <option value="Pentecôtistes Unis de Madagascar">Pentecôtistes Unis de Madagascar</option>
+                  <option value="Jesosy Mamonjy">Jesosy Mamonjy</option>
+                  <option value="Apokalipsy">Apokalipsy</option>
+                  <option value="Églises évangéliques indépendantes locales">Églises évangéliques indépendantes locales</option>
                 </select>
               </div>
 
@@ -253,6 +261,26 @@ export default function ChurchSelector({
                   className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-slate-800 dark:text-slate-100 p-3 outline-none shadow-sm transition-all text-base"
                 />
               </div>
+            </div>
+
+            {/* Sync configuration with Madagascar denominations */}
+            <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-850 p-4 rounded-xl">
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={sharedProgramEnabled}
+                  onChange={(e) => setSharedProgramEnabled(e.target.checked)}
+                  className="mt-1 w-4.5 h-4.5 text-violet-600 focus:ring-violet-500 rounded border-slate-300 dark:border-slate-700 cursor-pointer"
+                />
+                <div>
+                  <span className={`block font-bold text-slate-800 dark:text-slate-150 ${isElderlyMode ? 'text-lg' : 'text-xs'}`}>
+                    Hampiasa ny Fandaharam-potoana Iraisana ofisialy any Madagasikara
+                  </span>
+                  <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-normal">
+                    Raha fidinanao ity, ny fandaharam-potoan'ny fiangonanao dia hampifanarahana tonga dia mitovy ho azy amin'ny fiangonana rehetra mitovy sokajy (oh: Kulto ofisialy FJKM rehetra na Lamesa Katolika rehetra). Handray ho azy ny fanovana nasionaly ianao saingy mbola afaka manova andalan-tsoratra sy filazana ihany koa.
+                  </span>
+                </div>
+              </label>
             </div>
 
             <div>

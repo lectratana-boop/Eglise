@@ -466,6 +466,7 @@ export default function App() {
           {/* 6. EXPANDED VIEWS RENDER PORT */}
           {activeTab === 'Events' && (
             <AgendaPage
+              activeChurch={activeChurch}
               churchId={activeChurchId}
               events={events}
               onAddEvent={handleAddEvent}

@@ -236,7 +236,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
                         : 'bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-150 dark:border-slate-800 border-b-[3px] hover:bg-slate-100'
                     }`}
                   >
-                    📜 Testamenta Taloha (39)
+                    📜 Tes. T (39)
                   </button>
                   <button
                     id="btn-tab-testament-vaovao"
@@ -250,7 +250,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
                         : 'bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-150 dark:border-slate-800 border-b-[3px] hover:bg-slate-100'
                     }`}
                   >
-                    ✝️ Testamenta Vaovao (27)
+                    ✝️ Tes. V (27)
                   </button>
                 </div>
 
