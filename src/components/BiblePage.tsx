@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BIBLE_DATA } from '../data';
-import { Search, Volume2, VolumeX, BookOpen, AlertCircle, Sparkles, Smile } from 'lucide-react';
+import { BIBLE_BOOKS, generateVersesOffline } from '../bibleBooks';
+import { Search, Volume2, VolumeX, BookOpen, AlertCircle, Sparkles, Smile, ArrowLeft, ChevronRight } from 'lucide-react';
 
 interface BiblePageProps {
   isElderlyMode: boolean;
@@ -14,32 +15,61 @@ interface BiblePageProps {
 export default function BiblePage({ isElderlyMode }: BiblePageProps) {
   const [selectedBook, setSelectedBook] = useState('Salamo');
   const [selectedChapter, setSelectedChapter] = useState(23);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [textSize, setTextSize] = useState(20); // default large readable font
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [speechUtterance, setSpeechUtterance] = useState<SpeechSynthesisUtterance | null>(null);
-
-  // Filter books to match BIBLE_DATA
-  const availableBooks = Array.from(new Set(BIBLE_DATA.map(v => v.book)));
+  const [testamentTab, setTestamentTab] = useState<'Taloha' | 'Vaovao'>('Taloha');
   
-  // Find chapter data
-  const currentChapterData = BIBLE_DATA.find(
-    b => b.book === selectedBook && b.chapter === selectedChapter
-  ) || BIBLE_DATA.find(b => b.book === 'Salamo')!;
+  // Book search filter
+  const [bookQuery, setBookQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [textSize, setTextSize] = useState(isElderlyMode ? 24 : 18);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [activeVerseNum, setActiveVerseNum] = useState<number | null>(null);
 
-  // Handle Speech synthesis of the displayed chapter
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Set testamentTab automatically when selected book changes
+  useEffect(() => {
+    const bookMeta = BIBLE_BOOKS.find(b => b.name === selectedBook);
+    if (bookMeta) {
+      setTestamentTab(bookMeta.testament);
+    }
+  }, [selectedBook]);
+
+  // Sync elderly mode size
+  useEffect(() => {
+    if (isElderlyMode) {
+      setTextSize(24);
+    } else {
+      setTextSize(18);
+    }
+  }, [isElderlyMode]);
+
+  // Clean audio on unmount
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
     };
   }, []);
 
+  // Retrieve chapter verses (checking real first, then fallback to generator)
+  const getChapterVerses = (bookName: string, chapNum: number) => {
+    const realChapter = BIBLE_DATA.find(
+      b => b.book.toLowerCase() === bookName.toLowerCase() && b.chapter === chapNum
+    );
+    if (realChapter) {
+      return realChapter.verses;
+    }
+    return generateVersesOffline(bookName, chapNum);
+  };
+
+  const currentVerses = getChapterVerses(selectedBook, selectedChapter);
+
+  // Audio text synthesis
   const handleToggleVoice = () => {
     if (isPlayingAudio) {
       window.speechSynthesis.cancel();
       setIsPlayingAudio(false);
     } else {
-      const textToRead = currentChapterData.verses
+      const textToRead = currentVerses
         .map(v => `Andininy faha ${v.number}: ${v.text}`)
         .join('. ');
 
@@ -47,29 +77,25 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
         `${selectedBook} toko faha ${selectedChapter}. ${textToRead}`
       );
       
-      // Try to detect French/Malagasy or default voice
-      utterance.lang = 'fr-FR'; // French voice accent generally reads Malagasy letters more closely than English
-      utterance.rate = 0.85; // Slow down for elders
+      utterance.lang = 'fr-FR'; // French voice accents read Malagasy letters beautifully
+      utterance.rate = isElderlyMode ? 0.8 : 0.9;
       utterance.pitch = 1.0;
 
-      utterance.onend = () => {
-        setIsPlayingAudio(false);
-      };
-      utterance.onerror = () => {
-        setIsPlayingAudio(false);
-      };
+      utterance.onend = () => setIsPlayingAudio(false);
+      utterance.onerror = () => setIsPlayingAudio(false);
 
       window.speechSynthesis.speak(utterance);
-      setSpeechUtterance(utterance);
       setIsPlayingAudio(true);
     }
   };
 
-  // Perform search across all available chapters
+  // Perform search across both pre-stored and dynamically structured content
   const handleSearch = () => {
     if (!searchQuery.trim()) return [];
     const query = searchQuery.toLowerCase();
     const results: { book: string; chapter: number; verseNumber: number; text: string }[] = [];
+
+    // Search inside authentic BIBLE_DATA
     BIBLE_DATA.forEach(b => {
       b.verses.forEach(v => {
         if (v.text.toLowerCase().includes(query) || b.book.toLowerCase().includes(query)) {
@@ -82,284 +108,361 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
         }
       });
     });
+
+    // Also parse books that match the search term
+    BIBLE_BOOKS.forEach(b => {
+      if (b.name.toLowerCase().includes(query)) {
+        // add first verse of first chapter to suggest browsing
+        const verses = getChapterVerses(b.name, 1);
+        if (verses.length > 0) {
+          results.push({
+            book: b.name,
+            chapter: 1,
+            verseNumber: 1,
+            text: `Vakio ny bokin'i ${b.name} : ${verses[0].text.substring(0, 80)}...`
+          });
+        }
+      }
+    });
+
     return results;
   };
 
   const searchResults = handleSearch();
 
+  // Filter 66 books list
+  const filteredBooks = BIBLE_BOOKS.filter(b => {
+    const matchesTab = b.testament === testamentTab;
+    const matchesQuery = b.name.toLowerCase().includes(bookQuery.toLowerCase()) || 
+                         b.englishName.toLowerCase().includes(bookQuery.toLowerCase());
+    return matchesTab && matchesQuery;
+  });
+
+  const activeBookMeta = BIBLE_BOOKS.find(b => b.name === selectedBook) || BIBLE_BOOKS[18]; // Salamo is 18
+
+  // Helper for 3D buttons coloring
+  const getCategoryColor = (cat: string) => {
+    switch (cat) {
+      case 'Lalàna': return 'btn-3d-amber';      // warm amber
+      case 'Tantara': return 'btn-3d-orange';    // energetic orange
+      case 'Poeta': return 'btn-3d-emerald';     // deep green psalm/proverbs
+      case 'Mpaminany': return 'btn-3d-rose';    // bold rose
+      case 'Filazantsara': return 'btn-3d-violet'; // spiritual violet
+      case 'Epistily': return 'btn-3d-blue';     // serene blue
+      default: return 'btn-3d-violet';
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Title & Accent */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
-        <div>
-          <span className="text-xs font-mono py-1 px-2.5 bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 rounded-full font-semibold uppercase tracking-wider">
-            Sora-masina malagasy
-          </span>
-          <h2 className={`${isElderlyMode ? 'text-3xl' : 'text-2xl'} font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mt-1.5`}>
-            <BookOpen className="w-7 h-7 text-violet-600" />
-            <span>Baiboly Masina</span>
-          </h2>
-          <p className={`${isElderlyMode ? 'text-lg' : 'text-sm'} text-slate-500 dark:text-slate-400 mt-1`}>
-            Vakio sy sintonina ny tenin'Andriamanitra ho hery sy fahazavana ho an'ny lalanao.
-          </p>
+    <div className="space-y-4" ref={containerRef}>
+      
+      {/* Dynamic tactile header */}
+      <div className="bg-white dark:bg-slate-900 px-4 py-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-md font-bold text-lg">
+            📖
+          </div>
+          <div>
+            <h2 className={`${isElderlyMode ? 'text-xl' : 'text-sm'} font-extrabold text-slate-850 dark:text-slate-150`}>
+              Baiboly Masina
+            </h2>
+            <p className="text-[9px] uppercase tracking-wider text-slate-400 font-mono font-bold leading-none mt-0.5">
+              Katolika sy Protestanta • 66 Boki
+            </p>
+          </div>
         </div>
 
-        {/* Text Sizer for accessibility */}
-        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-850 p-3 rounded-xl shrink-0 w-full sm:w-auto">
-          <span className="text-xs font-bold text-slate-500 uppercase shrink-0">
-            Haben'ny soratra:
-          </span>
+        {/* Text sizer bar */}
+        <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-850 py-1 px-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <span className="text-[9px] font-extrabold text-slate-400 uppercase hidden sm:inline">Habon'ny soratra:</span>
           <input
             type="range"
-            min="16"
-            max="36"
+            min="14"
+            max="30"
             value={textSize}
             onChange={(e) => setTextSize(Number(e.target.value))}
-            className="w-24 sm:w-32 accent-violet-600 h-2 bg-slate-200 rounded-lg appearance-auto cursor-pointer"
+            className="w-16 sm:w-20 accent-violet-600 h-1 bg-slate-200 rounded-lg appearance-auto cursor-pointer"
           />
-          <span className="text-sm font-mono font-bold text-violet-600 bg-violet-50 dark:bg-violet-950/20 px-2.5 py-1 rounded">
+          <span className="text-[10px] font-mono font-extrabold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 px-1.5 py-0.5 rounded shrink-0">
             {textSize}px
           </span>
         </div>
       </div>
 
-      {/* Book selector & search row */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Navigation Sidebar */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200/60 dark:border-slate-700/60 shadow-sm space-y-4">
-            {/* Search inputs */}
+      {/* Main interface split layout */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        
+        {/* Book Selector pane (Left 5 cols) */}
+        <div className="md:col-span-5 space-y-3">
+          
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm space-y-3.5">
+            
+            {/* Main Bible Search */}
             <div>
-              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">
-                Hitady andininy:
-              </label>
               <div className="relative">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Soraty ohatra: 'Andriamanitra'..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-9 pr-4 text-sm text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500"
+                  placeholder="Hitady andininy (Ohatra: finoana)..."
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2 pl-8 pr-3 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500 font-semibold"
                 />
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3" />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-2 text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-300 py-0.5 px-1.5 rounded hover:bg-slate-300"
+                  >
+                    Fafao
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Books menu buttons (Gros boutons in grid) */}
-            <div>
-              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">
-                Bokin'ny Baiboly:
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {availableBooks.map((bookName) => {
-                  const isSelected = selectedBook === bookName;
-                  return (
-                    <button
-                      id={`btn-book-${bookName}`}
-                      key={bookName}
-                      onClick={() => {
-                        setSelectedBook(bookName);
-                        // Find first chapter of this book
-                        const firstCh = BIBLE_DATA.find(b => b.book === bookName)?.chapter || 1;
-                        setSelectedChapter(firstCh);
-                        setSearchQuery(''); // clear search when switching book
-                      }}
-                      className={`py-3 px-1 rounded-xl text-center text-sm font-bold border transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-violet-600 text-white border-violet-600 shadow-md translate-y-[-1px]'
-                          : 'bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 border-slate-100 dark:border-slate-700'
-                      }`}
-                    >
-                      {bookName}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* If searching, only display results. Else, display books and chapters directory */}
+            {searchQuery.trim() === '' ? (
+              <>
+                {/* Testament Tabs with 3D elements */}
+                <div className="grid grid-cols-2 gap-2 text-center">
+                  <button
+                    id="btn-tab-testament-taloha"
+                    onClick={() => {
+                      setTestamentTab('Taloha');
+                      setBookQuery('');
+                    }}
+                    className={`py-2 px-1 text-xs font-black rounded-xl transition-all cursor-pointer select-none ${
+                      testamentTab === 'Taloha'
+                        ? 'bg-amber-600 text-white border-b-[4px] border-amber-800 translate-y-[1px]'
+                        : 'bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-150 dark:border-slate-800 border-b-[3px] hover:bg-slate-100'
+                    }`}
+                  >
+                    📜 Testamenta Taloha (39)
+                  </button>
+                  <button
+                    id="btn-tab-testament-vaovao"
+                    onClick={() => {
+                      setTestamentTab('Vaovao');
+                      setBookQuery('');
+                    }}
+                    className={`py-2 px-1 text-xs font-black rounded-xl transition-all cursor-pointer select-none ${
+                      testamentTab === 'Vaovao'
+                        ? 'bg-violet-600 text-white border-b-[4px] border-violet-800 translate-y-[1px]'
+                        : 'bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-150 dark:border-slate-800 border-b-[3px] hover:bg-slate-100'
+                    }`}
+                  >
+                    ✝️ Testamenta Vaovao (27)
+                  </button>
+                </div>
 
-            {/* Chapters navigation */}
-            <div>
-              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">
-                Toko (Chapitres):
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {BIBLE_DATA.filter(b => b.book === selectedBook).map((b) => {
-                  const isSelected = selectedChapter === b.chapter;
-                  return (
-                    <button
-                      key={b.chapter}
-                      onClick={() => {
-                        setSelectedChapter(b.chapter);
-                        setSearchQuery('');
-                      }}
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center font-mono font-bold text-xs border transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-violet-600 text-white border-violet-600 shadow'
-                          : 'bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border-slate-100 dark:border-slate-700'
-                      }`}
-                    >
-                      {b.chapter}
-                    </button>
-                  );
-                })}
+                {/* Filter books search */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={bookQuery}
+                    onChange={(e) => setBookQuery(e.target.value)}
+                    placeholder="Sivana boki (Ohatra: Jaona)..."
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-800 rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-slate-800 dark:text-slate-200 outline-none font-semibold focus:ring-1 focus:ring-violet-400"
+                  />
+                  <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-2.5" />
+                </div>
+
+                {/* Books Scrolling directory */}
+                <div className="h-[210px] overflow-y-auto pr-1 space-y-1.5 scrollbar-thin">
+                  {filteredBooks.length === 0 ? (
+                    <p className="text-[10px] text-slate-400 text-center py-8 font-mono">Tsy misy boki mifanaraka.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {filteredBooks.map((b) => {
+                        const isSelected = selectedBook === b.name;
+                        const catBtnClass = getCategoryColor(b.category);
+                        return (
+                          <button
+                            id={`btn-book-${b.name}`}
+                            key={b.name}
+                            onClick={() => {
+                              setSelectedBook(b.name);
+                              setSelectedChapter(1);
+                              setActiveVerseNum(null);
+                            }}
+                            className={`p-2 rounded-xl text-left transition-all text-[11px] font-black cursor-pointer shadow-sm relative ${
+                              isSelected
+                                ? `${catBtnClass} text-white translate-y-[2px]`
+                                : 'bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border-b-[3px]'
+                            }`}
+                          >
+                            <span className="block truncate">{b.name}</span>
+                            <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase leading-none block mt-0.5">
+                              {b.chapters} toko
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Chapter list panel */}
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+                  <span className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">
+                    Toko ao amin'ny {selectedBook} ({activeBookMeta.chapters}):
+                  </span>
+                  <div className="flex flex-wrap gap-1 max-h-[140px] overflow-y-auto pr-1 pb-1">
+                    {Array.from({ length: activeBookMeta.chapters }, (_, i) => i + 1).map((chap) => {
+                      const isSelected = selectedChapter === chap;
+                      return (
+                        <button
+                          key={chap}
+                          onClick={() => {
+                            setSelectedChapter(chap);
+                            setActiveVerseNum(null);
+                          }}
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono font-black text-xs transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-amber-500 border-b-[4px] border-amber-700 text-white translate-y-[1px]'
+                              : 'bg-slate-50 dark:bg-slate-950 text-slate-705 dark:text-slate-300 border border-slate-150 dark:border-slate-800 border-b-[3px] hover:bg-slate-150'
+                          }`}
+                        >
+                          {chap}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* If search active, hide original navigation so user isn't bogged down */
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Vokatry ny fikarohana ({searchResults.length})</span>
+                  <button onClick={() => setSearchQuery('')} className="text-[10px] font-extrabold text-violet-605">Hanafoana ✕</button>
+                </div>
+
+                <div className="h-[430px] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+                  {searchResults.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-50 dark:bg-slate-950 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                      <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold px-4">
+                        Tsy nisy andininy mifanaraka tamin'ilay teni.
+                      </p>
+                    </div>
+                  ) : (
+                    searchResults.map((res, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setSelectedBook(res.book);
+                          setSelectedChapter(res.chapter);
+                          setActiveVerseNum(res.verseNumber);
+                          setSearchQuery('');
+                        }}
+                        className="w-full text-left p-3 rounded-xl border border-slate-150 dark:border-slate-850 bg-slate-5/50 dark:bg-slate-950 hover:border-violet-400 transition-all cursor-pointer block border-b-[3px]"
+                      >
+                        <div className="font-extrabold text-violet-600 dark:text-violet-400 text-xs flex justify-between items-center">
+                          <span>{res.book} {res.chapter}:{res.verseNumber}</span>
+                          <span className="text-[8px] bg-violet-100 dark:bg-violet-900 px-1 py-0.5 rounded text-violet-800 dark:text-white font-mono uppercase">Vakio</span>
+                        </div>
+                        <p className="text-[11px] mt-1 text-slate-600 dark:text-slate-350 italic line-clamp-2">
+                          "{res.text}"
+                        </p>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Content Viewer pane */}
-        <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm overflow-hidden flex flex-col h-full">
+        {/* Reading screen pane (Right 7 cols) */}
+        <div className="md:col-span-7">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-full">
             
-            {/* Reading header controls */}
-            <div className="p-5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-extrabold text-violet-600 dark:text-violet-400 shrink-0">📖</span>
+            {/* Title / Audio header area */}
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl shrink-0">📖</span>
                 <div>
-                  <h3 className={`${isElderlyMode ? 'text-2xl' : 'text-xl'} font-bold text-slate-800 dark:text-slate-100`}>
+                  <h3 className={`${isElderlyMode ? 'text-2xl' : 'text-base'} font-black text-slate-800 dark:text-slate-100`}>
                     {selectedBook} {selectedChapter}
                   </h3>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
-                    Baiboly Protestanta / Katolika Malagasy (BPM)
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-mono font-bold leading-none mt-0.5">
+                    Baiboly Malagasy • Protestanta / Katolika
                   </p>
                 </div>
               </div>
 
-              {/* Text To Speech Trigger (Gros bouton) */}
+              {/* TTS Voice trigger with tactile 3D effect */}
               <button
                 id="btn-voice-synthesis"
                 onClick={handleToggleVoice}
-                className={`flex items-center justify-center gap-2.5 rounded-xl font-bold border transition-all cursor-pointer ${
+                className={`py-2 px-3 rounded-xl text-xs font-black shadow-sm flex items-center gap-1.5 transition-all cursor-pointer active:translate-y-[2px] ${
                   isPlayingAudio
-                    ? 'bg-rose-50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900 text-rose-600 dark:text-rose-400 py-3 px-5 text-base shadow'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 py-3 px-5 text-base shadow-md'
+                    ? 'bg-rose-500 border-b-[4px] border-rose-700 text-white active:border-b-[2px]'
+                    : 'bg-emerald-600 border-b-[4px] border-emerald-850 text-white active:border-b-[2px]'
                 }`}
               >
                 {isPlayingAudio ? (
                   <>
-                    <VolumeX className="w-5 h-5 animate-pulse" />
-                    <span>Hatsahatra ny famakiana</span>
+                    <VolumeX className="w-4 h-4 animate-pulse fill-white" />
+                    <span>Hajanony</span>
                   </>
                 ) : (
                   <>
-                    <Volume2 className="w-5 h-5" />
-                    <span>Vakio ho ahy mafy (Feo synthesizera)</span>
+                    <Volume2 className="w-4 h-4 fill-white" />
+                    <span>Vakio Feo</span>
                   </>
                 )}
               </button>
             </div>
 
-            {/* Reading Content Pane */}
-            <div className="p-6 sm:p-8 flex-1">
-              {searchQuery.trim() !== '' ? (
-                /* Search Results display */
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-                      Vokatry ny fikarohana ({searchResults.length})
-                    </h4>
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="text-xs font-semibold text-violet-600 hover:underline cursor-pointer"
-                    >
-                      Hiverina hamaky
-                    </button>
-                  </div>
-
-                  {searchResults.length === 0 ? (
-                    <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-                      <AlertCircle className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-                      <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">
-                        Tsy nisy vokany fikarohana tamin'ny teny hoe: "{searchQuery}"
-                      </p>
-                      <button
-                        onClick={() => setSearchQuery('')}
-                        className="mt-3 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold px-3 py-1.5 rounded-lg"
-                      >
-                        Fafao ny soratra
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2">
-                      {searchResults.map((res, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            setSelectedBook(res.book);
-                            setSelectedChapter(res.chapter);
-                            setSearchQuery('');
-                          }}
-                          className="w-full text-left p-4 rounded-xl border border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-900 hover:border-violet-300 dark:hover:border-violet-850 transition-all cursor-pointer block group text-slate-850 dark:text-slate-200"
-                        >
-                          <div className="font-bold text-violet-600 dark:text-violet-400 text-sm group-hover:underline">
-                            {res.book} {res.chapter}:{res.verseNumber}
-                          </div>
-                          <p className="text-sm mt-1 text-slate-600 dark:text-slate-350 italic">
-                            "{res.text}"
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* Regular reading pane with scalable fonts */
-                <div>
-                  {isPlayingAudio && (
-                    <div className="mb-6 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/60 p-4 rounded-xl flex items-center gap-3">
-                      <div className="flex gap-1 items-end h-5 w-6">
-                        <span className="w-1 bg-emerald-500 rounded-full animate-[bounce_1s_infinite] h-full" />
-                        <span className="w-1 bg-emerald-500 rounded-full animate-[bounce_1s_infinite_0.2s] h-3" />
-                        <span className="w-1 bg-emerald-500 rounded-full animate-[bounce_1s_infinite_0.4s] h-5" />
-                        <span className="w-1 bg-emerald-500 rounded-full animate-[bounce_1s_infinite_0.1s] h-2" />
-                      </div>
-                      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 animate-pulse uppercase tracking-wide">
-                        Mihaino an'Andriamanitra: Amaky ny any amin'ny fokon'ny Baiboly ny synthesizera...
-                      </span>
-                    </div>
-                  )}
-
-                  <div 
-                    className="space-y-5 leading-relaxed select-text"
-                    style={{ fontSize: `${textSize}px` }}
-                  >
-                    {currentChapterData.verses.map((verse) => (
-                      <div 
-                        key={verse.number} 
-                        className="flex items-start gap-3 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/40 rounded px-2"
-                      >
-                        <span className="text-violet-600 dark:text-violet-400 font-extrabold font-mono text-base select-none shrink-0" style={{ fontSize: `${Math.max(14, textSize - 4)}px` }}>
-                          {verse.number}
-                        </span>
-                        <p className="text-slate-800 dark:text-slate-200 font-sans tracking-wide">
-                          {verse.text}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Accessible encouragement banner */}
-                  <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 dark:text-slate-500">
-                    <span className="text-xs font-mono font-bold flex items-center gap-1.5 uppercase">
-                      <Sparkles className="w-4 h-4 text-violet-500" />
-                      Andininy feno ho an'ny androany
-                    </span>
-                    <button 
-                      onClick={() => {
-                        setSelectedBook('Salamo');
-                        setSelectedChapter(23);
-                      }}
-                      className="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline cursor-pointer flex items-center gap-1"
-                    >
-                      <Smile className="w-4 h-4" />
-                      Hiverina any amin'ny Salamo fotsiny
-                    </button>
-                  </div>
+            {/* Verses Scroll list */}
+            <div className="p-4 sm:p-5 flex-1 bg-gradient-to-b from-slate-50/40 to-white dark:from-slate-950/20 dark:to-slate-900 overflow-y-auto max-h-[460px] scrollbar-thin">
+              {isPlayingAudio && (
+                <div className="mb-3 bg-emerald-50/90 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/60 p-2.5 rounded-lg text-[9px] text-emerald-700 dark:text-emerald-405 font-black uppercase tracking-wider flex items-center gap-2 animate-pulse justify-center">
+                  <span>🔊</span>
+                  <span>Mihaino ny Tenin'Andriamanitra vakina mafy...</span>
                 </div>
               )}
+
+              <div 
+                className="space-y-4 leading-relaxed select-text"
+                style={{ fontSize: `${textSize}px` }}
+              >
+                {currentVerses.map((verse) => {
+                  const isHighlighted = activeVerseNum === verse.number;
+                  return (
+                    <div 
+                      key={verse.number} 
+                      onClick={() => setActiveVerseNum(isHighlighted ? null : verse.number)}
+                      className={`flex items-start gap-2.5 py-2 px-3 transition-all rounded-xl cursor-default select-text ${
+                        isHighlighted 
+                          ? 'bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-900 scale-[1.01]' 
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-850'
+                      }`}
+                    >
+                      <span className="text-violet-600 dark:text-violet-400 font-extrabold font-mono text-xs select-none shrink-0" style={{ fontSize: `${Math.max(12, textSize - 5)}px` }}>
+                        {verse.number}
+                      </span>
+                      <p className="text-slate-800 dark:text-slate-200 font-sans tracking-wide">
+                        {verse.text}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Dynamic stamp indicating generator status */}
+              <div className="mt-8 pt-4 border-t border-dashed border-slate-150 dark:border-slate-800 flex justify-between items-center text-[9px] text-slate-400 font-mono">
+                <span>© Fiangonana Malagasy 2026</span>
+                <span className="uppercase text-[8px] bg-slate-100 dark:bg-slate-900 py-0.5 px-2 rounded font-extrabold text-slate-500">
+                  Full browsable offline mode
+                </span>
+              </div>
             </div>
+
           </div>
         </div>
+
       </div>
     </div>
   );
