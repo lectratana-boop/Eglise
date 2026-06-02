@@ -63,8 +63,7 @@ const DAILY_PROMISES = [
 export default function App() {
   // State management populated with localStorage persistence
   const [churches, setChurches] = useState<Church[]>(() => {
-    const saved = localStorage.getItem('mifandray_churches');
-    return saved ? JSON.parse(saved) : INITIAL_CHURCHES;
+    return INITIAL_CHURCHES;
   });
 
   const [activeChurchId, setActiveChurchId] = useState<string>(() => {
@@ -472,31 +471,13 @@ export default function App() {
 
                 {/* Interactive greeting with dynamic island feel */}
                 <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-4 text-white shadow-md relative overflow-hidden">
-                <h2 className={`${isElderlyMode ? 'text-2xl' : 'text-lg'} font-black leading-tight text-white/95`}>
-                  🏡 <span className="text-yellow-300">{activeChurch.name}</span>
-                </h2>
-                <p className="text-[11.5px] text-violet-100 leading-snug mt-2 font-medium">
-                  {activeChurch.description || DEFAULT_SLOGAN}
-                </p>
- 
-                {/* Inline Church Space Selector */}
-                <div className="mt-3.5 bg-black/20 p-2 rounded-xl backdrop-blur-sm border border-white/10">
-                  <span className="block text-[8px] uppercase tracking-wider font-extrabold text-violet-200 mb-1">
-                    Hifidy fiangonana hafa :
-                  </span>
-                  <select
-                    value={activeChurchId}
-                    onChange={(e) => setActiveChurchId(e.target.value)}
-                    className="w-full bg-slate-900 border-none rounded-lg text-xs py-1.5 px-2 text-white outline-none font-bold cursor-pointer"
-                  >
-                    {churches.map(ch => (
-                      <option key={ch.id} value={ch.id} className="bg-slate-900 text-white">
-                        ⛪ {ch.name} ({ch.type})
-                      </option>
-                    ))}
-                  </select>
+                  <h2 className={`${isElderlyMode ? 'text-2xl' : 'text-lg'} font-black leading-tight text-white/95`}>
+                    🏡 <span className="text-yellow-300">{activeChurch.name}</span>
+                  </h2>
+                  <p className="text-[11.5px] text-violet-100 leading-snug mt-2 font-medium italic">
+                    "{activeChurch.description || DEFAULT_SLOGAN}"
+                  </p>
                 </div>
-              </div>
  
               {/* Dynamic Promise of today with robust design */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-900 dark:to-slate-900 border border-amber-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
