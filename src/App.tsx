@@ -356,17 +356,17 @@ export default function App() {
   const bottomNavItems = [
     { key: 'Accueil', label: 'Tongasoa', icon: <Home className="w-5 h-5" /> },
     { key: 'Bible', label: 'Baiboly', icon: <BookOpen className="w-5 h-5" /> },
-    { key: 'Chorales', label: 'Fihirana', icon: <Music className="w-5 h-5" /> },
-    { key: 'Dimes', label: 'Fanomezana', icon: <Heart className="w-5 h-5" /> },
+    { key: 'Jeunes', label: 'Sampana', icon: <Users className="w-5 h-5" /> },
+    { key: 'Quiz', label: 'Quiz', icon: <Award className="w-5 h-5" /> },
   ];
 
   // Secondary item drawer elements
   const secondaryMenuItems = [
     { key: 'Annonces', label: 'Filazana', icon: <Megaphone className="w-5 h-5" />, color: 'from-violet-500 to-purple-600' },
     { key: 'Events', label: 'Fandaharana', icon: <Calendar className="w-5 h-5" />, color: 'from-amber-400 to-orange-500' },
-    { key: 'Jeunes', label: 'Sampana Tanora', icon: <Users className="w-5 h-5" />, color: 'from-orange-500 to-rose-500' },
+    { key: 'Chorales', label: 'Fihirana', icon: <Music className="w-5 h-5" />, color: 'from-violet-650 to-indigo-600' },
+    { key: 'Dimes', label: 'Fanomezana', icon: <Heart className="w-5 h-5" />, color: 'from-rose-500 to-pink-605' },
     { key: 'Sermons', label: 'Toriteny', icon: <Mic className="w-5 h-5" />, color: 'from-emerald-500 to-teal-600' },
-    { key: 'Quiz', label: 'Lalao Quiz', icon: <Award className="w-5 h-5" />, color: 'from-yellow-400 to-amber-500' },
     { key: 'Settings', label: 'Fitantanana', icon: <Settings className="w-5 h-5" />, color: 'from-slate-500 to-slate-700' }
   ];
 
