@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
+// @ts-ignore
+import churchLogo from '../assets/images/church_logo_1780395512214.png';
 
 interface ChurchLogoProps {
   layout?: 'square' | 'horizontal';
@@ -36,7 +38,7 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
         {/* Generated elegant gold church logo */}
         <div className={`transition-all duration-300 flex items-center justify-center ${sizeClass}`}>
           <img
-            src="/src/assets/images/church_logo_1780395512214.png"
+            src={churchLogo}
             alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
             referrerPolicy="no-referrer"
             className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal dark:bg-white rounded-2xl p-1"
@@ -61,7 +63,7 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
     <div className={`flex items-center gap-2 select-none ${className}`}>
       <div className={`bg-white rounded-lg p-0.5 border border-slate-150 dark:border-slate-800 ${badgeSize} flex items-center justify-center overflow-hidden`}>
         <img
-          src="/src/assets/images/church_logo_1780395512214.png"
+          src={churchLogo}
           alt="F.P.Fi"
           referrerPolicy="no-referrer"
           className="max-w-full max-h-full object-contain mix-blend-multiply"
