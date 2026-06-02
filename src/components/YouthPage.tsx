@@ -21,7 +21,10 @@ import {
   ThumbsUp,
   X,
   Plus,
-  MessageSquareOff
+  MessageSquareOff,
+  Phone,
+  MapPin,
+  Globe
 } from 'lucide-react';
 
 interface YouthPageProps {
@@ -82,6 +85,23 @@ const EMOTICONS = [
   { emoji: '😢', label: 'Malahelo' },
   { emoji: '😡', label: 'Tezitra' }
 ];
+
+const getMemberAvatar = (memberId: string) => {
+  const avatars = [
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80"
+  ];
+  let sum = 0;
+  const idStr = memberId || "";
+  for (let i = 0; i < idStr.length; i++) {
+    sum += idStr.charCodeAt(i);
+  }
+  return avatars[sum % avatars.length];
+};
 
 export default function YouthPage({ isElderlyMode, members, churchRoles }: YouthPageProps) {
   // Posts stored in state & localStorage
@@ -318,68 +338,127 @@ export default function YouthPage({ isElderlyMode, members, churchRoles }: Youth
 
   return (
     <div className="space-y-4">
-      {/* 1. SESSION SIMULATOR CONTROL BAR */}
-      <div className="bg-gradient-to-r from-violet-600 to-indigo-700 text-white p-4 rounded-2xl shadow-md border border-violet-500/30 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center animate-pulse shrink-0">
-              <UserCheck className="w-5 h-5 text-amber-300" />
-            </div>
-            <div>
-              <span className="text-[10px] text-violet-200 block uppercase font-black tracking-wider leading-none mb-1">Testing simulated user identity:</span>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm text-yellow-300">
-                  {activeUser ? activeUser.name : 'Tsy misy mpikambana mpitsapa voafidy'}
-                </span>
-                {activeUser && (
-                  <span className="text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded-full capitalize">
-                    {activeUser.phone}
+      {/* 1. SECTOR FOR SIMULATED SESSION IDENTITY */}
+      <div className="bg-slate-100 dark:bg-slate-900 border border-slate-205 dark:border-slate-800 p-3.5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 text-slate-800 dark:text-slate-100">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 bg-violet-600 rounded-full animate-ping shrink-0" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Fidiana Mpikambana Mpizahatany (Simulated Member Session)
+          </span>
+        </div>
+        <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 justify-end">
+          <label htmlFor="user-identity-select" className="text-[10px] font-extrabold uppercase text-slate-500 pointer-events-none shrink-0">
+            SOKAFY NY MPIKAMBANA:
+          </label>
+          <select
+            id="user-identity-select"
+            value={activeMemberId}
+            onChange={(e) => setActiveMemberId(e.target.value)}
+            className="w-full md:w-56 bg-white dark:bg-slate-950 border border-slate-205 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 font-extrabold outline-none cursor-pointer focus:ring-1 focus:ring-violet-500"
+          >
+            <option value="">-- Mifidiana Mpitsapa --</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.role || 'Mpikambana tsotra'})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* 2. HIGH FIDELITY PROFESSIONAL MEMBER BUSINESS CARD (CARTE DE VISITE AS SHOWN IN PHOTO) */}
+      {activeUser && (
+        <div id="mifandray-member-card" className="bg-gradient-to-r from-[#1e155c] via-[#231570] to-[#2c138d] text-white p-6 rounded-3xl shadow-xl relative overflow-hidden ring-1 ring-violet-500/20 max-w-full">
+          {/* Subtle light reflections */}
+          <div className="absolute top-0 right-0 w-36 h-36 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
+            {/* LEFT PORTRAIT ELEMENT */}
+            <div className="flex flex-col items-center shrink-0 w-full sm:w-1/3 border-b sm:border-b-0 pb-4 sm:pb-0 border-white/5">
+              <div className="relative w-28 h-28 rounded-full border-2 border-white shadow-lg overflow-hidden bg-violet-950 flex items-center justify-center shrink-0">
+                <img
+                  src={getMemberAvatar(activeUser.id)}
+                  alt={activeUser.name}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80";
+                  }}
+                />
+              </div>
+              
+              {/* Yellow bold name below avatar */}
+              <div className="mt-3 text-center">
+                {activeUser.name.split(' ').map((part, index) => (
+                  <span
+                    key={part + index}
+                    className={`block text-[#f9c21b] font-black leading-tight text-center tracking-wide ${
+                      index === 0 ? 'text-lg uppercase' : 'text-base font-semibold opacity-95 text-amber-200 mt-0.5'
+                    }`}
+                  >
+                    {part}
                   </span>
-                )}
+                ))}
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <label htmlFor="user-identity-select" className="text-[10px] font-extrabold uppercase shrink-0 text-violet-100">
-              Sokafy ny mpikambana:
-            </label>
-            <div className="relative">
-              <select
-                id="user-identity-select"
-                value={activeMemberId}
-                onChange={(e) => setActiveMemberId(e.target.value)}
-                className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-2.5 py-1.5 text-xs text-white font-extrabold outline-none shrink-0 cursor-pointer text-slate-800"
-              >
-                <option value="" className="text-slate-800">-- Mifidiana Mpitsapa kianja --</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id} className="text-slate-800">
-                    {m.name} ({m.role})
-                  </option>
-                ))}
-              </select>
+            {/* VERTICAL SEPARATOR LINE */}
+            <div className="hidden sm:block border-r border-white/10 h-32 mx-1 self-center" />
+
+            {/* RIGHT INFORMATION FIELDS */}
+            <div className="flex-1 flex flex-col justify-center gap-3.5 w-full min-w-0">
+              
+              {/* ROW 1: PHONE */}
+              <div className="flex items-center gap-3.5">
+                <div className="w-9 h-9 rounded-full bg-[#170e4b]/60 border border-violet-500/30 flex items-center justify-center shrink-0 shadow-sm">
+                  <Phone className="w-4 h-4 text-white fill-white" />
+                </div>
+                <span className="text-sm font-bold tracking-wider font-mono text-white/95">
+                  {activeUser.phone || '033 45 678 90'}
+                </span>
+              </div>
+
+              {/* HORIZONTAL SEPARATOR */}
+              <div className="border-t border-white/10" />
+
+              {/* ROW 2: ADDRESS */}
+              <div className="flex items-center gap-3.5">
+                <div className="w-9 h-9 rounded-full bg-[#170e4b]/60 border border-violet-500/30 flex items-center justify-center shrink-0 shadow-sm">
+                  <MapPin className="w-4 h-4 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-[8px] font-black text-violet-300 uppercase tracking-widest leading-none mb-1">
+                    ADRESSE:
+                  </span>
+                  <span className="block text-xs font-bold text-white/95 truncate">
+                    {activeUser.address || 'Lot 26 ter mahamasina'}
+                  </span>
+                </div>
+              </div>
+
+              {/* HORIZONTAL SEPARATOR */}
+              <div className="border-t border-white/10" />
+
+              {/* ROW 3: SAMPANA BADGES */}
+              <div className="flex items-center gap-3.5">
+                <div className="w-9 h-9 rounded-full bg-[#170e4b]/60 border border-violet-500/30 flex items-center justify-center shrink-0 shadow-sm">
+                  <Globe className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex flex-wrap gap-1.5 min-w-0">
+                  <div className="inline-flex items-center gap-1.5 bg-[#170e4b]/60 border border-violet-500/40 px-3.5 py-1.5 rounded-lg min-w-0 max-w-full">
+                    <span className="text-[8.5px] font-black text-violet-200 tracking-wider">SAMPANA:</span>
+                    <span className="text-[10px] font-black text-[#f9c21b] truncate">
+                      {userSampanaList.length > 0 ? userSampanaList.join(', ') : (activeUser.role || 'Mpitahiry vola')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
-
-        {/* Info label list of department access */}
-        {activeUser && (
-          <div className="pt-2 border-t border-white/10 text-xs flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-extrabold text-violet-200 uppercase">Sampana idirany:</span>
-            {userSampanaList.length > 0 ? (
-              userSampanaList.map((samp) => (
-                <span key={samp} className="text-[10px] font-extrabold bg-white/15 px-2 py-0.5 rounded text-amber-200">
-                  {samp}
-                </span>
-              ))
-            ) : (
-              <span className="text-[10px] italic text-rose-300">
-                Tsy misy Sampana. (Mandehana any amin'ny "Fitantanana" hanomezana Sampana azy amin'ny alalan'ny fanovana mombamomba!)
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* 2. SAMPANA TAB SELECTORS AT THE TOP */}
       {activeUser && userSampanaList.length > 0 && (

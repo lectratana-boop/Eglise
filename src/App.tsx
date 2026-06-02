@@ -46,7 +46,8 @@ import {
   Sparkles,
   Volume2,
   X,
-  PhoneCall
+  PhoneCall,
+  Plus
 } from 'lucide-react';
 
 const DEFAULT_SLOGAN = "Fampiharana ho an'ny fiangonana eto Madagasikara: Baiboly Masina, fandalinana, fihirana, ary varavarana fifandraisana mivantana eo amin'ny mpino sy ny fiangonana rehetra.";
@@ -895,9 +896,26 @@ export default function App() {
                 <span className="text-[9px] font-black uppercase bg-amber-100 dark:bg-amber-955 text-amber-700 dark:text-amber-300 py-0.5 px-2 rounded font-sans">
                   Andraikitra sy Sampana
                 </span>
-                <h3 className="font-extrabold text-xs text-slate-850 dark:text-white leading-none mt-1">
-                  Andraikitra ao amin'ny Fiangonana
-                </h3>
+                
+                <div className="flex items-center justify-between gap-2 mt-1">
+                  <h3 className="font-extrabold text-xs text-slate-850 dark:text-white leading-none">
+                    Andraikitra ao amin'ny Fiangonana
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setEditingRoleIndex(null);
+                      setRoleInputValue('');
+                      const el = document.getElementById('new-role-input');
+                      if (el) el.focus();
+                    }}
+                    className="p-1 px-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg flex items-center gap-1 text-[10px] font-black cursor-pointer active:scale-95 transition-all shadow-xs"
+                    title="Hampiditra sampana vaovao"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Sampana Vaovao</span>
+                  </button>
+                </div>
+
                 <p className="text-[10px] text-slate-400">
                   Azonao atao ny mampiditra andraikitra vaovao, manova, na mamafa ireo efa misy izay isafidianana amin'ny fampidirana mpikambana.
                 </p>
@@ -909,6 +927,7 @@ export default function App() {
                   </span>
                   <div className="flex gap-2">
                     <input
+                      id="new-role-input"
                       type="text"
                       value={roleInputValue}
                       onChange={(e) => setRoleInputValue(e.target.value)}
@@ -936,9 +955,10 @@ export default function App() {
                     ) : (
                       <button
                         onClick={addNewRole}
-                        className="py-1.5 px-3 bg-amber-600 hover:bg-amber-700 font-bold text-white text-xs rounded-lg cursor-pointer shrink-0"
+                        className="py-1.5 px-3 bg-amber-600 hover:bg-amber-700 font-bold text-white text-xs rounded-lg cursor-pointer shrink-0 flex items-center gap-1"
                       >
-                        Hampiditra
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Hampiditra</span>
                       </button>
                     )}
                   </div>
