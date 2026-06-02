@@ -141,6 +141,184 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
     localStorage.setItem('mifandray_sampana_finances_v4', JSON.stringify(finances));
   }, [finances]);
 
+  // Financial Transaction type definitions
+  // (type 'tahiry' for money obtained, 'fandaniana' for spent/expense)
+  const [transactions, setTransactions] = useState<any[]>(() => {
+    const saved = localStorage.getItem('mifandray_sampana_transactions_v3');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [
+      {
+        id: 'tx-stk-1',
+        sampana: 'Sampana Tanora Kristiana (STK)',
+        type: 'tahiry',
+        amount: 1200000,
+        label: 'Tamberim-vola Krismasy sy Taom-baovao',
+        date: '2026-05-10',
+        insertedBy: 'Andry Tiana'
+      },
+      {
+        id: 'tx-stk-2',
+        sampana: 'Sampana Tanora Kristiana (STK)',
+        type: 'tahiry',
+        amount: 400000,
+        label: 'Adidim-pikambana STK - Aprily',
+        date: '2026-05-12',
+        insertedBy: 'Andry Tiana'
+      },
+      {
+        id: 'tx-stk-3',
+        sampana: 'Sampana Tanora Kristiana (STK)',
+        type: 'fandaniana',
+        amount: 350000,
+        label: 'Fitaovam-panamafisam-peo hira',
+        date: '2026-05-15',
+        insertedBy: 'Andry Tiana'
+      },
+      {
+        id: 'tx-slk-1',
+        sampana: 'Sampana Lahikambana (SLK)',
+        type: 'tahiry',
+        amount: 970000,
+        label: 'Fanomezana malalaka sy Adidy',
+        date: '2026-05-01',
+        insertedBy: 'Harijaona'
+      },
+      {
+        id: 'tx-slk-2',
+        sampana: 'Sampana Lahikambana (SLK)',
+        type: 'fandaniana',
+        amount: 120000,
+        label: 'Fitaterana fitoriana teny',
+        date: '2026-05-18',
+        insertedBy: 'Harijaona'
+      },
+      {
+        id: 'tx-dorkasy-1',
+        sampana: 'Sampana Dorkasy',
+        type: 'tahiry',
+        amount: 2340000,
+        label: 'Bazar Dorkasy Taona 2026',
+        date: '2026-05-02',
+        insertedBy: 'Ramatoa Lala'
+      },
+      {
+        id: 'tx-dorkasy-2',
+        sampana: 'Sampana Dorkasy',
+        type: 'fandaniana',
+        amount: 450000,
+        label: 'Fanampiana sy fizarana sakafo',
+        date: '2026-05-22',
+        insertedBy: 'Ramatoa Lala'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mifandray_sampana_transactions_v3', JSON.stringify(transactions));
+  }, [transactions]);
+
+  // Tab (onglet) active view state for money lists
+  const [activeFinTab, setActiveFinTab] = useState<{ type: 'tahiry' | 'fandaniana'; sampana: string; editMode: boolean } | null>(null);
+
+  // States for inserting a record
+  const [txLabel, setTxLabel] = useState('');
+  const [txAmount, setTxAmount] = useState('');
+  const [txDate, setTxDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+  const handleAddTransactionSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeFinTab) return;
+    const { type, sampana } = activeFinTab;
+    const parsedAmount = parseFloat(txAmount.replace(/\s+/g, ''));
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert("⚠️ Ampidiro ny vola marina (mihoatra ny 0 Ar) azafady.");
+      return;
+    }
+    if (!txLabel.trim()) {
+      alert("⚠️ Ampidiro ny antony na fanazavana momba ny vola.");
+      return;
+    }
+
+    const newTx = {
+      id: "tx-" + Date.now(),
+      sampana,
+      type,
+      amount: parsedAmount,
+      label: txLabel.trim(),
+      date: txDate || new Date().toISOString().split('T')[0],
+      insertedBy: loggedInMember?.name || 'Secretaire'
+    };
+
+    setTransactions(prev => [newTx, ...prev]);
+
+    // Automatically recalculate and edit balance accordingly
+    setFinances(prev => {
+      const current = prev[sampana] || { balance: 0, lastExpense: 0, expenseLabel: '' };
+      let newBalance = current.balance;
+      let newLastExpense = current.lastExpense;
+      let newExpenseLabel = current.expenseLabel;
+
+      if (type === 'tahiry') {
+        // Balance increases by obtained money
+        newBalance += parsedAmount;
+      } else {
+        // Balance decreases by expenditures
+        newBalance = Math.max(0, newBalance - parsedAmount);
+        newLastExpense = parsedAmount;
+        newExpenseLabel = txLabel.trim();
+      }
+
+      return {
+        ...prev,
+        [sampana]: {
+          balance: newBalance,
+          lastExpense: newLastExpense,
+          expenseLabel: newExpenseLabel
+        }
+      };
+    });
+
+    setTxLabel('');
+    setTxAmount('');
+    setTxDate(new Date().toISOString().split('T')[0]);
+    setActiveFinTab(prev => prev ? { ...prev, editMode: false } : null);
+  };
+
+  const handleDeleteTransaction = (txId: string) => {
+    if (!isAuthorizedSecretary()) {
+      alert("⚠️ Tsy nahazo alalana: Ny Secretaire ihany no afaka mamafa mombamomba ny vola.");
+      return;
+    }
+    if (!confirm("Tena hofoananao ve ity taratasy ity?")) return;
+
+    const txToDelete = transactions.find(t => t.id === txId);
+    if (!txToDelete) return;
+
+    setTransactions(prev => prev.filter(t => t.id !== txId));
+
+    // Revert from main finances total
+    setFinances(prev => {
+      const current = prev[txToDelete.sampana] || { balance: 0, lastExpense: 0, expenseLabel: '' };
+      let newBalance = current.balance;
+      if (txToDelete.type === 'tahiry') {
+        newBalance = Math.max(0, newBalance - txToDelete.amount);
+      } else {
+        newBalance += txToDelete.amount;
+      }
+      return {
+        ...prev,
+        [txToDelete.sampana]: {
+          ...current,
+          balance: newBalance
+        }
+      };
+    });
+  };
+
   const isAuthorizedSecretary = () => {
     if (!loggedInMember) return false;
     const roleString = (loggedInMember.role || '').toLowerCase();
@@ -521,8 +699,11 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
             
             {/* Green Balance Block - Solid High-Contrast color for maximum readability */}
             <div
-              onClick={() => handleEditBalance(viewedSampana || userSampanaList[0] || 'STK')}
-              title="Kitiho eto raha hanova ny tahiry (Balance)"
+              onClick={() => {
+                const currentSampana = viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)';
+                setActiveFinTab({ type: 'tahiry', sampana: currentSampana, editMode: false });
+              }}
+              title="Kitiho eto raha hijery ny lisitry ny fidiram-bola rehetra (Tahiry)"
               className="bg-emerald-600 hover:bg-emerald-550 border-2 border-emerald-450 p-3.5 rounded-2xl flex flex-col justify-between transition-all cursor-pointer shadow-lg select-none active:scale-[0.98] group relative overflow-hidden text-white"
             >
               <div className="flex items-center justify-between gap-1 relative z-10">
@@ -541,22 +722,27 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
                 <span className="block text-base sm:text-lg font-black text-white font-mono mt-1.5 drop-shadow-sm select-all">
                   {formattedAr(
                     (finances[viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)'] || {
-                      balance: 500000
+                      balance: 500050
                     }).balance
                   )}
                 </span>
               </div>
 
-              {/* Action indicators with 'Acces' button */}
+              {/* Action indicators with 'Acces' button for inserting */}
               <div className="flex items-center gap-1.5 mt-2.5 relative z-10">
                 <span className="text-[8px] font-black text-emerald-150 uppercase bg-emerald-700/60 px-1.5 py-0.5 rounded border border-emerald-500/20 leading-none">
-                  Hanova ✎
+                  Tsindrio hijery 👁
                 </span>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleEditBalance(viewedSampana || userSampanaList[0] || 'STK');
+                    const currentSampana = viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)';
+                    if (!isAuthorizedSecretary()) {
+                      alert("⚠️ Tsy nahazo alalana: Ny Secretaire ihany no afaka mampiditra mombamomba ny fidiram-bola (Acces).");
+                      return;
+                    }
+                    setActiveFinTab({ type: 'tahiry', sampana: currentSampana, editMode: true });
                   }}
                   className="px-2 py-0.5 rounded text-[8px] font-extrabold uppercase bg-white text-emerald-700 hover:bg-emerald-50 active:scale-95 transition-all shadow-sm cursor-pointer"
                 >
@@ -569,8 +755,11 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
 
             {/* Blue Expense Block - Solid High-Contrast color for maximum readability */}
             <div
-              onClick={() => handleEditExpense(viewedSampana || userSampanaList[0] || 'STK')}
-              title="Kitiho eto raha hanova ny fandaniana farany"
+              onClick={() => {
+                const currentSampana = viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)';
+                setActiveFinTab({ type: 'fandaniana', sampana: currentSampana, editMode: false });
+              }}
+              title="Kitiho eto raha hijery ny lisitry ny fandaniana rehetra"
               className="bg-sky-600 hover:bg-sky-550 border-2 border-sky-450 p-3.5 rounded-2xl flex flex-col justify-between transition-all cursor-pointer shadow-lg select-none active:scale-[0.98] group relative overflow-hidden text-white"
             >
               <div className="flex items-center justify-between gap-1 relative z-10">
@@ -607,13 +796,18 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
               {/* Action indicators with 'Acces' button */}
               <div className="flex items-center gap-1.5 mt-2 relative z-10">
                 <span className="text-[8px] font-black text-sky-150 uppercase bg-sky-700/60 px-1.5 py-0.5 rounded border border-sky-500/20 leading-none">
-                  Hanova ✎
+                  Tsindrio hijery 👁
                 </span>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleEditExpense(viewedSampana || userSampanaList[0] || 'STK');
+                    const currentSampana = viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)';
+                    if (!isAuthorizedSecretary()) {
+                      alert("⚠️ Tsy nahazo alalana: Ny Secretaire ihany no afaka mampiditra mombamomba ny fandaniana (Acces).");
+                      return;
+                    }
+                    setActiveFinTab({ type: 'fandaniana', sampana: currentSampana, editMode: true });
                   }}
                   className="px-2 py-0.5 rounded text-[8px] font-extrabold uppercase bg-white text-sky-700 hover:bg-sky-50 active:scale-95 transition-all shadow-sm cursor-pointer"
                 >
@@ -975,6 +1169,215 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
                 );
               })
             )}
+          </div>
+        </div>
+      )}
+
+      {activeFinTab && (
+        <div id="financial-tab-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-fadeIn text-left">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className={`p-2 rounded-lg ${activeFinTab.type === 'tahiry' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' : 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-400'}`}>
+                  {activeFinTab.type === 'tahiry' ? <Coins className="w-5 h-5" /> : <LogOut className="w-5 h-5 -rotate-90" />}
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-850 dark:text-white uppercase leading-none">
+                    {activeFinTab.type === 'tahiry' ? 'Lisitry ny Tahiry (Fidiram-bola)' : 'Lisitry ny Fandaniana (Vola mivoaka)'}
+                  </h3>
+                  <span className="text-[10px] font-bold text-slate-450 leading-none block mt-1">
+                    {activeFinTab.sampana}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveFinTab(null)}
+                className="p-1 px-2 text-slate-400 hover:text-rose-500 rounded-lg text-xs font-bold transition-colors cursor-pointer select-none"
+              >
+                Hanakatona ✕
+              </button>
+            </div>
+
+            {/* TAB PANELS SELECTOR (if secretary) */}
+            {isAuthorizedSecretary() && (
+              <div className="flex border-b border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-900 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveFinTab(prev => prev ? { ...prev, editMode: false } : null)}
+                  className={`flex-1 py-2.5 text-center text-xs font-bold transition-all border-b-2 outline-none ${!activeFinTab.editMode ? 'text-violet-600 dark:text-violet-400 border-violet-500 bg-white dark:bg-slate-850' : 'text-slate-450 dark:text-slate-450 border-transparent hover:text-slate-600'}`}
+                >
+                  👁 Hijery ny lisitra
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFinTab(prev => prev ? { ...prev, editMode: true } : null)}
+                  className={`flex-1 py-2.5 text-center text-xs font-bold transition-all border-b-2 outline-none ${activeFinTab.editMode ? 'text-violet-600 dark:text-violet-400 border-violet-500 bg-white dark:bg-slate-850' : 'text-slate-450 dark:text-slate-450 border-transparent hover:text-slate-600'}`}
+                >
+                  📥 Hampiditra mombamomba ny vola
+                </button>
+              </div>
+            )}
+
+            {/* Modal Body & list/form */}
+            <div className="p-4 flex-1 overflow-y-auto">
+              {!activeFinTab.editMode ? (
+                /* VIEW TRANSACTION LOGS LIST */
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between text-[11px] font-black text-slate-450 uppercase tracking-widest border-b border-slate-100 dark:border-slate-850 pb-1">
+                    <span>Mombamomba ny Vola</span>
+                    <span>Vola mifanitsy (Ar)</span>
+                  </div>
+
+                  {transactions.filter(t => t.sampana === activeFinTab.sampana && t.type === activeFinTab.type).length === 0 ? (
+                    <div className="text-center py-10 space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                        {activeFinTab.type === 'tahiry' ? <Coins className="w-5 h-5" /> : <LogOut className="w-5 h-5 -rotate-90" />}
+                      </div>
+                      <p className="text-xs font-semibold text-slate-450">
+                        Mbola tsy misy fampahalalana voasoratra eto.
+                      </p>
+                      {isAuthorizedSecretary() && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveFinTab(prev => prev ? { ...prev, editMode: true } : null)}
+                          className="text-[10px] uppercase font-black text-violet-600 dark:text-violet-400 hover:underline"
+                        >
+                          Hampiditra voalohany 📥
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {transactions
+                        .filter(t => t.sampana === activeFinTab.sampana && t.type === activeFinTab.type)
+                        .map((t) => (
+                          <div
+                            key={t.id}
+                            className="flex items-start justify-between gap-3 p-2.5 rounded-xl border border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-950/40 hover:bg-slate-50 dark:hover:bg-slate-950/80 transition-all"
+                          >
+                            <div className="space-y-1 flex-1 min-w-0">
+                              <p className="text-xs font-extrabold text-slate-800 dark:text-slate-100 leading-snug">
+                                {t.label}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] font-bold text-slate-450">
+                                <span className="font-mono">{t.date}</span>
+                                <span>•</span>
+                                <span className="text-violet-600 dark:text-violet-400">Nampidirin'i {t.insertedBy || 'Secretaire'}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className={`font-mono text-xs font-black ${activeFinTab.type === 'tahiry' ? 'text-emerald-600 dark:text-emerald-400' : 'text-sky-600 dark:text-sky-400'}`}>
+                                {activeFinTab.type === 'tahiry' ? '+' : '-'}{formattedAr(t.amount)}
+                              </span>
+                              {isAuthorizedSecretary() && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteTransaction(t.id)}
+                                  className="text-slate-400 hover:text-red-500 font-bold p-0.5 cursor-pointer text-xs"
+                                  title="Fafana ity tamberina ity"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* Dynamic Sum Indicator */}
+                  <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-850 flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-slate-450 leading-none">
+                      {activeFinTab.type === 'tahiry' ? 'Totalin\'ny Tahiry voaray :' : 'Vola Fitontonan\'ny fandaniana :'}
+                    </span>
+                    <span className="font-mono text-sm font-black text-slate-850 dark:text-white">
+                      {formattedAr(
+                        transactions
+                          .filter(t => t.sampana === activeFinTab.sampana && t.type === activeFinTab.type)
+                          .reduce((sum, t) => sum + t.amount, 0)
+                      )}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                /* SECRETARY INSERTION FORM */
+                <form onSubmit={handleAddTransactionSubmit} className="space-y-4">
+                  <div className="p-3 bg-violet-50/50 dark:bg-violet-955/10 border border-violet-100 dark:border-violet-950/40 rounded-xl space-y-1.5 leading-snug">
+                    <h4 className="text-[10.5px] font-black text-violet-750 dark:text-violet-300 uppercase">Fampidirana tamberina ara-bola</h4>
+                    <p className="text-[9.5px] text-slate-500 dark:text-slate-400 leading-normal">
+                      Ny fampidiranao eto dia hanova avy hatrany ny tarehimarika amin'ny tabilaon'ny {activeFinTab.sampana} ary ho azon'ny mpikambana rehetra jerena.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 font-sans">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-450 uppercase mb-1">
+                        Antony / Karazam-bola ({activeFinTab.type === 'tahiry' ? 'Adidy, tamberi-vola, sns.' : 'Zavatra nividianana'}) :
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        value={txLabel}
+                        onChange={(e) => setTxLabel(e.target.value)}
+                        placeholder={activeFinTab.type === 'tahiry' ? 'Ohatra: Tamberim-vola Krismasy' : 'Ohatra: Fividianana solon-gazety'}
+                        className="w-full bg-slate-50 dark:bg-slate-955/35 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-850 dark:text-white outline-none font-semibold focus:ring-1 focus:ring-violet-500"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-450 uppercase mb-1">
+                          Vola (Ar) :
+                        </label>
+                        <input
+                          required
+                          type="number"
+                          value={txAmount}
+                          onChange={(e) => setTxAmount(e.target.value)}
+                          placeholder="Ohatra: 250000"
+                          className="w-full bg-slate-50 dark:bg-slate-955/35 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-850 dark:text-white outline-none font-semibold focus:ring-1 focus:ring-violet-500 font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-450 uppercase mb-1">
+                          Daty niditra :
+                        </label>
+                        <input
+                          required
+                          type="date"
+                          value={txDate}
+                          onChange={(e) => setTxDate(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-955/35 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-855 dark:text-white outline-none font-semibold focus:ring-1 focus:ring-violet-500 font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="submit"
+                      className="flex-1 py-2 rounded-xl text-xs font-black text-white bg-violet-600 hover:bg-violet-700 active:scale-98 transition-all cursor-pointer shadow-md select-none"
+                    >
+                      Tehirizina 💾
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveFinTab(prev => prev ? { ...prev, editMode: false } : null)}
+                      className="py-2 px-4 rounded-xl text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-300 transition-all cursor-pointer select-none"
+                    >
+                      Afoana
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-855 text-center text-[9px] text-slate-400 shrink-0 leading-normal">
+              Azo jerena malalaka amin'ny maha fiangonana mangarahara ho an'ny rehetra.
+            </div>
           </div>
         </div>
       )}
