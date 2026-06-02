@@ -112,8 +112,8 @@ export default function YouthPage({ isElderlyMode, members, churchRoles }: Youth
 
   // Current session dynamic simulation
   const [activeMemberId, setActiveMemberId] = useState<string>(() => {
-    // Default to first member in church or some demo
-    return members[0]?.id || '';
+    const jean = members.find(m => m.name.toLowerCase().includes('jean'));
+    return jean?.id || members[0]?.id || '';
   });
 
   // Keep posts synced in localStorage
@@ -338,42 +338,34 @@ export default function YouthPage({ isElderlyMode, members, churchRoles }: Youth
 
   return (
     <div className="space-y-4">
-      {/* 1. SECTOR FOR SIMULATED SESSION IDENTITY */}
-      <div className="bg-slate-100 dark:bg-slate-900 border border-slate-205 dark:border-slate-800 p-3.5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 text-slate-800 dark:text-slate-100">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 bg-violet-600 rounded-full animate-ping shrink-0" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Fidiana Mpikambana Mpizahatany (Simulated Member Session)
-          </span>
-        </div>
-        <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 justify-end">
-          <label htmlFor="user-identity-select" className="text-[10px] font-extrabold uppercase text-slate-500 pointer-events-none shrink-0">
-            SOKAFY NY MPIKAMBANA:
-          </label>
-          <select
-            id="user-identity-select"
-            value={activeMemberId}
-            onChange={(e) => setActiveMemberId(e.target.value)}
-            className="w-full md:w-56 bg-white dark:bg-slate-950 border border-slate-205 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 font-extrabold outline-none cursor-pointer focus:ring-1 focus:ring-violet-500"
-          >
-            <option value="">-- Mifidiana Mpitsapa --</option>
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} ({m.role || 'Mpikambana tsotra'})
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* 2. HIGH FIDELITY PROFESSIONAL MEMBER BUSINESS CARD (CARTE DE VISITE AS SHOWN IN PHOTO) */}
-      {activeUser && (
+      {/* 1. HIGH FIDELITY PROFESSIONAL MEMBER BUSINESS CARD (CARTE DE VISITE AS SHOWN IN PHOTO) */}
+      {activeUser ? (
         <div id="mifandray-member-card" className="bg-gradient-to-r from-[#1e155c] via-[#231570] to-[#2c138d] text-white p-6 rounded-3xl shadow-xl relative overflow-hidden ring-1 ring-violet-500/20 max-w-full">
           {/* Subtle light reflections */}
           <div className="absolute top-0 right-0 w-36 h-36 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
+          {/* SOKAFY NY MPIKAMBANA - Top-right subtle selector on the business card */}
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-[#170e4b]/80 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-violet-500/35">
+            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping shrink-0" />
+            <label htmlFor="user-identity-select" className="text-[9px] font-black text-violet-200 uppercase tracking-wider hidden xs:inline">
+              Mpanoratra:
+            </label>
+            <select
+              id="user-identity-select"
+              value={activeMemberId}
+              onChange={(e) => setActiveMemberId(e.target.value)}
+              className="bg-transparent text-[#f9c21b] font-black text-xs outline-none cursor-pointer border-none p-0 focus:ring-0 max-w-[120px] xs:max-w-[160px] truncate"
+            >
+              {members.map((m) => (
+                <option key={m.id} value={m.id} className="text-slate-900 bg-white">
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10 pt-4 sm:pt-0">
             {/* LEFT PORTRAIT ELEMENT */}
             <div className="flex flex-col items-center shrink-0 w-full sm:w-1/3 border-b sm:border-b-0 pb-4 sm:pb-0 border-white/5">
               <div className="relative w-28 h-28 rounded-full border-2 border-white shadow-lg overflow-hidden bg-violet-950 flex items-center justify-center shrink-0">
@@ -457,6 +449,28 @@ export default function YouthPage({ isElderlyMode, members, churchRoles }: Youth
 
             </div>
           </div>
+        </div>
+      ) : (
+        <div id="mifandray-member-card-fallback" className="bg-[#1e155c] text-white p-6 rounded-3xl shadow-xl border border-violet-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 bg-amber-400 rounded-full animate-bounce" />
+            <span className="text-xs font-black uppercase text-violet-200 tracking-wider">
+              Sokafy ny mombamomba ny mpikambana mpizara:
+            </span>
+          </div>
+          <select
+            id="user-identity-select"
+            value={activeMemberId}
+            onChange={(e) => setActiveMemberId(e.target.value)}
+            className="bg-white/10 hover:bg-white/15 text-[#f9c21b] border border-white/20 font-black text-xs px-3.5 py-2 rounded-xl outline-none cursor-pointer w-full sm:w-56"
+          >
+            <option value="" className="text-slate-900 bg-white">-- Mifidiana Mpikambana --</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id} className="text-slate-900 bg-white">
+                {m.name}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 
