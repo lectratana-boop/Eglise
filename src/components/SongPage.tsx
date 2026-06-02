@@ -3,58 +3,26 @@
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Elegant, full-featured Hymnal page supporting all 827 FFPM, 50 FF and 40 Fifohazana hymns.
- * Persists favorites, features rich church pipe-organ accompaniment synth and dynamic visual note tracking.
+ * Focuses purely on clean readability, simple navigation, and direct song number selection.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { generateSong, searchSongs, getHymnTempoNotes, SongDetail } from '../songGenerator';
-import { Music, Search, Play, Pause, ChevronRight, Star, Volume2, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { generateSong, searchSongs, SongDetail } from '../songGenerator';
+import { Music, Search, ChevronRight } from 'lucide-react';
 
 interface SongPageProps {
   isElderlyMode: boolean;
 }
 
-type BookType = 'FFPM' | 'FF' | 'Fifohazana' | 'Favoris';
+type BookType = 'FFPM' | 'FF' | 'Fifohazana';
 
 export default function SongPage({ isElderlyMode }: SongPageProps) {
   const [activeBook, setActiveBook] = useState<BookType>('FFPM');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Load favorites from local storage
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('church_song_favs') || '["ffpm-1", "ffpm-23", "ffpm-480"]');
-    } catch (e) {
-      return ["ffpm-1", "ffpm-23", "ffpm-480"];
-    }
-  });
+  const [directNumber, setDirectNumber] = useState('');
 
   // Keep track of the active song ID
   const [selectedSongId, setSelectedSongId] = useState<string>('ffpm-1');
-
-  // Audio synths states
-  const [isPlayingTune, setIsPlayingTune] = useState(false);
-  const [audioCtx, setAudioCtx] = useState<AudioContext | null>(null);
-  const [synthInterval, setSynthInterval] = useState<any>(null);
-  
-  // Custom karaoke beat tracker for animated feedback
-  const [currentBeat, setCurrentBeat] = useState(0);
-
-  // Sync favorites storage
-  useEffect(() => {
-    localStorage.setItem('church_song_favs', JSON.stringify(favorites));
-  }, [favorites]);
-
-  const toggleFavorite = (id: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    setFavorites(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(item => item !== id);
-      } else {
-        return [...prev, id];
-      }
-    });
-  };
 
   // Extract book and number from song ID
   const parseSongId = (id: string): { book: 'FFPM' | 'FF' | 'Fifohazana'; num: number } => {
@@ -71,127 +39,41 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
   })();
 
   const handleSelectSong = (id: string) => {
-    stopKaraoke();
-    setIsPlayingTune(false);
     setSelectedSongId(id);
   };
 
-  // Dynamic lists with intelligent fallback
-  const filteredSongs = searchSongs(searchQuery, activeBook, favorites);
+  // Intelligent lyric filtering
+  const filteredSongs = searchSongs(searchQuery, activeBook);
 
-  // Majestic Stereophonic Pipe-Organ Accompaniment
-  const startKaraoke = (songNumber: number, bookType: 'FFPM' | 'FF' | 'Fifohazana') => {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      setAudioCtx(ctx);
+  // Directly select a song by its number
+  const handleDirectNumberSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const num = parseInt(directNumber, 10);
+    if (!isNaN(num) && num > 0) {
+      let maxLimit = 827;
+      if (activeBook === 'FF') maxLimit = 50;
+      if (activeBook === 'Fifohazana') maxLimit = 40;
 
-      let step = 0;
-      const notes = getHymnTempoNotes(songNumber, bookType);
-
-      // Play notes every 0.55 seconds for a lively liturgical pace
-      const interval = setInterval(() => {
-        if (!ctx || ctx.state === 'closed') return;
-        
-        const organGain = ctx.createGain();
-        organGain.gain.setValueAtTime(0.0, ctx.currentTime);
-        organGain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.04); // swell/attack
-        organGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.52); // decay/reverb
-
-        const currentFreq = notes[step % notes.length];
-
-        // 1. Principal Organ Voice (Triangle Wave)
-        const principal = ctx.createOscillator();
-        principal.type = 'triangle';
-        principal.frequency.setValueAtTime(currentFreq, ctx.currentTime);
-
-        // 2. Majestic Pedal Bass (Sine Wave - 1 Octave Lower)
-        const pedalBass = ctx.createOscillator();
-        pedalBass.type = 'sine';
-        pedalBass.frequency.setValueAtTime(currentFreq / 2, ctx.currentTime);
-
-        // 3. Harmonic Mixture Voice (Soft Sawtooth Wave - 1 Octave Higher + Perfect Fifth)
-        // Ratio 1.5 is perfect third harmonic
-        const mixtureHarmonic = ctx.createOscillator();
-        mixtureHarmonic.type = 'triangle';
-        mixtureHarmonic.frequency.setValueAtTime(currentFreq * 1.5, ctx.currentTime);
-
-        const mixtureGain = ctx.createGain();
-        mixtureGain.gain.setValueAtTime(0.02, ctx.currentTime);
-
-        // Connect everything to destination
-        principal.connect(organGain);
-        pedalBass.connect(organGain);
-        
-        mixtureHarmonic.connect(mixtureGain);
-        mixtureGain.connect(organGain);
-
-        organGain.connect(ctx.destination);
-
-        // Start oscillators simultaneously
-        principal.start();
-        pedalBass.start();
-        mixtureHarmonic.start();
-
-        // Graceful stop
-        principal.stop(ctx.currentTime + 0.55);
-        pedalBass.stop(ctx.currentTime + 0.55);
-        mixtureHarmonic.stop(ctx.currentTime + 0.55);
-
-        // Beat anim incrementor
-        setCurrentBeat(prev => (prev + 1) % 8);
-        step++;
-      }, 550);
-
-      setSynthInterval(interval);
-    } catch (e) {
-      console.error(e);
+      if (num <= maxLimit) {
+        const targetId = `${activeBook.toLowerCase()}-${num}`;
+        setSelectedSongId(targetId);
+        setDirectNumber('');
+        setSearchQuery(''); // clear query to show lists
+      }
     }
   };
-
-  const stopKaraoke = () => {
-    if (synthInterval) {
-      clearInterval(synthInterval);
-      setSynthInterval(null);
-    }
-    if (audioCtx) {
-      audioCtx.close();
-      setAudioCtx(null);
-    }
-    setCurrentBeat(0);
-  };
-
-  const toggleTunePlay = () => {
-    if (isPlayingTune) {
-      stopKaraoke();
-      setIsPlayingTune(false);
-    } else {
-      const parsed = parseSongId(selectedSongId);
-      startKaraoke(parsed.num, parsed.book);
-      setIsPlayingTune(true);
-    }
-  };
-
-  // Clean audio-sources on transition/unmount
-  useEffect(() => {
-    return () => {
-      stopKaraoke();
-    };
-  }, [selectedSongId]);
 
   return (
     <div className="space-y-4">
       
       {/* Top Header Card */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-        <span className="text-[9px] font-extrabold py-0.5 px-2 bg-gradient-to-r from-violet-100 to-indigo-100 dark:from-violet-950/40 dark:to-indigo-950/40 text-violet-700 dark:text-violet-300 rounded-full uppercase tracking-wider">
-          🎵 Fihirana & Karaoké
-        </span>
-        <h2 className={`${isElderlyMode ? 'text-2xl font-black' : 'text-sm font-extrabold'} text-slate-850 dark:text-slate-100 flex items-center gap-1.5 mt-1`}>
-          <Music className="w-5 h-5 text-violet-600 animate-pulse" />
+        <h2 className={`${isElderlyMode ? 'text-2xl font-black' : 'text-lg font-extrabold'} text-slate-850 dark:text-slate-100 flex items-center gap-2`}>
+          <Music className="w-5 h-5 text-violet-650 animate-pulse" />
           <span>Fihirana Malagasy Manontolo</span>
         </h2>
-        <p className="text-[10px] text-slate-450 dark:text-slate-400 leading-snug mt-1">
-          Hira sy feon-kira feno amin'ny fombam-pivavahana: 827 hira FFPM, Fihirana Fanampiny, ary Fifohazana. Azonao ampiasaina ho karaoké hanampiana ny mino.
+        <p className="text-[11px] text-slate-450 dark:text-slate-400 leading-snug mt-1.5 font-medium">
+          Hira feno amin'ny fombam-pivavahana: hira 827 ao amin'ny bokin'ny FFPM fototra, Fihirana Fanampiny (FF), ary Fihirana Fifohazana.
         </p>
       </div>
 
@@ -201,15 +83,15 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
         {/* LEFT COLUMN: Books toggle and search directory */}
         <div className="md:col-span-5 space-y-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col">
           
-          {/* Hymnal Source Tabs */}
+          {/* Hymnal Source Tabs - put tightly on a single row */}
           <div className="space-y-1">
             <span className="block text-[8.5px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              Fidio Ny Boky (Sélectionner Hymnal):
+              Fidio Ny Boky (Sélectionner l'Hymnal):
             </span>
-            <div className="grid grid-cols-4 gap-1 p-1 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-150 dark:border-slate-800">
+            <div className="flex flex-row gap-1 p-1 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-150 dark:border-slate-800 w-full overflow-hidden">
               <button
                 onClick={() => { setActiveBook('FFPM'); setSearchQuery(''); }}
-                className={`py-1.5 rounded-lg text-[9px] font-black uppercase text-center transition-all cursor-pointer ${
+                className={`flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-extrabold uppercase text-center transition-all cursor-pointer ${
                   activeBook === 'FFPM'
                     ? 'bg-gradient-to-br from-violet-600 to-indigo-650 text-white shadow-xs'
                     : 'text-slate-500 hover:text-slate-850 dark:hover:text-white'
@@ -219,7 +101,7 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
               </button>
               <button
                 onClick={() => { setActiveBook('FF'); setSearchQuery(''); }}
-                className={`py-1.5 rounded-lg text-[9px] font-black uppercase text-center transition-all cursor-pointer ${
+                className={`flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-extrabold uppercase text-center transition-all cursor-pointer ${
                   activeBook === 'FF'
                     ? 'bg-gradient-to-br from-violet-600 to-indigo-650 text-white shadow-xs'
                     : 'text-slate-500 hover:text-slate-850 dark:hover:text-white'
@@ -229,7 +111,7 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
               </button>
               <button
                 onClick={() => { setActiveBook('Fifohazana'); setSearchQuery(''); }}
-                className={`py-1.5 rounded-lg text-[9px] font-black uppercase text-center transition-all cursor-pointer ${
+                className={`flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-extrabold uppercase text-center transition-all cursor-pointer ${
                   activeBook === 'Fifohazana'
                     ? 'bg-gradient-to-br from-violet-600 to-indigo-650 text-white shadow-xs'
                     : 'text-slate-500 hover:text-slate-850 dark:hover:text-white'
@@ -237,30 +119,47 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
               >
                 Fifohazana
               </button>
-              <button
-                onClick={() => { setActiveBook('Favoris'); setSearchQuery(''); }}
-                className={`py-1.5 rounded-lg text-[9px] font-black uppercase text-center transition-all cursor-pointer flex items-center justify-center gap-0.5 ${
-                  activeBook === 'Favoris'
-                    ? 'bg-amber-500 text-white shadow-xs'
-                    : 'text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-900/60'
-                }`}
-              >
-                ⭐ Favoris
-              </button>
             </div>
           </div>
 
-          {/* Quick Search */}
-          <div className="space-y-1.5 pt-1">
-            <div className="relative">
+          {/* Type song number directamente */}
+          <div className="space-y-1 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-850">
+            <span className="block text-[8.5px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              Hizaha amin'ny Laharana hira:
+            </span>
+            <form onSubmit={handleDirectNumberSubmit} className="flex gap-1.5 items-center mt-1">
+              <input
+                type="number"
+                min="1"
+                max={activeBook === 'FFPM' ? 827 : activeBook === 'FF' ? 50 : 40}
+                value={directNumber}
+                onChange={(e) => setDirectNumber(e.target.value)}
+                placeholder={`Isan'ny hira (1 - ${activeBook === 'FFPM' ? 827 : activeBook === 'FF' ? 50 : 40})`}
+                className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-1.5 px-2.5 text-xs font-bold text-slate-855 dark:text-white outline-none focus:ring-1 focus:ring-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              <button
+                type="submit"
+                className="bg-violet-600 hover:bg-violet-700 text-white text-[10.5px] font-extrabold py-1.5 px-3 rounded-lg transition-all active:scale-95 shrink-0 cursor-pointer"
+              >
+                Hizaha 📖
+              </button>
+            </form>
+          </div>
+
+          {/* Quick Search string input */}
+          <div className="space-y-1">
+            <span className="block text-[8.5px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              Tadiavo amin'ny alalan'ny teny:
+            </span>
+            <div className="relative mt-1">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={
                   activeBook === 'FFPM' 
-                    ? "Tadiavo amin'ny laharana (1-827), lohateny, na tonony..." 
-                    : "Tiavo lohateny na teny ao amin'ny hira..."
+                    ? "Tadiavo amin'ny laharana, lohateny, na tonony..." 
+                    : "Tiavo lohateny na teny amin'ny tononkira..."
                 }
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2 pl-8 pr-3 text-xs text-slate-850 dark:text-white outline-none focus:ring-2 focus:ring-violet-550 font-bold placeholder-slate-400"
               />
@@ -276,13 +175,12 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
                   Tsy hita ity hira ity
                 </p>
                 <p className="text-[9px] text-slate-400 px-4">
-                  Raha hira FFPM indray, soraty tsotra ny laharana 1 ka hatramin'ny 827 (ohatra: 480) mba ahafahana mamorona azy malalaka!
+                  Ampiasao ny laharana hira (1 ka hatramin'ny 827 ho an'ny FFPM) mba hahitana azy amin'ny fomba mety.
                 </p>
               </div>
             ) : (
               filteredSongs.map((sg) => {
                 const isSelected = selectedSongId === sg.id;
-                const isFav = favorites.includes(sg.id);
                 return (
                   <div
                     key={sg.id}
@@ -304,7 +202,6 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
                       <div className="truncate">
                         <h4 className="text-xs font-black truncate leading-tight flex items-center gap-1">
                           {sg.title}
-                          {isFav && <span className="text-amber-400 shrink-0">★</span>}
                         </h4>
                         <span className={`text-[8.5px] uppercase font-bold leading-none ${isSelected ? 'text-violet-200' : 'text-slate-400'}`}>
                           {sg.book === 'FFPM' ? '📖 FFPM' : sg.book === 'FF' ? '🎵 Fanampiny' : '🔥 Fifohazana'} • {sg.category}
@@ -313,18 +210,7 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {/* Interactive Star within row */}
-                      <button
-                        onClick={(e) => toggleFavorite(sg.id, e)}
-                        className={`p-1 rounded-md transition-colors ${
-                          isFav 
-                            ? 'text-amber-400' 
-                            : isSelected ? 'text-violet-300 hover:text-white' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'
-                        }`}
-                      >
-                        <Star className="w-3.5 h-3.5 fill-current" />
-                      </button>
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
                     </div>
                   </div>
                 );
@@ -332,12 +218,9 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
             )}
           </div>
           
-          <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl text-[8.5px] text-slate-400 dark:text-slate-500 font-medium leading-normal mt-auto border border-slate-100 dark:border-slate-850">
-            📌 <strong>Toro-hevitra:</strong> Afaka mikaroka mivantana amin'ny soronao na laharana hira ao amin'ny FFPM ianao (1 hatramin'ny 827) mba handrindrana ny karaoke azy rehetra.
-          </div>
         </div>
 
-        {/* RIGHT COLUMN: Lyrics Reader and interactive Pipe-Organ simulation */}
+        {/* RIGHT COLUMN: Lyrics Reader */}
         <div className="md:col-span-7 flex flex-col">
           
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col h-full overflow-hidden">
@@ -349,15 +232,8 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
                   {activeSong.book === 'FF' ? `FF ${activeSong.number}` : activeSong.number}
                 </span>
                 <div>
-                  <h3 className={`${isElderlyMode ? 'text-xl' : 'text-sm'} font-black text-slate-850 dark:text-slate-100 leading-tight flex items-center gap-1.5`}>
-                    <span>{activeSong.title}</span>
-                    <button 
-                      onClick={() => toggleFavorite(activeSong.id)}
-                      className="text-amber-400 hover:scale-110 active:scale-95 transition-transform"
-                      title="Hira ankafizina"
-                    >
-                      <Star className={`w-4 h-4 ${favorites.includes(activeSong.id) ? 'fill-amber-400' : 'text-slate-300 dark:text-slate-600'}`} />
-                    </button>
+                  <h3 className={`${isElderlyMode ? 'text-xl' : 'text-sm'} font-black text-slate-850 dark:text-slate-100 leading-tight`}>
+                    {activeSong.title}
                   </h3>
                   <span className="text-[8.5px] uppercase font-black text-violet-600 dark:text-violet-400 tracking-wider">
                     {activeSong.book === 'FFPM' 
@@ -366,89 +242,17 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
                   </span>
                 </div>
               </div>
-
-              {/* Karaoke triggering Organ voice */}
-              <button
-                id="btn-tune-play"
-                onClick={toggleTunePlay}
-                className={`py-2 px-3.5 rounded-xl text-[10px] font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
-                  isPlayingTune
-                    ? 'bg-rose-500 hover:bg-rose-600 text-white'
-                    : 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                }`}
-              >
-                {isPlayingTune ? (
-                  <>
-                    <Pause className="w-3.5 h-3.5 fill-white animate-bounce" />
-                    <span>Ajanony (Pause)</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5 fill-white animate-pulse" />
-                    <span>Tandrohina Organa 🎵</span>
-                  </>
-                )}
-              </button>
             </div>
 
-            {/* Simulated interactive note karaoke score visualizer overlay */}
-            {isPlayingTune && (
-              <div className="px-4 py-2 bg-slate-900 border-b border-indigo-950 flex flex-col gap-1">
-                
-                {/* Visual bouncing music notes header */}
-                <div className="flex items-center justify-between text-[9px] text-violet-400 font-mono font-bold uppercase tracking-wider">
-                  <span className="flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-amber-400 animate-spin" />
-                    MIDI ORGANA COMPLET : FEON-KIRA BANJY (TEMPO ACTIV)
-                  </span>
-                  <span className="flex gap-1 animate-pulse text-indigo-300">
-                    {['🎵', '♩', '🎶', '♩', '🎵', '♩', '🎶'][currentBeat % 7]}
-                  </span>
-                </div>
-
-                {/* Bouncing visualizer bar graph */}
-                <div className="flex items-end justify-center gap-1.5 h-8 pt-1">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((bar, idx) => {
-                    // Seed wave height calculated using beat index
-                    const activeHeight = isPlayingTune 
-                      ? Math.max(12, Math.floor(Math.sin((currentBeat + idx) * 0.7) * 20 + 20)) 
-                      : 4;
-                    return (
-                      <div 
-                        key={idx}
-                        className={`w-1 rounded-t-xs transition-all duration-300 ${
-                          idx % 3 === 0 
-                            ? 'bg-emerald-450' 
-                            : idx % 2 === 0 ? 'bg-violet-500' : 'bg-indigo-400'
-                        }`}
-                        style={{ height: `${activeHeight}px` }}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Song lyrics and interactive scrolling representation */}
+            {/* Song lyrics and scrolling representation */}
             <div className="p-4 sm:p-6 text-center bg-gradient-to-b from-white to-slate-50/20 dark:from-slate-900 dark:to-slate-950 flex-1 flex flex-col justify-between min-h-[300px]">
               
-              {/* Floating note indicators in background */}
               <div className="relative py-4 flex-1 flex flex-col justify-center">
-                {isPlayingTune && (
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-10">
-                    <div className="absolute top-[10%] left-[20%] text-3xl font-bold animate-bounce">🎵</div>
-                    <div className="absolute top-[40%] right-[15%] text-4xl font-bold animate-ping">🎶</div>
-                    <div className="absolute bottom-[20%] left-[40%] text-2xl font-bold">♩</div>
-                    <div className="absolute bottom-[10%] left-[10%] text-3xl font-bold animate-pulse">🎵</div>
-                  </div>
-                )}
-
-                {/* Actual stanzas with interactive highlight beats */}
+                
+                {/* Actual stanzas */}
                 <div className="space-y-6">
                   {activeSong.lyrics.split('\n\n').map((stanza, idx) => {
                     const isChorus = stanza.trim().includes('Fiverenana') || stanza.trim().includes('Refrain');
-                    // highlight corresponding stanza based on song beat steps
-                    const isStanzaPulse = isPlayingTune && (currentBeat % 3 === idx % 3);
 
                     return (
                       <div 
@@ -457,13 +261,8 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
                           isChorus 
                             ? 'bg-amber-500/5 border border-amber-550/20 text-amber-900 dark:text-amber-200' 
                             : 'text-slate-800 dark:text-slate-200'
-                        } ${isStanzaPulse ? 'ring-2 ring-violet-500/30 scale-[1.01] bg-slate-50/70 dark:bg-slate-950/20' : ''}`}
+                        }`}
                       >
-                        {isPlayingTune && isStanzaPulse && (
-                          <span className="absolute -top-2 left-4 text-[10px] bg-violet-600 text-white font-extrabold px-1.5 py-0.5 rounded-md animate-bounce flex items-center gap-0.5 shadow-xs">
-                            🎵 Active
-                          </span>
-                        )}
                         <p className={`whitespace-pre-line leading-relaxed font-sans ${
                           isElderlyMode 
                             ? 'text-lg font-black' 
@@ -479,7 +278,7 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
 
               {/* Liturgical bottom citation info */}
               <div className="text-[8.5px] text-slate-400 dark:text-slate-500 font-mono mt-6 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 uppercase tracking-wide">
-                <span>© Fiangonana Protestanta / Katolika Malagasy</span>
+                <span>© Fiangonana Protestanta Malagasy</span>
                 <span>FFPM - Fihirana Fanampiny - Fifohazana</span>
               </div>
             </div>

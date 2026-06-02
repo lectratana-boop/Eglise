@@ -82,28 +82,30 @@ Mandra-pandresy anay ny adin'ny fiainana.`,
     category: "Fifandraisana"
   },
   "ffpm-480": {
-    title: "Raha mbola velona koa",
-    lyrics: `Raha mbola velona koa ty foko sy fanahiko,
-Dia hihira fiderana ho Anao foana, ry Mpanjaka malalako.
-Ny fahasoavanao sesehena no nanaloka ny diako,
-Ka hampiely ny hafatrao masina aho hatraiza hatraiza.
+    title: "Mamin'ny foko, ry Jeso ô",
+    lyrics: `Mamin'ny foko, ry Jeso malala,
+Ny miara-dia sy ho namanao;
+Fa teo no hitako fa misy lala,
+Ny rano velona izay nomenao.
 
-Fiverenana:
-O miderà an'i Jehovah izay tia antsika,
-Mihira faly sy mifalia tokoa r'izay mino!
-Ambaro eran-tany ny famonjena lehibe
-Sy ny fitiavany mandrakizay tsy tontan'ny ela!
+Andininy 2:
+Mamiko koa ny mandre ny feonao,
+Miantso ahy hoe: "Manaraha Ahy!"
+Ka dia faly aho hamantatra izao,
+Ny fitiavanao mamelom-panahy.
 
-Ny famindram-po sy fahatsaranao no hitako matches,
-Nentin'ny tànanao tsara namakivaky ny onja mafy.
-Tsy hatahotra aho na ho solafaka aza ny fiainana,
-Fa ny teninao no jiro fanazavana feno hery.
+Andininy 3:
+Na dia be aza ny ady sy trotraka,
+Manodidina ahy isan-kariva;
+Atopiko aminao, ry Jeso, ny maso,
+Ka hitsiky indray aho hihira ho Anao.
 
-Ampio aho Tompo ô mba ho vavolombelona marina,
-Hampianatra sy hitarika ny hafa amin'ny lalan'ny cross.
-Mba ho voninahitrao irery ihany ny asako rehetra,
-Mandra-pahatonga any an-danitra lapanao masina be fahazavana.`,
-    category: "Fiderana"
+Andininy 4:
+Andry sy heriko Ianao, ry Mpamonjy,
+Raha tojo onja mahery ny diako;
+Ny tànanao tsara no mbola hamonjy,
+Ka feno fifaliana ny fanahiko.`,
+    category: "Finoana"
   },
   "ffpm-827": {
     title: "Ny foko, ry Mpamonjy",
