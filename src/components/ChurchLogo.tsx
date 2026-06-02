@@ -50,7 +50,7 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
 
   // Horizontal layout for header representation
   return (
-    <div className={`flex items-center gap-2 select-none ${className}`}>
+    <div className={`flex items-center select-none ${className}`}>
       <div className={`bg-white rounded-lg p-0.5 border border-slate-150 dark:border-slate-800 ${badgeSize} flex items-center justify-center overflow-hidden`}>
         <img
           src={churchLogo}
@@ -58,14 +58,6 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
           referrerPolicy="no-referrer"
           className="max-w-full max-h-full object-contain mix-blend-multiply"
         />
-      </div>
-      <div className="flex flex-col items-start leading-none">
-        <h1 className="text-xs font-black tracking-[0.1em] text-amber-900 dark:text-amber-500 font-sans leading-none">
-          F.P.Fi
-        </h1>
-        <div className="text-[8px] font-extrabold tracking-[0.05em] text-slate-550 dark:text-slate-450 mt-0.5 uppercase leading-none">
-          Protestante Fifohazana
-        </div>
       </div>
     </div>
   );

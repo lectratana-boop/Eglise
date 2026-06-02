@@ -25,7 +25,8 @@ import {
   Phone,
   MapPin,
   Globe,
-  LogOut
+  LogOut,
+  Coins
 } from 'lucide-react';
 
 interface YouthPageProps {
@@ -106,12 +107,72 @@ const getMemberAvatar = (memberId: string) => {
   return avatars[sum % avatars.length];
 };
 
+const formattedAr = (val: number) => {
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(val) + " Ar";
+};
+
 export default function YouthPage({ isElderlyMode, members, churchRoles, loggedInMember, onLogout }: YouthPageProps) {
   // Posts stored in state & localStorage
   const [posts, setPosts] = useState<SampanaPost[]>(() => {
     const saved = localStorage.getItem('mifandray_sampana_posts');
     return saved ? JSON.parse(saved) : INITIAL_SAMPANA_POSTS;
   });
+
+  // Finances state for currently viewed Sampana, persistent in localStorage
+  const [finances, setFinances] = useState<Record<string, { balance: number; lastExpense: number; expenseLabel: string }>>(() => {
+    const saved = localStorage.getItem('mifandray_sampana_finances_v4');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      'Sampana Tanora Kristiana (STK)': { balance: 1250000, lastExpense: 350000, expenseLabel: 'Fitaovam-panamafisam-peo hira' },
+      'Sampana Lahikambana (SLK)': { balance: 850000, lastExpense: 120000, expenseLabel: 'Fitaterana fitoriana teny' },
+      'Dorkasy': { balance: 1890000, lastExpense: 450000, expenseLabel: 'Fanampiana sy fizarana sakafo' },
+      'VFTM': { balance: 620500, lastExpense: 85000, expenseLabel: 'Tsakitsaky sy ranom-boankazo' },
+      'Sampana SAF': { balance: 980000, lastExpense: 150000, expenseLabel: 'Fahasalamana fototra' },
+      'Sampana SFL (Sampana Fiangonana sy ny Loholona)': { balance: 1500000, lastExpense: 200000, expenseLabel: 'Fivorian\'ny Loholona' }
+    };
+  });
+
+  // Persist finances to localStorage
+  useEffect(() => {
+    localStorage.setItem('mifandray_sampana_finances_v4', JSON.stringify(finances));
+  }, [finances]);
+
+  const handleEditBalance = (samp: string) => {
+    const sampKey = samp || 'Sampana Tanora Kristiana (STK)';
+    const current = finances[sampKey] || { balance: 500000, lastExpense: 50000, expenseLabel: 'Fandaniana' };
+    const answer = prompt(`Hanova ny Tahiry (Balance) ao amin'ny ${sampKey} (Ar) :`, current.balance.toString());
+    if (answer !== null) {
+      const parsed = parseFloat(answer.replace(/\s+/g, ''));
+      if (!isNaN(parsed) && parsed >= 0) {
+        setFinances(prev => ({
+          ...prev,
+          [sampKey]: { ...current, balance: parsed }
+        }));
+      }
+    }
+  };
+
+  const handleEditExpense = (samp: string) => {
+    const sampKey = samp || 'Sampana Tanora Kristiana (STK)';
+    const current = finances[sampKey] || { balance: 500000, lastExpense: 50000, expenseLabel: 'Fandaniana' };
+    const amountStr = prompt(`Hanova ny Fandaniana farany ao amin'ny ${sampKey} (Ar) :`, current.lastExpense.toString());
+    if (amountStr !== null) {
+      const parsedAmount = parseFloat(amountStr.replace(/\s+/g, ''));
+      if (!isNaN(parsedAmount) && parsedAmount >= 0) {
+        const desc = prompt("Inona no anton'izany fandaniana izany? (Ohatra: Fividianana fitaovana)", current.expenseLabel);
+        if (desc !== null) {
+          setFinances(prev => ({
+            ...prev,
+            [sampKey]: { ...current, lastExpense: parsedAmount, expenseLabel: desc || 'Fandaniana' }
+          }));
+        }
+      }
+    }
+  };
 
   const activeMemberId = loggedInMember?.id || '';
 
@@ -366,106 +427,164 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
         </div>
       )}
 
-      {/* 1. HIGH FIDELITY PROFESSIONAL MEMBER BUSINESS CARD (CARTE DE VISITE) */}
+      {/* 1. ULTRA HIGH FIDELITY MEMBER BUSINESS CARD & FINANCIAL BALANCE BLOCKS (CORED BY USER INTENT) */}
       {activeUser ? (
-        <div id="mifandray-member-card" className="bg-gradient-to-r from-[#1e155c] via-[#231570] to-[#2c138d] text-white p-6 rounded-3xl shadow-xl relative overflow-hidden ring-1 ring-violet-500/20 max-w-full">
-          {/* Subtle light reflections */}
-          <div className="absolute top-0 right-0 w-36 h-36 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Member Card - Half Size Layout (Réduite à moitié) */}
+          <div id="mifandray-member-card" className="bg-gradient-to-r from-[#170f4b] via-[#1f135e] to-[#2a1387] text-white p-4 rounded-2xl shadow-lg relative overflow-hidden ring-1 ring-violet-500/20 max-w-full flex flex-col justify-center min-h-[140px]">
+            {/* Subtle atmosphere lights */}
+            <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/10 rounded-full blur-xl pointer-events-none" />
+            <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl pointer-events-none" />
 
-          {/* Gold Decorative Tag to match high polish cards */}
-          <div className="absolute top-4 right-4 z-10 text-[9.5px] font-black uppercase tracking-wider text-[#f9c21b] bg-white/10 px-2.5 py-1 rounded-lg border border-white/10">
-            F.P.F.I Mpikambana
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10 pt-4 sm:pt-0">
-            {/* LEFT PORTRAIT ELEMENT */}
-            <div className="flex flex-col items-center shrink-0 w-full sm:w-1/3 border-b sm:border-b-0 pb-4 sm:pb-0 border-white/5">
-              <div className="relative w-28 h-28 rounded-full border-2 border-white shadow-lg overflow-hidden bg-violet-950 flex items-center justify-center shrink-0">
-                <img
-                  src={getMemberAvatar(activeUser.id)}
-                  alt={activeUser.name}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80";
-                  }}
-                />
-              </div>
-              
-              {/* Yellow bold name below avatar */}
-              <div className="mt-3 text-center">
-                {activeUser.name.split(' ').map((part, index) => (
-                  <span
-                    key={part + index}
-                    className={`block text-[#f9c21b] font-black leading-tight text-center tracking-wide ${
-                      index === 0 ? 'text-lg uppercase' : 'text-base font-semibold opacity-95 text-amber-200 mt-0.5'
-                    }`}
-                  >
-                    {part}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* VERTICAL SEPARATOR LINE */}
-            <div className="hidden sm:block border-r border-white/10 h-32 mx-1 self-center" />
-
-            {/* RIGHT INFORMATION FIELDS */}
-            <div className="flex-1 flex flex-col justify-center gap-3.5 w-full min-w-0">
-              
-              {/* ROW 1: PHONE */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-full bg-[#170e4b]/60 border border-violet-500/30 flex items-center justify-center shrink-0 shadow-sm">
-                  <Phone className="w-4 h-4 text-white fill-white" />
+            <div className="flex items-center gap-4 relative z-10">
+              {/* PORTRAIT & MINI NAME */}
+              <div className="flex flex-col items-center shrink-0">
+                <div className="relative w-15 h-15 rounded-full border-2 border-amber-400 shadow-md overflow-hidden bg-violet-950 flex items-center justify-center">
+                  <img
+                    src={getMemberAvatar(activeUser.id)}
+                    alt={activeUser.name}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80";
+                    }}
+                  />
+                  {/* Small gold crown or design emblem */}
+                  <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-amber-400 rounded-full flex items-center justify-center border border-indigo-950">
+                    <span className="text-[7px] font-black text-indigo-950">★</span>
+                  </div>
                 </div>
-                <span className="text-sm font-bold tracking-wider font-mono text-white/95">
-                  {activeUser.phone || '033 45 678 90'}
+                {/* Yellow bold short name */}
+                <span className="mt-1.5 block text-amber-400 font-extrabold text-xs uppercase tracking-wider text-center max-w-[85px] truncate">
+                  {activeUser.name.split(' ')[0]}
                 </span>
               </div>
 
-              {/* HORIZONTAL SEPARATOR */}
-              <div className="border-t border-white/10" />
-
-              {/* ROW 2: ADDRESS */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-full bg-[#170e4b]/60 border border-violet-500/30 flex items-center justify-center shrink-0 shadow-sm">
-                  <MapPin className="w-4 h-4 text-white" />
+              {/* CARD DETAILS */}
+              <div className="flex-1 min-w-0 flex flex-col gap-1.5 border-l border-white/10 pl-3.5">
+                {/* Information badge */}
+                <div className="self-start text-[7.5px] font-black uppercase tracking-widest text-amber-200 bg-white/5 py-0.5 px-1.5 rounded-md border border-white/5 leading-none">
+                  F.P.F.I Mpikambana
                 </div>
-                <div className="min-w-0">
-                  <span className="block text-[8px] font-black text-violet-300 uppercase tracking-widest leading-none mb-1">
-                    ADRESSE:
+
+                {/* Info Row 1: Finday */}
+                <div className="flex items-center gap-2">
+                  <Phone className="w-3 h-3 text-amber-400 shrink-0" />
+                  <span className="text-[11px] font-bold tracking-tight font-mono text-white/95">
+                    {activeUser.phone || '033 45 678 90'}
                   </span>
-                  <span className="block text-xs font-bold text-white/95 truncate">
+                </div>
+
+                {/* Info Row 2: Adiresy */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <MapPin className="w-3 h-3 text-violet-300 shrink-0" />
+                  <span className="text-[10px] text-white/90 truncate leading-tight" title={activeUser.address}>
                     {activeUser.address || 'Lot 26 ter mahamasina'}
                   </span>
                 </div>
-              </div>
 
-              {/* HORIZONTAL SEPARATOR */}
-              <div className="border-t border-white/10" />
-
-              {/* ROW 3: SAMPANA BADGES */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-9 h-9 rounded-full bg-[#170e4b]/60 border border-violet-500/30 flex items-center justify-center shrink-0 shadow-sm">
-                  <Globe className="w-4 h-4 text-white" />
-                </div>
-                <div className="flex flex-wrap gap-1.5 min-w-0">
-                  <div className="inline-flex items-center gap-1.5 bg-[#170e4b]/60 border border-violet-500/40 px-3.5 py-1.5 rounded-lg min-w-0 max-w-full">
-                    <span className="text-[8.5px] font-black text-violet-200 tracking-wider">SAMPANA:</span>
-                    <span className="text-[10px] font-black text-[#f9c21b] truncate">
-                      {viewedSampana || userSampanaList.join(', ') || activeUser.role || 'Mpikambana tsotra'}
-                    </span>
-                  </div>
+                {/* Info Row 3: Sampana */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <Globe className="w-3 h-3 text-amber-400 shrink-0" />
+                  <span className="text-[10px] font-black text-amber-300 truncate leading-tight">
+                    {viewedSampana || userSampanaList[0] || 'STK'}
+                  </span>
                 </div>
               </div>
-
             </div>
           </div>
+
+          {/* 2 Financial Cards (1 Green for Balance, 1 Blue for Expense) */}
+          <div className="grid grid-cols-2 gap-3 min-h-[140px]">
+            
+            {/* Green Balance Block */}
+            <div
+              onClick={() => handleEditBalance(viewedSampana || userSampanaList[0] || 'STK')}
+              title="Kitiho eto raha hanova ny tahiry (Balance)"
+              className="bg-emerald-950/20 dark:bg-emerald-950/30 hover:bg-emerald-950/30 border-2 border-emerald-500/50 hover:border-emerald-400 p-3 rounded-2xl flex flex-col justify-between transition-all cursor-pointer shadow-md select-none active:scale-[0.98] group relative overflow-hidden"
+            >
+              <div className="flex items-center justify-between gap-1 relative z-10">
+                <span className="text-[9px] font-black tracking-widest text-emerald-400 uppercase leading-none">
+                  Tahiry
+                </span>
+                <div className="w-5.5 h-5.5 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0 border border-emerald-550/20 group-hover:scale-110 transition-transform">
+                  <Coins className="w-2.5 h-2.5 text-emerald-400" />
+                </div>
+              </div>
+
+              <div className="mt-2.5 relative z-10">
+                <span className="block text-[8px] font-black text-emerald-500 uppercase tracking-widest leading-none">
+                  BALANCE :
+                </span>
+                <span className="block text-sm sm:text-base font-black text-emerald-400 font-mono mt-1 drop-shadow-sm select-all">
+                  {formattedAr(
+                    (finances[viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)'] || {
+                      balance: 500000
+                    }).balance
+                  )}
+                </span>
+              </div>
+
+              {/* Edit tip */}
+              <span className="text-[7.5px] font-extrabold text-emerald-400/85 mt-2 bg-emerald-400/10 px-1 py-0.5 rounded border border-emerald-400/10 self-start leading-none">
+                Hanova ✎
+              </span>
+
+              <div className="absolute -bottom-8 -right-8 w-14 h-14 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
+            </div>
+
+            {/* Blue Expense Block */}
+            <div
+              onClick={() => handleEditExpense(viewedSampana || userSampanaList[0] || 'STK')}
+              title="Kitiho eto raha hanova ny fandaniana farany"
+              className="bg-sky-950/20 dark:bg-sky-950/30 hover:bg-sky-950/30 border-2 border-sky-500/50 hover:border-sky-400 p-3 rounded-2xl flex flex-col justify-between transition-all cursor-pointer shadow-md select-none active:scale-[0.98] group relative overflow-hidden"
+            >
+              <div className="flex items-center justify-between gap-1 relative z-10">
+                <span className="text-[9px] font-black tracking-widest text-sky-400 uppercase leading-none">
+                  Fandaniana
+                </span>
+                <div className="w-5.5 h-5.5 rounded-full bg-sky-500/15 flex items-center justify-center shrink-0 border border-sky-550/20 group-hover:scale-110 transition-transform">
+                  <LogOut className="w-2.5 h-2.5 text-sky-400 -rotate-90" />
+                </div>
+              </div>
+
+              <div className="mt-2.5 relative z-10 leading-tight">
+                <span className="block text-[8px] font-black text-sky-400 uppercase tracking-widest leading-none">
+                  FARANY :
+                </span>
+                <span className="block text-sm sm:text-base font-black text-sky-300 font-mono mt-0.5 drop-shadow-sm truncate select-all">
+                  {formattedAr(
+                    (finances[viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)'] || {
+                      lastExpense: 50000
+                    }).lastExpense
+                  )}
+                </span>
+                <span className="block text-[7px] font-extrabold text-slate-400 truncate tracking-tight leading-none mt-1" title={
+                  (finances[viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)'] || {
+                    expenseLabel: 'Fandaniana'
+                  }).expenseLabel
+                }>
+                  {(finances[viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)'] || {
+                    expenseLabel: 'Fiaraha-mientana'
+                  }).expenseLabel}
+                </span>
+              </div>
+
+              {/* Edit tip */}
+              <span className="text-[7.5px] font-extrabold text-sky-400/85 mt-2 bg-sky-400/10 px-1 py-0.5 rounded border border-sky-400/10 self-start leading-none">
+                Hanova ✎
+              </span>
+
+              <div className="absolute -bottom-8 -right-8 w-14 h-14 bg-sky-500/5 rounded-full blur-xl pointer-events-none" />
+            </div>
+
+          </div>
+
         </div>
       ) : null}
 
-      {/* Elegant logout action trigger requested by user */}
+      {/* Elegant logout action trigger requested by user - positioned below */}
       {activeUser && (
         <div className="flex justify-end pr-1 mt-1">
           <button
@@ -475,7 +594,7 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
                 onLogout();
               }
             }}
-            className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 border-b-[3px] border-rose-805 cursor-pointer"
+            className="w-full py-2 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white font-black text-[11px] uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 border-b-[3px] border-rose-800 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Hivoaka ny application (Sortir)</span>
