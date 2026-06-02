@@ -133,7 +133,7 @@ export default function App() {
   // Settings & Theme
   const [churchRoles, setChurchRoles] = useState<string[]>(() => {
     const saved = localStorage.getItem('mifandray_church_roles');
-    return saved ? JSON.parse(saved) : [
+    const defaultRoles = [
       "Sampana Dorkasy",
       "Sampana Lehilahy Kristianina (SLK)",
       "Sampana Tanora Kristiana (STK)",
@@ -146,8 +146,19 @@ export default function App() {
       "Mpampianatra sekoly alahady",
       "Loholona",
       "Diakra",
-      "Mpitandrina"
+      "Mpitandrina",
+      "Secretaire"
     ];
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && !parsed.includes("Secretaire")) {
+          parsed.push("Secretaire");
+        }
+        return parsed;
+      } catch (e) {}
+    }
+    return defaultRoles;
   });
 
   useEffect(() => {

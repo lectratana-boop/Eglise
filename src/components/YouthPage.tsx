@@ -141,7 +141,24 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
     localStorage.setItem('mifandray_sampana_finances_v4', JSON.stringify(finances));
   }, [finances]);
 
+  const isAuthorizedSecretary = () => {
+    if (!loggedInMember) return false;
+    const roleString = (loggedInMember.role || '').toLowerCase();
+    const rolesArray = (loggedInMember.roles || []).map(r => r.toLowerCase());
+    const nameString = (loggedInMember.name || '').toLowerCase();
+    
+    // Check if the user has a "secretaire" role or name contains "secretaire", OR if they are the admin/pastor (which allows override)
+    const hasSecretaryRole = roleString.includes('secretaire') || rolesArray.includes('secretaire');
+    const isSecretaryByNameOrAdmin = nameString.includes('secretaire') || loggedInMember.id === 'm-admin' || roleString.includes('mpitandrina');
+    
+    return hasSecretaryRole || isSecretaryByNameOrAdmin;
+  };
+
   const handleEditBalance = (samp: string) => {
+    if (!isAuthorizedSecretary()) {
+      alert("⚠️ Tsy nahazo alalana: Ny Secretaire ihany no afaka manova ny tamberina vola (tahiry sy fandaniana) mba hisorohana ny fanararaotana.");
+      return;
+    }
     const sampKey = samp || 'Sampana Tanora Kristiana (STK)';
     const current = finances[sampKey] || { balance: 500000, lastExpense: 50000, expenseLabel: 'Fandaniana' };
     const answer = prompt(`Hanova ny Tahiry (Balance) ao amin'ny ${sampKey} (Ar) :`, current.balance.toString());
@@ -157,6 +174,10 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
   };
 
   const handleEditExpense = (samp: string) => {
+    if (!isAuthorizedSecretary()) {
+      alert("⚠️ Tsy nahazo alalana: Ny Secretaire ihany no afaka manova ny tamberina vola (tahiry sy fandaniana) mba hisorohana ny fanararaotana.");
+      return;
+    }
     const sampKey = samp || 'Sampana Tanora Kristiana (STK)';
     const current = finances[sampKey] || { balance: 500000, lastExpense: 50000, expenseLabel: 'Fandaniana' };
     const amountStr = prompt(`Hanova ny Fandaniana farany ao amin'ny ${sampKey} (Ar) :`, current.lastExpense.toString());
@@ -495,29 +516,29 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
             </div>
           </div>
 
-          {/* 2 Financial Cards (1 Green for Balance, 1 Blue for Expense) */}
+          {/* 2 Financial Cards (1 Green for Balance, 1 Blue for Expense) - Optimized for maximum legibility */}
           <div className="grid grid-cols-2 gap-3 min-h-[140px]">
             
-            {/* Green Balance Block */}
+            {/* Green Balance Block - Solid High-Contrast color for maximum readability */}
             <div
               onClick={() => handleEditBalance(viewedSampana || userSampanaList[0] || 'STK')}
               title="Kitiho eto raha hanova ny tahiry (Balance)"
-              className="bg-emerald-950/20 dark:bg-emerald-950/30 hover:bg-emerald-950/30 border-2 border-emerald-500/50 hover:border-emerald-400 p-3 rounded-2xl flex flex-col justify-between transition-all cursor-pointer shadow-md select-none active:scale-[0.98] group relative overflow-hidden"
+              className="bg-emerald-600 hover:bg-emerald-550 border-2 border-emerald-450 p-3.5 rounded-2xl flex flex-col justify-between transition-all cursor-pointer shadow-lg select-none active:scale-[0.98] group relative overflow-hidden text-white"
             >
               <div className="flex items-center justify-between gap-1 relative z-10">
-                <span className="text-[9px] font-black tracking-widest text-emerald-400 uppercase leading-none">
+                <span className="text-[9.5px] font-black tracking-widest text-emerald-100 uppercase leading-none">
                   Tahiry
                 </span>
-                <div className="w-5.5 h-5.5 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0 border border-emerald-550/20 group-hover:scale-110 transition-transform">
-                  <Coins className="w-2.5 h-2.5 text-emerald-400" />
+                <div className="w-5.5 h-5.5 rounded-full bg-white/20 flex items-center justify-center shrink-0 border border-white/10 group-hover:scale-110 transition-transform">
+                  <Coins className="w-2.5 h-2.5 text-white" />
                 </div>
               </div>
 
               <div className="mt-2.5 relative z-10">
-                <span className="block text-[8px] font-black text-emerald-500 uppercase tracking-widest leading-none">
+                <span className="block text-[8.5px] font-bold text-emerald-100 uppercase tracking-widest leading-none">
                   BALANCE :
                 </span>
-                <span className="block text-sm sm:text-base font-black text-emerald-400 font-mono mt-1 drop-shadow-sm select-all">
+                <span className="block text-base sm:text-lg font-black text-white font-mono mt-1.5 drop-shadow-sm select-all">
                   {formattedAr(
                     (finances[viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)'] || {
                       balance: 500000
@@ -526,41 +547,53 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
                 </span>
               </div>
 
-              {/* Edit tip */}
-              <span className="text-[7.5px] font-extrabold text-emerald-400/85 mt-2 bg-emerald-400/10 px-1 py-0.5 rounded border border-emerald-400/10 self-start leading-none">
-                Hanova ✎
-              </span>
+              {/* Action indicators with 'Acces' button */}
+              <div className="flex items-center gap-1.5 mt-2.5 relative z-10">
+                <span className="text-[8px] font-black text-emerald-150 uppercase bg-emerald-700/60 px-1.5 py-0.5 rounded border border-emerald-500/20 leading-none">
+                  Hanova ✎
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditBalance(viewedSampana || userSampanaList[0] || 'STK');
+                  }}
+                  className="px-2 py-0.5 rounded text-[8px] font-extrabold uppercase bg-white text-emerald-700 hover:bg-emerald-50 active:scale-95 transition-all shadow-sm cursor-pointer"
+                >
+                  Acces ⚙
+                </button>
+              </div>
 
-              <div className="absolute -bottom-8 -right-8 w-14 h-14 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
+              <div className="absolute -bottom-8 -right-8 w-14 h-14 bg-white/5 rounded-full blur-xl pointer-events-none" />
             </div>
 
-            {/* Blue Expense Block */}
+            {/* Blue Expense Block - Solid High-Contrast color for maximum readability */}
             <div
               onClick={() => handleEditExpense(viewedSampana || userSampanaList[0] || 'STK')}
               title="Kitiho eto raha hanova ny fandaniana farany"
-              className="bg-sky-950/20 dark:bg-sky-950/30 hover:bg-sky-950/30 border-2 border-sky-500/50 hover:border-sky-400 p-3 rounded-2xl flex flex-col justify-between transition-all cursor-pointer shadow-md select-none active:scale-[0.98] group relative overflow-hidden"
+              className="bg-sky-600 hover:bg-sky-550 border-2 border-sky-450 p-3.5 rounded-2xl flex flex-col justify-between transition-all cursor-pointer shadow-lg select-none active:scale-[0.98] group relative overflow-hidden text-white"
             >
               <div className="flex items-center justify-between gap-1 relative z-10">
-                <span className="text-[9px] font-black tracking-widest text-sky-400 uppercase leading-none">
+                <span className="text-[9.5px] font-black tracking-widest text-sky-100 uppercase leading-none">
                   Fandaniana
                 </span>
-                <div className="w-5.5 h-5.5 rounded-full bg-sky-500/15 flex items-center justify-center shrink-0 border border-sky-550/20 group-hover:scale-110 transition-transform">
-                  <LogOut className="w-2.5 h-2.5 text-sky-400 -rotate-90" />
+                <div className="w-5.5 h-5.5 rounded-full bg-white/20 flex items-center justify-center shrink-0 border border-white/10 group-hover:scale-110 transition-transform">
+                  <LogOut className="w-2.5 h-2.5 text-white -rotate-90" />
                 </div>
               </div>
 
               <div className="mt-2.5 relative z-10 leading-tight">
-                <span className="block text-[8px] font-black text-sky-400 uppercase tracking-widest leading-none">
+                <span className="block text-[8.5px] font-bold text-sky-100 uppercase tracking-widest leading-none">
                   FARANY :
                 </span>
-                <span className="block text-sm sm:text-base font-black text-sky-300 font-mono mt-0.5 drop-shadow-sm truncate select-all">
+                <span className="block text-base sm:text-lg font-black text-white font-mono mt-1.5 drop-shadow-sm truncate select-all">
                   {formattedAr(
                     (finances[viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)'] || {
                       lastExpense: 50000
                     }).lastExpense
                   )}
                 </span>
-                <span className="block text-[7px] font-extrabold text-slate-400 truncate tracking-tight leading-none mt-1" title={
+                <span className="block text-[8px] font-bold text-sky-150 truncate tracking-tight leading-none mt-1" title={
                   (finances[viewedSampana || userSampanaList[0] || 'Sampana Tanora Kristiana (STK)'] || {
                     expenseLabel: 'Fandaniana'
                   }).expenseLabel
@@ -571,12 +604,24 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
                 </span>
               </div>
 
-              {/* Edit tip */}
-              <span className="text-[7.5px] font-extrabold text-sky-400/85 mt-2 bg-sky-400/10 px-1 py-0.5 rounded border border-sky-400/10 self-start leading-none">
-                Hanova ✎
-              </span>
+              {/* Action indicators with 'Acces' button */}
+              <div className="flex items-center gap-1.5 mt-2 relative z-10">
+                <span className="text-[8px] font-black text-sky-150 uppercase bg-sky-700/60 px-1.5 py-0.5 rounded border border-sky-500/20 leading-none">
+                  Hanova ✎
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditExpense(viewedSampana || userSampanaList[0] || 'STK');
+                  }}
+                  className="px-2 py-0.5 rounded text-[8px] font-extrabold uppercase bg-white text-sky-700 hover:bg-sky-50 active:scale-95 transition-all shadow-sm cursor-pointer"
+                >
+                  Acces ⚙
+                </button>
+              </div>
 
-              <div className="absolute -bottom-8 -right-8 w-14 h-14 bg-sky-500/5 rounded-full blur-xl pointer-events-none" />
+              <div className="absolute -bottom-8 -right-8 w-14 h-14 bg-white/5 rounded-full blur-xl pointer-events-none" />
             </div>
 
           </div>
