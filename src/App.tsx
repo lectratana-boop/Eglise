@@ -199,6 +199,7 @@ export default function App() {
   // Admin dynamic roles edit states
   const [roleInputValue, setRoleInputValue] = useState('');
   const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
+  const [showChurchSetup, setShowChurchSetup] = useState<boolean>(false);
 
   const addNewRole = () => {
     if (!roleInputValue.trim()) {
@@ -806,15 +807,32 @@ export default function App() {
             <div className="space-y-4">
               {/* Fitantanana ny Fiangonana Active Admin Card */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-xs space-y-3">
-                <span className="text-[9px] font-black uppercase bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 py-0.5 px-2 rounded font-sans">
-                  Fitantanana ny Fiangonana
-                </span>
-                <h3 className="font-extrabold text-sm text-slate-850 dark:text-white leading-none mt-1">
-                  Fikirana: <span className="text-violet-600 dark:text-violet-400">{activeChurch.name}</span>
-                </h3>
-                <p className="text-[10px] text-slate-400">Afaka ovaovanao eto ny anarana, teny faneva (slogan), ary ny andinin-tsoratra masina ny fiangonanao.</p>
+                <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-805 pb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-black uppercase bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 py-0.5 px-2 rounded font-sans">
+                      Fitantanana ny Fiangonana
+                    </span>
+                    <span className="text-[9px] font-black tracking-wider uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                      {showChurchSetup ? 'Ampiasaina' : 'Miafina'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowChurchSetup(!showChurchSetup)}
+                    className="p-1 px-2.5 bg-violet-600 hover:bg-violet-750 text-white rounded-lg flex items-center gap-1 text-[10px] font-black cursor-pointer active:scale-95 transition-all shadow-xs shrink-0 select-none"
+                  >
+                    <span>{showChurchSetup ? 'Hanafina Fikirana ✕' : 'Fitantanana ny Fiangonana ⚙️'}</span>
+                  </button>
+                </div>
 
-                <div className="space-y-3.5 border-t border-slate-100 dark:border-slate-800 pt-3">
+                {showChurchSetup && (
+                  <div className="space-y-3.5 animate-fadeIn">
+                    <h3 className="font-extrabold text-sm text-slate-850 dark:text-white leading-none mt-1">
+                      Fikirana: <span className="text-violet-600 dark:text-violet-400">{activeChurch.name}</span>
+                    </h3>
+                    <p className="text-[10px] text-slate-400">Afaka ovaovanao eto ny anarana, teny faneva (slogan), ary ny andinin-tsoratra masina ny fiangonanao.</p>
+
+                    <div className="space-y-3.5 mt-3">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
                       Anaran'ny Fiangonana
@@ -957,13 +975,13 @@ export default function App() {
                   <div className="flex gap-2 pt-2">
                     <button
                       onClick={handleUpdateChurch}
-                      className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 font-bold text-white text-[10.5px] rounded-lg cursor-pointer transition-all active:translate-y-[1px] border-b-[3px] border-violet-800"
+                      className="flex-1 py-1.5 bg-violet-600 hover:bg-violet-700 font-bold text-white text-[10px] rounded-lg cursor-pointer transition-all active:translate-y-[1px]"
                     >
                       Tehirizina ny fanovana 💾
                     </button>
                     <button
                       onClick={handleDeleteActiveChurch}
-                      className="py-2 px-3 bg-red-100 hover:bg-red-200 text-red-700 hover:text-red-800 font-bold text-[10.5px] rounded-lg cursor-pointer transition-all active:scale-95 border border-red-200"
+                      className="py-1.5 px-3 bg-red-100 hover:bg-red-200 text-red-700 hover:text-red-800 font-bold text-[10px] rounded-lg cursor-pointer transition-all active:scale-95 border border-red-200"
                       title="Hamafa ity fiangonana ity"
                     >
                       Hofafana ✕
@@ -971,6 +989,8 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            )}
+          </div>
 
               {/* Andraikitra sy Sampana Management Panel */}
               <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 p-4 rounded-xl shadow-xs space-y-3">

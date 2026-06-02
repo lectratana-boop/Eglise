@@ -34,6 +34,7 @@ export default function MembersPage({
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [photo, setPhoto] = useState('');
 
   // Editing Form State
   const [editingMember, setEditingMember] = useState<Member | null>(null);
@@ -41,6 +42,27 @@ export default function MembersPage({
   const [editPhone, setEditPhone] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [editSelectedRoles, setEditSelectedRoles] = useState<string[]>([]);
+  const [editPhoto, setEditPhoto] = useState('');
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("⚠️ Lehibe loatra ny sary! Misafidiana sary latsaky ny 2MB azafady.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (isEdit) {
+          setEditPhoto(result);
+        } else {
+          setPhoto(result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const filteredMembers = members.filter(m => {
     const matchesChurch = m.churchId === churchId;
@@ -84,13 +106,15 @@ export default function MembersPage({
       phone: phone.trim(),
       address: address.trim() || 'Tsy voasoratra ny adiresy',
       role: selectedRoles.join(', '), // Comma-separated presentation for backward compatibility
-      roles: selectedRoles // Array storage for modular access
+      roles: selectedRoles, // Array storage for modular access
+      photo: photo || undefined
     });
 
     setName('');
     setPhone('');
     setAddress('');
     setSelectedRoles([]);
+    setPhoto('');
     setIsAdding(false);
   };
 
@@ -113,7 +137,8 @@ export default function MembersPage({
       phone: editPhone.trim(),
       address: editAddress.trim(),
       role: editSelectedRoles.join(', '),
-      roles: editSelectedRoles
+      roles: editSelectedRoles,
+      photo: editPhoto || undefined
     });
 
     setEditingMember(null);
@@ -127,6 +152,7 @@ export default function MembersPage({
     // Backward-compatibility: parse from comma string if roles is not set
     const parsedRoles = m.roles || (m.role ? m.role.split(', ').map(r => r.trim()).filter(Boolean) : []);
     setEditSelectedRoles(parsedRoles);
+    setEditPhoto(m.photo || '');
   };
 
   const [activeCallContact, setActiveCallContact] = useState<string | null>(null);
@@ -197,12 +223,12 @@ export default function MembersPage({
           <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" />
         </div>
 
-        {/* Members card layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Members card layout - reduced to half size to view more members at once */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
           {filteredMembers.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-slate-400 dark:text-slate-500">
-              <User className="w-12 h-12 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
-              <p className="text-sm font-semibold">Tsy nisy mpikambana voaray hita mifanaraka amin'ny fikarohanao.</p>
+            <div className="col-span-full text-center py-8 text-slate-400 dark:text-slate-500">
+              <User className="w-10 h-10 mx-auto mb-1 text-slate-300 dark:text-slate-700" />
+              <p className="text-xs font-semibold">Tsy nisy mpikambana voaray hita mifanaraka amin'ny fikarohanao.</p>
             </div>
           ) : (
             filteredMembers.map((member) => {
@@ -211,67 +237,88 @@ export default function MembersPage({
                 <div
                   id={`member-card-${member.id}`}
                   key={member.id}
-                  className="p-4 sm:p-5 rounded-2xl border border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-850 hover:shadow-md transition-all flex flex-col justify-between gap-3.5 h-full"
+                  className="p-2.5 rounded-xl border border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-850 hover:shadow-sm transition-all flex flex-col justify-between gap-2 h-full text-left"
                 >
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-11 h-11 rounded-full bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 flex items-center justify-center text-sm font-black shrink-0 uppercase">
-                      {member.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                    </div>
-                    <div className="space-y-1 overflow-hidden flex-1">
-                      <h3 className={`${isElderlyMode ? 'text-xl' : 'text-base'} font-extrabold text-slate-850 dark:text-slate-100 truncate`}>
-                        {member.name}
-                      </h3>
-                      
-                      {/* Flex wrap list of assigned roles */}
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {parsedRoles.length > 0 ? (
-                          parsedRoles.map((roleName) => (
-                            <span key={roleName} className="inline-flex items-center gap-0.5 text-[9px] bg-violet-50 dark:bg-violet-950/50 text-violet-650 dark:text-violet-300 px-1.5 py-0.5 rounded-md font-bold tracking-tight">
-                              <Briefcase className="w-2.5 h-2.5 shrink-0" />
-                              <span className="truncate max-w-[120px]">{roleName}</span>
-                            </span>
-                          ))
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full border border-violet-200 dark:border-violet-850 overflow-hidden shrink-0 bg-violet-50 dark:bg-violet-950 flex items-center justify-center">
+                        {member.photo ? (
+                          <img
+                            src={member.photo}
+                            alt={member.name}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <span className="inline-flex items-center gap-0.5 text-[9px] bg-slate-50 dark:bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded-md font-bold">
-                            Mpikambana tsotra
+                          <span className="text-[10px] uppercase font-black text-violet-600 dark:text-violet-400">
+                            {member.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                           </span>
                         )}
                       </div>
+                      
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 truncate" title={member.name}>
+                          {member.name}
+                        </h3>
+                      </div>
+                    </div>
+                    
+                    {/* Flex wrap list of assigned roles (miniaturized) */}
+                    <div className="flex flex-wrap gap-0.5">
+                      {parsedRoles.length > 0 ? (
+                        parsedRoles.slice(0, 2).map((roleName) => (
+                          <span key={roleName} className="inline-flex items-center gap-0.5 text-[7.5px] bg-violet-50 dark:bg-violet-950/50 text-violet-650 dark:text-violet-350 px-1 py-0.5 rounded font-extrabold tracking-tight truncate max-w-full">
+                            <Briefcase className="w-2 h-2 shrink-0" />
+                            <span className="truncate max-w-[65px]">{roleName}</span>
+                          </span>
+                        ))
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 text-[7.5px] bg-slate-50 dark:bg-slate-900 text-slate-450 px-1 py-0.5 rounded font-extrabold">
+                          Tsotra
+                        </span>
+                      )}
+                      {parsedRoles.length > 2 && (
+                        <span className="inline-flex items-center text-[7px] bg-amber-50 dark:bg-amber-950/30 text-amber-600 px-1 py-0.5 rounded font-black">
+                          +{parsedRoles.length - 2}
+                        </span>
+                      )}
+                    </div>
 
-                      <p className="text-xs text-slate-550 dark:text-slate-400 flex items-center gap-1.5 pt-1.5">
-                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="font-semibold font-mono">{member.phone}</span>
+                    <div className="space-y-0.5 text-[9px] text-slate-500 dark:text-slate-400 pt-0.5">
+                      <p className="flex items-center gap-1 font-mono font-semibold truncate">
+                        <Phone className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                        <span>{member.phone}</span>
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-450 flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <p className="flex items-center gap-1 truncate" title={member.address}>
+                        <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0" />
                         <span className="truncate">{member.address}</span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-1.5 border-t border-slate-100 dark:border-slate-800/60 pt-2 shrink-0">
+                  <div className="flex items-center justify-between gap-1 border-t border-slate-100 dark:border-slate-800/60 pt-2 shrink-0">
                     <button
                       onClick={() => startEdit(member)}
-                      className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-300 border border-slate-150 dark:border-slate-700 font-bold text-xs flex items-center gap-1 cursor-pointer active:scale-95 transition-all"
-                      title="Hanova mombamomba"
+                      className="flex-1 py-1 px-1.5 rounded bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-350 border border-slate-150 dark:border-slate-700 font-bold text-[8.5px] flex items-center justify-center gap-0.5 cursor-pointer active:scale-95 transition-all"
+                      title="Hanova"
                     >
-                      <Edit2 className="w-3 h-3 text-violet-600 dark:text-violet-400" />
+                      <Edit2 className="w-2.5 h-2.5 text-violet-600" />
                       <span>Hanova</span>
                     </button>
                     <button
                       onClick={() => onDeleteMember(member.id)}
-                      className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs flex items-center gap-1 cursor-pointer active:scale-95 transition-all border border-rose-100 dark:border-rose-950"
-                      title="Hamafa mpikambana"
+                      className="py-1 px-1.5 rounded bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-bold text-[8.5px] flex items-center justify-center gap-0.5 cursor-pointer active:scale-95 transition-all border border-rose-100/60 dark:border-rose-900/30"
+                      title="Hamafa"
                     >
-                      <Trash2 className="w-3 h-3 text-rose-600" />
+                      <Trash2 className="w-2.5 h-2.5 text-rose-600" />
                       <span>Hamafa</span>
                     </button>
                     <button
                       onClick={() => handleCallSimulation(member.name)}
-                      className="w-8 h-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 cursor-pointer border border-emerald-100 dark:border-emerald-900 active:scale-95 transition-all"
+                      className="w-5 h-5 rounded bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 cursor-pointer border border-emerald-100 dark:border-emerald-900 absolute-none"
                       title="Hiantso finday"
                     >
-                      <Phone className="w-3.5 h-3.5 fill-current" />
+                      <Phone className="w-2.5 h-2.5 fill-current" />
                     </button>
                   </div>
                 </div>
@@ -333,7 +380,7 @@ export default function MembersPage({
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-450 dark:text-slate-450 uppercase mb-1">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-450 uppercase mb-1">
                   Adiresy / Toerana Fonenana
                 </label>
                 <input
@@ -343,6 +390,47 @@ export default function MembersPage({
                   placeholder="Ohatra: Isotry, rihana faha-2"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-205 dark:border-slate-800 rounded-xl p-2.5 text-slate-850 dark:text-slate-100 outline-none text-xs font-semibold focus:ring-1 focus:ring-violet-500"
                 />
+              </div>
+
+              {/* AMPIDIRO SARY (PHOTO INSERTION) */}
+              <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-150 dark:border-slate-800 space-y-2">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-455 uppercase">
+                  Sarin'ny Mpikambana (Insera Sary)
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                    {photo ? (
+                      <img src={photo} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePhotoUpload(e, false)}
+                      className="hidden"
+                      id="member-photo-file-add"
+                    />
+                    <label
+                      htmlFor="member-photo-file-add"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[10px] font-black cursor-pointer shadow-xs transition-all select-none"
+                    >
+                      Mifidiana Sary 📤
+                    </label>
+                    {photo && (
+                      <button
+                        type="button"
+                        onClick={() => setPhoto('')}
+                        className="block text-[9px] text-red-500 font-extrabold hover:underline"
+                      >
+                        Fafao ny sary ✕
+                      </button>
+                    )}
+                    <span className="block text-[8px] text-slate-400 leading-none mt-0.5 border-0">JPEG/PNG latsaky ny 2MB</span>
+                  </div>
+                </div>
               </div>
 
               {/* CHECKBOX ROLES LIST */}
@@ -461,6 +549,47 @@ export default function MembersPage({
                   onChange={(e) => setEditAddress(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-205 dark:border-slate-800 rounded-xl p-2.5 text-slate-850 dark:text-slate-100 outline-none text-xs font-semibold focus:ring-1 focus:ring-violet-500"
                 />
+              </div>
+
+              {/* HANAMPY SARY HANDOVANA (EDIT PHOTO) */}
+              <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-150 dark:border-slate-800 space-y-2">
+                <label className="block text-[10px] font-black text-slate-455 dark:text-slate-450 uppercase">
+                  Hanova Sarin'ny Mpikambana (Insera Sary)
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                    {editPhoto ? (
+                      <img src={editPhoto} alt="Edit Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePhotoUpload(e, true)}
+                      className="hidden"
+                      id="member-photo-file-edit"
+                    />
+                    <label
+                      htmlFor="member-photo-file-edit"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[10px] font-black cursor-pointer shadow-xs transition-all select-none"
+                    >
+                      Mifidiana Sary 📤
+                    </label>
+                    {editPhoto && (
+                      <button
+                        type="button"
+                        onClick={() => setEditPhoto('')}
+                        className="block text-[9px] text-red-500 font-extrabold hover:underline"
+                      >
+                        Fafao ny sary ✕
+                      </button>
+                    )}
+                    <span className="block text-[8px] text-slate-400 leading-none mt-0.5 border-0">JPEG/PNG latsaky ny 2MB</span>
+                  </div>
+                </div>
               </div>
 
               {/* EDIT CHECKBOX ROLES LIST */}

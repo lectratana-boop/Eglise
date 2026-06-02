@@ -32,6 +32,7 @@ export interface Member {
   address: string;
   role: string; // e.g., Loholona, Diakra, Mpihira, Tsotra
   roles?: string[]; // Multiple roles/sampana selected by admin
+  photo?: string; // Optional custom photo (Base64 data URL or external URL)
 }
 
 export interface SampanaComment {

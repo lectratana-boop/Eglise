@@ -463,7 +463,7 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
               <div className="flex flex-col items-center shrink-0">
                 <div className="relative w-15 h-15 rounded-full border-2 border-amber-400 shadow-md overflow-hidden bg-violet-950 flex items-center justify-center">
                   <img
-                    src={getMemberAvatar(activeUser.id)}
+                    src={activeUser.photo || getMemberAvatar(activeUser.id)}
                     alt={activeUser.name}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
