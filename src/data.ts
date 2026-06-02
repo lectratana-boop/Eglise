@@ -18,6 +18,10 @@ export const INITIAL_CHURCHES: Church[] = [
 ];
 
 export const INITIAL_MEMBERS: Member[] = [
+  // Special authentic user accounts requested by user
+  { id: "m-admin", churchId: "fjkm-isotry", name: "Admin", phone: "034 65 154 53", address: "Bureau Fifohazana Isotry", role: "Mpitandrina" },
+  { id: "m-tantely", churchId: "fjkm-isotry", name: "Tantely", phone: "034 29 944 17", address: "Lot 26 ter mahamasina", role: "Sampana Tanora Kristiana (STK)" },
+
   // FJKM Isotry Fitiavana members
   { id: "m1", churchId: "fjkm-isotry", name: "Andry Rakotomalala", phone: "034 12 345 67", address: "Isotry II G 12", role: "Loholona" },
   { id: "m2", churchId: "fjkm-isotry", name: "Miora Rasoarilalao", phone: "032 98 765 43", address: "67Ha Atsimo III Y 3", role: "Diakra" },

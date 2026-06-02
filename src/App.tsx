@@ -97,14 +97,14 @@ export default function App() {
     }
   }, [loggedInMember]);
 
-  const handleRegisterAndLogin = (name: string, phone: string) => {
+  const handleRegisterAndLogin = (name: string, phone: string, requestedRole?: string) => {
     const newMember: Member = {
       id: `mem-${Date.now()}`,
       churchId: activeChurchId || 'fjkm-isotry',
       name: name,
       phone: phone,
-      address: "Lot 26 ter mahamasina",
-      role: "Sampana Tanora Kristiana (STK)" // default sampana
+      address: requestedRole === 'Mpitandrina' ? "Bureau Fifohazana Isotry" : "Lot 26 ter mahamasina",
+      role: requestedRole || "Sampana Tanora Kristiana (STK)" // default sampana
     };
     setMembers(prev => [...prev, newMember]);
     setLoggedInMember(newMember);
@@ -774,6 +774,7 @@ export default function App() {
               members={members}
               churchRoles={churchRoles}
               loggedInMember={loggedInMember}
+              onLogout={() => setLoggedInMember(null)}
             />
           )}
 

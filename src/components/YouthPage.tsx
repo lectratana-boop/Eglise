@@ -24,7 +24,8 @@ import {
   MessageSquareOff,
   Phone,
   MapPin,
-  Globe
+  Globe,
+  LogOut
 } from 'lucide-react';
 
 interface YouthPageProps {
@@ -32,6 +33,7 @@ interface YouthPageProps {
   members: Member[];
   churchRoles: string[];
   loggedInMember: Member | null;
+  onLogout: () => void;
 }
 
 // Default initial posts in case localStorage is empty
@@ -104,7 +106,7 @@ const getMemberAvatar = (memberId: string) => {
   return avatars[sum % avatars.length];
 };
 
-export default function YouthPage({ isElderlyMode, members, churchRoles, loggedInMember }: YouthPageProps) {
+export default function YouthPage({ isElderlyMode, members, churchRoles, loggedInMember, onLogout }: YouthPageProps) {
   // Posts stored in state & localStorage
   const [posts, setPosts] = useState<SampanaPost[]>(() => {
     const saved = localStorage.getItem('mifandray_sampana_posts');
@@ -462,6 +464,24 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
           </div>
         </div>
       ) : null}
+
+      {/* Elegant logout action trigger requested by user */}
+      {activeUser && (
+        <div className="flex justify-end pr-1 mt-1">
+          <button
+            id="btn-sortir-sampana"
+            onClick={() => {
+              if (confirm("Hivoaka ny kaontinao ve ianao?")) {
+                onLogout();
+              }
+            }}
+            className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 border-b-[3px] border-rose-805 cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Hivoaka ny application (Sortir)</span>
+          </button>
+        </div>
+      )}
 
       {/* 2. CORE DEPARTMENT SCREEN - MOVED ALL THE WAY UP AND DE-CLUTTERED AS REQUESTED */}
       {activeUser && userSampanaList.length === 0 && (
