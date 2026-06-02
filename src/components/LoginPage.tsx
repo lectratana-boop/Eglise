@@ -52,22 +52,14 @@ export default function LoginPage({ members, onLogin, onRegisterAndLogin }: Logi
       <div className="absolute bottom-10 left-10 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Header section with F.P.Fi Church Logo */}
-      <div className="w-full text-center space-y-3 pt-6 animate-fadeIn">
-        <div className="mx-auto w-24 h-24 rounded-full bg-white p-2 flex items-center justify-center shadow-2xl border border-violet-500/20 overflow-hidden">
+      <div className="w-full text-center py-4 animate-fadeIn">
+        <div className="mx-auto w-40 h-40 sm:w-48 sm:h-48 rounded-full bg-white p-3 flex items-center justify-center shadow-2xl border border-violet-500/10 overflow-hidden">
           <img
             src={churchLogo}
             alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
             referrerPolicy="no-referrer"
-            className="w-full h-full object-contain mix-blend-multiply"
+            className="w-full h-full object-contain mix-blend-multiply rounded-full scale-102"
           />
-        </div>
-        <div>
-          <h1 className="text-xl font-black tracking-tight text-white uppercase select-none">
-            Mifandray <span className="text-amber-400">F.P.Fi</span>
-          </h1>
-          <p className="text-[10px] text-slate-300 uppercase font-black tracking-widest mt-0.5">
-            Fiangonana Protestante Fifohazana Isotry
-          </p>
         </div>
       </div>
 

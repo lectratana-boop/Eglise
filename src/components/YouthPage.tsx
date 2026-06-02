@@ -584,23 +584,7 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
         </div>
       ) : null}
 
-      {/* Elegant logout action trigger requested by user - positioned below */}
-      {activeUser && (
-        <div className="flex justify-end pr-1 mt-1">
-          <button
-            id="btn-sortir-sampana"
-            onClick={() => {
-              if (confirm("Hivoaka ny kaontinao ve ianao?")) {
-                onLogout();
-              }
-            }}
-            className="w-full py-2 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white font-black text-[11px] uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 border-b-[3px] border-rose-800 cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Hivoaka ny application (Sortir)</span>
-          </button>
-        </div>
-      )}
+
 
       {/* 2. CORE DEPARTMENT SCREEN - MOVED ALL THE WAY UP AND DE-CLUTTERED AS REQUESTED */}
       {activeUser && userSampanaList.length === 0 && (
