@@ -169,17 +169,6 @@ export default function LoginPage({ members, onLogin, onRegisterAndLogin }: Logi
             <span>Hiditra ato amin'ny Sehatra (Entrer) ➔</span>
           </button>
         </form>
-
-        <div className="border-t border-slate-800/80 pt-2.5 text-center">
-          <div className="inline-flex items-center gap-1 justify-center text-[9px] text-slate-500 uppercase font-black">
-            <Shield className="w-3.5 h-3.5 text-amber-500/80" />
-            <span>Sora-baventy voaaro sy azo antoka ny findainao</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full text-center text-[10px] text-slate-600 font-bold pb-2 uppercase tracking-tight">
-        Fiangonana Protestante Fifohazana Isotry (F.P.Fi) © 2026
       </div>
     </div>
   );
