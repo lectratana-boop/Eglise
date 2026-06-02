@@ -31,6 +31,28 @@ export interface Member {
   phone: string;
   address: string;
   role: string; // e.g., Loholona, Diakra, Mpihira, Tsotra
+  roles?: string[]; // Multiple roles/sampana selected by admin
+}
+
+export interface SampanaComment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface SampanaPost {
+  id: string;
+  sampanaName: string; // which department it belongs to
+  authorId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+  color: string;
+  likes: string[]; // member IDs who liked
+  reactions?: { [emoji: string]: string[] }; // { '👍': ['mem-1'], '❤️': ['mem-2'] }
+  comments?: SampanaComment[];
 }
 
 export interface Announcement {

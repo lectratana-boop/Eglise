@@ -96,6 +96,29 @@ export default function App() {
   });
 
   // Settings & Theme
+  const [churchRoles, setChurchRoles] = useState<string[]>(() => {
+    const saved = localStorage.getItem('mifandray_church_roles');
+    return saved ? JSON.parse(saved) : [
+      "Sampana Dorkasy",
+      "Sampana Lehilahy Kristianina (SLK)",
+      "Sampana Tanora Kristiana (STK)",
+      "Sampana Sekoly Alahady (SA)",
+      "Sampana Vokovoko Manga",
+      "SAMPATI (Sampana Mpanazava sy Tily)",
+      "Sampana Fifohazana (SAFIF)",
+      "Sampana SFL (Sampana Fiangonana sy ny Loholona)",
+      "Chorales (Pihira choral / Antoko mpihira)",
+      "Mpampianatra sekoly alahady",
+      "Loholona",
+      "Diakra",
+      "Mpitandrina"
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mifandray_church_roles', JSON.stringify(churchRoles));
+  }, [churchRoles]);
+
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('mifandray_theme') === 'dark';
   });
@@ -126,6 +149,35 @@ export default function App() {
   const [editHetsikaContent, setEditHetsikaContent] = useState('');
   const [editHafaTitle, setEditHafaTitle] = useState('');
   const [editHafaContent, setEditHafaContent] = useState('');
+
+  // Admin dynamic roles edit states
+  const [roleInputValue, setRoleInputValue] = useState('');
+  const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
+
+  const addNewRole = () => {
+    if (!roleInputValue.trim()) {
+      alert("Tsy azo avela ho foana ny anaran'andraikitra!");
+      return;
+    }
+    setChurchRoles(prev => [...prev, roleInputValue.trim()]);
+    setRoleInputValue('');
+  };
+
+  const saveEditedRole = () => {
+    if (!roleInputValue.trim()) {
+      alert("Tsy azo avela ho foana ny anaran'andraikitra!");
+      return;
+    }
+    if (editingRoleIndex !== null) {
+      setChurchRoles(prev => {
+        const copy = [...prev];
+        copy[editingRoleIndex] = roleInputValue.trim();
+        return copy;
+      });
+      setRoleInputValue('');
+      setEditingRoleIndex(null);
+    }
+  };
 
   // Sync state to localStorage on modification
   useEffect(() => {
@@ -197,6 +249,16 @@ export default function App() {
       id: `mem-${Date.now()}`
     };
     setMembers(prev => [...prev, fresh]);
+  };
+
+  const handleUpdateMember = (id: string, updatedFields: Partial<Member>) => {
+    setMembers(prev => prev.map(m => m.id === id ? { ...m, ...updatedFields } : m));
+  };
+
+  const handleDeleteMember = (id: string) => {
+    if (confirm("Tena hovonoina tokoa ve ity mpikambana ity?")) {
+      setMembers(prev => prev.filter(m => m.id !== id));
+    }
   };
 
   const handleAddAnnouncement = (newAnn: Omit<Announcement, 'id' | 'date'>) => {
@@ -638,7 +700,11 @@ export default function App() {
           )}
 
           {activeTab === 'Jeunes' && (
-            <YouthPage isElderlyMode={isElderlyMode} />
+            <YouthPage
+              isElderlyMode={isElderlyMode}
+              members={members}
+              churchRoles={churchRoles}
+            />
           )}
 
           {activeTab === 'Sermons' && (
@@ -824,12 +890,107 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Andraikitra sy Sampana Management Panel */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 p-4 rounded-xl shadow-xs space-y-3">
+                <span className="text-[9px] font-black uppercase bg-amber-100 dark:bg-amber-955 text-amber-700 dark:text-amber-300 py-0.5 px-2 rounded font-sans">
+                  Andraikitra sy Sampana
+                </span>
+                <h3 className="font-extrabold text-xs text-slate-850 dark:text-white leading-none mt-1">
+                  Andraikitra ao amin'ny Fiangonana
+                </h3>
+                <p className="text-[10px] text-slate-400">
+                  Azonao atao ny mampiditra andraikitra vaovao, manova, na mamafa ireo efa misy izay isafidianana amin'ny fampidirana mpikambana.
+                </p>
+
+                {/* Form to Add / Edit a Role */}
+                <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl space-y-2 border border-slate-200 dark:border-slate-850">
+                  <span className="block text-[9.5px] font-black text-slate-400 dark:text-slate-500 uppercase">
+                    {editingRoleIndex !== null ? `Hanova ny Andraikitra faha-${editingRoleIndex + 1}` : 'Hampiditra Andraikitra Vaovao'}
+                  </span>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={roleInputValue}
+                      onChange={(e) => setRoleInputValue(e.target.value)}
+                      placeholder="Ohatra: Sampana Dorkasy..."
+                      className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-850 dark:text-slate-100 outline-none focus:ring-1 focus:ring-amber-500 font-semibold"
+                    />
+                    {editingRoleIndex !== null ? (
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={saveEditedRole}
+                          className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 font-bold text-white text-xs rounded-lg cursor-pointer"
+                        >
+                          Tehirizina
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingRoleIndex(null);
+                            setRoleInputValue('');
+                          }}
+                          className="py-1.5 px-2 bg-slate-350 hover:bg-slate-450 font-bold text-white text-xs rounded-lg cursor-pointer"
+                        >
+                          Avelao
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={addNewRole}
+                        className="py-1.5 px-3 bg-amber-600 hover:bg-amber-700 font-bold text-white text-xs rounded-lg cursor-pointer shrink-0"
+                      >
+                        Hampiditra
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* List of Church Roles with simple scroll */}
+                <div className="max-h-60 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
+                  {churchRoles.map((roleName, rIdx) => (
+                    <div key={roleName + rIdx} className="p-2.5 flex items-center justify-between gap-3 text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="flex items-center gap-1.5 truncate">
+                        <span className="text-[10px] text-slate-400 font-mono">#{rIdx + 1}</span>
+                        <span className="truncate">{roleName}</span>
+                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => {
+                            setEditingRoleIndex(rIdx);
+                            setRoleInputValue(roleName);
+                          }}
+                          className="p-1 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-755 text-[10px] text-slate-650 dark:text-slate-300 rounded cursor-pointer"
+                        >
+                          Ovao ✏️
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Tena ho fafanao tokoa ve ny andraikitra "${roleName}"?`)) {
+                              setChurchRoles(prev => prev.filter((_, idx) => idx !== rIdx));
+                              if (editingRoleIndex === rIdx) {
+                                setEditingRoleIndex(null);
+                                setRoleInputValue('');
+                              }
+                            }
+                          }}
+                          className="p-1 px-2 bg-rose-50 hover:bg-rose-100 text-[10px] text-rose-600 rounded cursor-pointer"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Member lists nested in settings admin screen */}
               <div>
                 <MembersPage
                   churchId={activeChurchId}
                   members={members}
+                  churchRoles={churchRoles}
                   onAddMember={handleAddMember}
+                  onUpdateMember={handleUpdateMember}
+                  onDeleteMember={handleDeleteMember}
                   isElderlyMode={isElderlyMode}
                 />
               </div>
