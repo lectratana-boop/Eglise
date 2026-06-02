@@ -14,9 +14,13 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
   const LogoBadge = ({ size = badgeSize }: { size?: string }) => (
     <svg
       viewBox="0 0 200 200"
+      width="200"
+      height="200"
       className={`${size} shrink-0 select-none transition-all duration-300`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      shapeRendering="geometricPrecision"
+      textRendering="geometricPrecision"
     >
       {/* Outer Circle Frame */}
       <circle cx="100" cy="100" r="92" stroke="#003366" strokeWidth="5.5" fill="none" />
@@ -80,7 +84,7 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
-          className="absolute right-4 top-4 p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 text-[#003366] dark:text-sky-305 border border-slate-200 dark:border-slate-700 cursor-pointer active:scale-95 transition-all flex items-center justify-center shadow-xs z-10"
+          className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 text-[#003366] dark:text-sky-305 border border-slate-200 dark:border-slate-700 cursor-pointer active:scale-95 transition-all flex items-center justify-center shadow-xs z-10"
           title={isExpanded ? "Hanameloka" : "Agrandir"}
         >
           {isExpanded ? (

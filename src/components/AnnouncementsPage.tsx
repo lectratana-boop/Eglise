@@ -5,12 +5,14 @@
 
 import React, { useState } from 'react';
 import { Announcement } from '../types';
-import { Megaphone, Calendar, Filter, Plus, X, Tag, FileText } from 'lucide-react';
+import { Megaphone, Calendar, Filter, Plus, X, Tag, FileText, Edit2, Trash2, Save, Undo } from 'lucide-react';
 
 interface AnnouncementsPageProps {
   churchId: string;
   announcements: Announcement[];
   onAddAnnouncement: (ann: Omit<Announcement, 'id' | 'date'>) => void;
+  onUpdateAnnouncement: (id: string, updatedFields: Partial<Announcement>) => void;
+  onDeleteAnnouncement: (id: string) => void;
   isElderlyMode: boolean;
 }
 
@@ -18,6 +20,8 @@ export default function AnnouncementsPage({
   churchId,
   announcements,
   onAddAnnouncement,
+  onUpdateAnnouncement,
+  onDeleteAnnouncement,
   isElderlyMode
 }: AnnouncementsPageProps) {
   const [activeCategory, setActiveCategory] = useState<'rehetra' | 'fivoriana' | 'hetsika' | 'hafa'>('rehetra');
@@ -25,6 +29,11 @@ export default function AnnouncementsPage({
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<'fivoriana' | 'hetsika' | 'hafa'>('fivoriana');
   const [content, setContent] = useState('');
+
+  // Local inline editing states for specific announcement card
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
 
   const filteredAnnouncements = announcements.filter(ann => {
     const matchesChurch = ann.churchId === churchId;
@@ -50,6 +59,30 @@ export default function AnnouncementsPage({
     setContent('');
     setCategory('fivoriana');
     setIsPublishing(false);
+  };
+
+  const startEditing = (ann: Announcement) => {
+    setEditingId(ann.id);
+    setEditTitle(ann.title);
+    setEditContent(ann.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditTitle('');
+    setEditContent('');
+  };
+
+  const handleSaveEdit = (id: string) => {
+    if (!editTitle.trim() || !editContent.trim()) {
+      alert("Tsy azo avela ho foana ny lohateny sy ny vontoatiny!");
+      return;
+    }
+    onUpdateAnnouncement(id, {
+      title: editTitle.trim(),
+      content: editContent.trim()
+    });
+    setEditingId(null);
   };
 
   const getCategoryTheme = (cat: string) => {
@@ -126,44 +159,118 @@ export default function AnnouncementsPage({
             </p>
           </div>
         ) : (
-          filteredAnnouncements.map((ann) => (
-            <div
-              id={`announcement-card-${ann.id}`}
-              key={ann.id}
-              className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-155 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all overflow-hidden"
-            >
-              <div className="p-5 sm:p-6 space-y-4">
-                
-                {/* Meta details */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2.5 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-wider ${getCategoryTheme(ann.category)}`}>
-                      {ann.category}
-                    </span>
-                    <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      Navoaka: {ann.date}
+          filteredAnnouncements.map((ann) => {
+            const isEditing = editingId === ann.id;
+            return (
+              <div
+                id={`announcement-card-${ann.id}`}
+                key={ann.id}
+                className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-155 dark:border-slate-700/80 shadow-sm hover:shadow-md transition-all overflow-hidden"
+              >
+                <div className="p-5 sm:p-6 space-y-4">
+                  
+                  {/* Meta details */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-wider ${getCategoryTheme(ann.category)}`}>
+                        {ann.category}
+                      </span>
+                      <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        Navoaka: {ann.date}
+                      </span>
+                    </div>
+                    
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded self-start sm:self-center">
+                      Filazana ofisialy ✔
                     </span>
                   </div>
-                  
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded self-start sm:self-center">
-                    Filazana ofisialy ✔
-                  </span>
-                </div>
 
-                {/* Announcement Message contents */}
-                <div className="space-y-2">
-                  <h3 className={`${isElderlyMode ? 'text-2xl' : 'text-lg'} font-bold text-slate-850 dark:text-slate-100`}>
-                    {ann.title}
-                  </h3>
-                  <p className={`${isElderlyMode ? 'text-lg lg:text-xl' : 'text-sm'} text-slate-600 dark:text-slate-350 leading-relaxed font-sans whitespace-pre-wrap`}>
-                    {ann.content}
-                  </p>
-                </div>
+                  {isEditing ? (
+                    /* EDIT MODE FORM FIELDS WITHIN CARD */
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">
+                          Lohateny *
+                        </label>
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-slate-800 dark:text-slate-100 outline-none text-sm font-bold focus:ring-1 focus:ring-violet-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">
+                          Vontoatiny (Content) *
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-slate-800 dark:text-slate-100 outline-none text-sm leading-relaxed focus:ring-1 focus:ring-violet-500"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Announcement Message contents VIEW MODE */
+                    <div className="space-y-2">
+                      <h3 className={`${isElderlyMode ? 'text-2xl' : 'text-lg'} font-bold text-slate-850 dark:text-slate-100`}>
+                        {ann.title}
+                      </h3>
+                      <p className={`${isElderlyMode ? 'text-lg lg:text-xl' : 'text-sm'} text-slate-600 dark:text-slate-350 leading-relaxed font-sans whitespace-pre-wrap`}>
+                        {ann.content}
+                      </p>
+                    </div>
+                  )}
 
+                  {/* ACTION FOOTER CONTAINING THE 3 BUTTONS (DELETE, EDIT, SAUVEGARDE) AS REQUESTED */}
+                  <div className="flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-700/50 pt-3.5 mt-2">
+                    {isEditing ? (
+                      <>
+                        <button
+                          onClick={() => handleSaveEdit(ann.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+                          title="Tahiry / Enregistrer (Sauvegarde)"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          <span>Sauvegarde</span>
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-650 text-slate-650 dark:text-slate-350 rounded-lg text-xs font-semibold cursor-pointer transition-all active:scale-95"
+                          title="Manafoana"
+                        >
+                          <Undo className="w-3.5 h-3.5" />
+                          <span>Hanafoana</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEditing(ann)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/30 dark:hover:bg-violet-900/40 text-violet-600 dark:text-violet-300 rounded-lg text-xs font-bold cursor-pointer transition-all active:scale-95 border border-violet-150/50 dark:border-violet-800/30"
+                          title="Hanova / Edit"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => onDeleteAnnouncement(ann.id)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-955/20 dark:hover:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-lg text-xs font-bold cursor-pointer transition-all active:scale-95 border border-rose-150/50 dark:border-rose-900/20"
+                          title="Hamafa / Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

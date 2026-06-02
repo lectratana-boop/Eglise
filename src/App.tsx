@@ -209,6 +209,16 @@ export default function App() {
     setAnnouncements(prev => [fresh, ...prev]);
   };
 
+  const handleUpdateAnnouncement = (id: string, updatedFields: Partial<Announcement>) => {
+    setAnnouncements(prev => prev.map(ann => ann.id === id ? { ...ann, ...updatedFields } : ann));
+  };
+
+  const handleDeleteAnnouncement = (id: string) => {
+    if (confirm("Tena hovonoina tokoa ve ity filazana ity?")) {
+      setAnnouncements(prev => prev.filter(ann => ann.id !== id));
+    }
+  };
+
   const handleAddEvent = (newEv: Omit<ChurchEvent, 'id'>) => {
     const fresh: ChurchEvent = {
       ...newEv,
@@ -318,24 +328,24 @@ export default function App() {
       cat === 'hetsika' ? activeChurch.customHetsikaDate :
       activeChurch.customHafaDate;
 
-    // Use customized admin fields only if they are not blank / empty
-    if (customTitle && customTitle.trim() && customContent && customContent.trim()) {
-      return {
-        id: `custom-${cat}`,
-        title: customTitle.trim(),
-        content: customContent.trim(),
-        date: customDate || new Date().toISOString().split('T')[0],
-        category: cat,
-        isCustom: true
-      };
-    }
-
-    // Default Fallback
+    // Get the default fallback announcement first
     const defaultAnn = announcements.find(a => a.churchId === activeChurchId && a.category === cat);
-    if (defaultAnn) {
+    
+    // Fallback on a field-by-field basis if any is empty / blank
+    const titleToUse = (customTitle && customTitle.trim()) ? customTitle.trim() : (defaultAnn?.title || "");
+    const contentToUse = (customContent && customContent.trim()) ? customContent.trim() : (defaultAnn?.content || "");
+
+    const isCustomized = !!((customTitle && customTitle.trim()) || (customContent && customContent.trim()));
+
+    if (titleToUse || contentToUse) {
       return {
-        ...defaultAnn,
-        isCustom: false
+        id: defaultAnn?.id || `custom-${cat}`,
+        title: titleToUse,
+        content: contentToUse,
+        // The date of communication must follow the date of update of the information
+        date: isCustomized ? (customDate || new Date().toISOString().split('T')[0]) : (defaultAnn?.date || new Date().toISOString().split('T')[0]),
+        category: cat,
+        isCustom: isCustomized
       };
     }
 
@@ -373,41 +383,41 @@ export default function App() {
         
         {/* TOP STATUS BAR REMOVED AND LEFT CLEAN AS REQUESTED */}
 
-        {/* COMPREHENSIVE PHONE TOP HEADER ACTION RAIL */}
-        <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800 px-4 py-2.5 flex items-center justify-between gap-1 shrink-0">
-          <div className="flex-1 flex justify-start py-0.5">
-            {activeTab !== 'Accueil' && (
+        {/* COMPREHENSIVE PHONE TOP HEADER ACTION RAIL - hidden on home screen */}
+        {activeTab !== 'Accueil' && (
+          <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800 px-4 py-2.5 flex items-center justify-between gap-1 shrink-0">
+            <div className="flex-1 flex justify-start py-0.5">
               <ChurchLogo layout="horizontal" badgeSize="h-8.5 w-8.5" />
-            )}
-          </div>
+            </div>
 
-          {/* Quick Accessibilities inside header */}
-          <div className="flex items-center gap-1 shrink-0 justify-end">
-            {/* Elderly Friendly Toggle button */}
-            <button
-              id="btn-toggle-accessibility"
-              onClick={() => setIsElderlyMode(!isElderlyMode)}
-              className={`p-1 rounded-lg border transition-all text-[8.5px] font-black cursor-pointer flex items-center justify-center gap-0.5 ${
-                isElderlyMode
-                  ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-705'
-              }`}
-              title="Mora vakina be taona"
-            >
-              <Accessibility className="w-3 h-3" />
-            </button>
+            {/* Quick Accessibilities inside header */}
+            <div className="flex items-center gap-1 shrink-0 justify-end">
+              {/* Elderly Friendly Toggle button */}
+              <button
+                id="btn-toggle-accessibility"
+                onClick={() => setIsElderlyMode(!isElderlyMode)}
+                className={`p-1 rounded-lg border transition-all text-[8.5px] font-black cursor-pointer flex items-center justify-center gap-0.5 ${
+                  isElderlyMode
+                    ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
+                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-705'
+                }`}
+                title="Mora vakina be taona"
+              >
+                <Accessibility className="w-3 h-3" />
+              </button>
 
-            {/* Theme switcher */}
-            <button
-              id="btn-toggle-dark-mode"
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-1 rounded-lg border border-slate-200 dark:border-slate-705 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 hover:shadow-sm"
-              title="Loko maizina"
-            >
-              {darkMode ? <Sun className="w-3 h-3 text-amber-500 fill-amber-400" /> : <Moon className="w-3 h-3 text-slate-650" />}
-            </button>
-          </div>
-        </header>
+              {/* Theme switcher */}
+              <button
+                id="btn-toggle-dark-mode"
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-1 rounded-lg border border-slate-200 dark:border-slate-705 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 hover:shadow-sm"
+                title="Loko maizina"
+              >
+                {darkMode ? <Sun className="w-3 h-3 text-amber-500 fill-amber-400" /> : <Moon className="w-3 h-3 text-slate-650" />}
+              </button>
+            </div>
+          </header>
+        )}
 
         {/* ACCESSIBLE ANNOUNCEMENT RAIL */}
         {isElderlyMode && (
@@ -426,7 +436,36 @@ export default function App() {
             <div className="space-y-4 animate-fadeIn">
               
               {/* Elegant Official Logo Badge at the top of the Tongasoa view - flushed all the way up */}
-              <ChurchLogo layout="square" className="rounded-t-none rounded-b-[32px] border-x-0 border-t-0 p-6 pt-5 w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800/80 shadow-xs" />
+              <div className="relative w-full">
+                <ChurchLogo layout="square" className="rounded-t-none rounded-b-[32px] border-x-0 border-t-0 p-6 pt-8 w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800/80 shadow-xs" />
+                
+                {/* Float Accessibility and Dark Mode toggles to the top right of the screen */}
+                <div className="absolute right-4 top-4 flex items-center gap-1.5 z-10">
+                  {/* Elderly Friendly Toggle button */}
+                  <button
+                    id="btn-toggle-accessibility-home"
+                    onClick={() => setIsElderlyMode(!isElderlyMode)}
+                    className={`p-1.5 rounded-lg border transition-all text-[8.5px] font-black cursor-pointer flex items-center justify-center gap-0.5 ${
+                      isElderlyMode
+                        ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+                    }`}
+                    title="Mora vakina be taona"
+                  >
+                    <Accessibility className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Theme switcher */}
+                  <button
+                    id="btn-toggle-dark-mode-home"
+                    onClick={() => setDarkMode(!darkMode)}
+                    className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 hover:shadow-sm hover:bg-slate-100 dark:hover:bg-slate-750"
+                    title="Loko maizina"
+                  >
+                    {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-650" />}
+                  </button>
+                </div>
+              </div>
 
               {/* Home main padded container */}
               <div className="px-4 space-y-4">
@@ -596,6 +635,8 @@ export default function App() {
               churchId={activeChurchId}
               announcements={announcements}
               onAddAnnouncement={handleAddAnnouncement}
+              onUpdateAnnouncement={handleUpdateAnnouncement}
+              onDeleteAnnouncement={handleDeleteAnnouncement}
               isElderlyMode={isElderlyMode}
             />
           )}

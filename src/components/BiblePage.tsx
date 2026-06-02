@@ -36,49 +36,98 @@ function normalizeBookName(name: string): string {
   return norm;
 }
 
-// Try parsing reference e.g., "Jaona 3:16", "Salamo 23"
-function parseBibleReference(query: string) {
-  const normalized = query.toLowerCase().trim();
+const CATHOLIC_DEUTEROCANONICAL = [
+  { name: "Tobia", englishName: "Tobit", chapters: 14, testament: "Taloha" as const, category: "Tantara" },
+  { name: "Jodita", englishName: "Judith", chapters: 16, testament: "Taloha" as const, category: "Tantara" },
+  { name: "Fahendrena", englishName: "Wisdom", chapters: 19, testament: "Taloha" as const, category: "Poeta" },
+  { name: "Sirasida", englishName: "Sirach", chapters: 51, testament: "Taloha" as const, category: "Poeta" },
+  { name: "Baroka", englishName: "Baruch", chapters: 6, testament: "Taloha" as const, category: "Mpaminany" },
+  { name: "1 Makabeo", englishName: "1 Maccabees", chapters: 16, testament: "Taloha" as const, category: "Tantara" },
+  { name: "2 Makabeo", englishName: "2 Maccabees", chapters: 15, testament: "Taloha" as const, category: "Tantara" },
+];
+
+// Try parsing reference e.g., "peter 1 toko 3 andiny 5 hatr@ 10" or "Jaona 3:16"
+function parseBibleReference(query: string, bibleVersion: 'FJKM' | 'Katolika') {
+  const normalized = query.toLowerCase().trim().replace(/\s+/g, ' ');
   if (!normalized) return null;
 
-  let matchedBook = null;
-  let matchedBookNameLength = 0;
+  const booksList = bibleVersion === 'Katolika' 
+    ? [...BIBLE_BOOKS, ...CATHOLIC_DEUTEROCANONICAL] 
+    : BIBLE_BOOKS;
 
-  for (const b of BIBLE_BOOKS) {
+  let matchedBook = null;
+  let bookCleanedQuery = normalized;
+
+  // Search if the query contains any of the book names or English names
+  for (const b of booksList) {
     const bNameLower = b.name.toLowerCase();
-    const bNormName = normalizeBookName(bNameLower);
     const engNameLower = b.englishName.toLowerCase();
 
-    // Check query starts with Malagasy book name, English book name, or short code
     if (normalized.startsWith(bNameLower)) {
-      if (bNameLower.length > matchedBookNameLength) {
-        matchedBook = b;
-        matchedBookNameLength = bNameLower.length;
-      }
+      matchedBook = b;
+      bookCleanedQuery = normalized.substring(bNameLower.length).trim();
+      break;
     } else if (normalized.startsWith(engNameLower)) {
-      if (engNameLower.length > matchedBookNameLength) {
-        matchedBook = b;
-        matchedBookNameLength = engNameLower.length;
-      }
-    } else {
-      // Test other variations using normalizeBookName
-      const shortCode = bNameLower.substring(0, 3);
-      if (normalized.startsWith(shortCode) && shortCode.length >= 3) {
-        if (shortCode.length > matchedBookNameLength) {
-          matchedBook = b;
-          matchedBookNameLength = shortCode.length;
+      matchedBook = b;
+      bookCleanedQuery = normalized.substring(engNameLower.length).trim();
+      break;
+    }
+  }
+
+  // Fallback for custom Malagasy phrasing like "peter 1" instead of "1 petera"
+  if (!matchedBook) {
+    const aliases: { [key: string]: string } = {
+      "petera": "Petera", "peter": "Petera", "pe": "Petera",
+      "korintiana": "Korintiana", "corinthians": "Korintiana", "kor": "Korintiana",
+      "tesaloniana": "Tesaloniana", "thessalonians": "Tesaloniana", "tes": "Tesaloniana",
+      "timoty": "Timoty", "timothy": "Timoty", "tim": "Timoty",
+      "mpanjaka": "Mpanjaka", "kings": "Mpanjaka",
+      "kronika": "Kronika", "chronicles": "Kronika", "kro": "Kronika",
+      "samoela": "Samoela", "samuel": "Samoela", "sam": "Samoela",
+      "jaona": "Jaona", "john": "Jaona", "jao": "Jaona",
+      "matio": "Matio", "matthew": "Matio", "mat": "Matio",
+      "marka": "Marka", "mark": "Marka", "mar": "Marka",
+      "lioka": "Lioka", "luke": "Lioka", "lio": "Lioka",
+      "genesisy": "Genesisy", "genesis": "Genesisy", "gen": "Genesisy",
+      "eksodosy": "Eksodosy", "exodus": "Eksodosy", "eks": "Eksodosy",
+      "salamo": "Salamo", "psalms": "Salamo", "sal": "Salamo",
+      "ohabolana": "Ohabolana", "proverbs": "Ohabolana", "ohab": "Ohabolana",
+      "apokalypsy": "Apokalypsy", "revelation": "Apokalypsy", "apok": "Apokalypsy",
+      "romana": "Romana", "romans": "Romana", "rom": "Romana",
+      "hebreo": "Hebreo", "hebrews": "Hebreo", "heb": "Hebreo"
+    };
+
+    for (const [kw, official] of Object.entries(aliases)) {
+      if (normalized.includes(kw)) {
+        let numPrefix = "";
+        if (normalized.includes("1") || normalized.includes("voalohany") || normalized.includes("i ")) {
+          numPrefix = "1 ";
+        } else if (normalized.includes("2") || normalized.includes("faharoa") || normalized.includes("ii ")) {
+          numPrefix = "2 ";
+        } else if (normalized.includes("3") || normalized.includes("fahatelo") || normalized.includes("iii ")) {
+          numPrefix = "3 ";
+        }
+
+        const targetName = (numPrefix + official).trim().toLowerCase();
+        const found = booksList.find(b => b.name.toLowerCase() === targetName || b.name.toLowerCase().includes(targetName));
+        if (found) {
+          matchedBook = found;
+          bookCleanedQuery = normalized
+            .replace(kw, '')
+            .replace(/1|2|3|voalohany|faharoa|fahatelo|i |ii |iii/g, '')
+            .trim();
+          break;
         }
       }
     }
   }
 
-  // Also support containing the word anywhere in case of typos
+  // Exact matching anything remaining
   if (!matchedBook) {
-    for (const b of BIBLE_BOOKS) {
-      const bNameLower = b.name.toLowerCase();
-      if (normalized.includes(bNameLower)) {
+    for (const b of booksList) {
+      if (normalized.includes(b.name.toLowerCase())) {
         matchedBook = b;
-        matchedBookNameLength = bNameLower.length;
+        bookCleanedQuery = normalized.replace(b.name.toLowerCase(), '').trim();
         break;
       }
     }
@@ -86,26 +135,38 @@ function parseBibleReference(query: string) {
 
   if (!matchedBook) return null;
 
-  // Extract remaining string to get chapter and verse numbers
-  // Example: "jaona 3:16" => matchedBookNameLength of "jaona" is 5 => remaining is " 3:16"
-  const remaining = normalized.substring(matchedBookNameLength).trim();
-  const digits = remaining.match(/\d+/g);
+  // Clean and prepare values
+  // Replace words with markers to parse easily
+  let prep = bookCleanedQuery
+    .replace(/(toko|tk|chapter|ch)/g, 'C')
+    .replace(/(andininy|andiny|and|verse|v)/g, 'V')
+    .replace(/(hatr@|hatramin|hatra|ka hatramin'ny|to|-)/g, 'H');
 
-  const result: { book: typeof BIBLE_BOOKS[0]; chapter?: number; verse?: number } = {
-    book: matchedBook
-  };
+  let chapterVal: number | undefined = undefined;
+  let verseStartVal: number | undefined = undefined;
+  let verseEndVal: number | undefined = undefined;
 
-  if (digits && digits.length > 0) {
-    result.chapter = parseInt(digits[0], 10);
-    if (digits.length > 1) {
-      result.verse = parseInt(digits[1], 10);
+  const allDigits = prep.match(/\d+/g);
+  if (allDigits && allDigits.length > 0) {
+    chapterVal = parseInt(allDigits[0], 10);
+    if (allDigits.length > 1) {
+      verseStartVal = parseInt(allDigits[1], 10);
+    }
+    if (allDigits.length > 2) {
+      verseEndVal = parseInt(allDigits[2], 10);
     }
   }
 
-  return result;
+  return {
+    book: matchedBook,
+    chapter: chapterVal,
+    verseStart: verseStartVal,
+    verseEnd: verseEndVal
+  };
 }
 
 export default function BiblePage({ isElderlyMode }: BiblePageProps) {
+  const [bibleVersion, setBibleVersion] = useState<'FJKM' | 'Katolika'>('FJKM');
   const [selectedBook, setSelectedBook] = useState('Salamo');
   const [selectedChapter, setSelectedChapter] = useState(23);
   const [testamentTab, setTestamentTab] = useState<'Taloha' | 'Vaovao'>('Taloha');
@@ -118,15 +179,23 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [activeVerseNum, setActiveVerseNum] = useState<number | null>(null);
 
+  // States to persist custom user requested range from search reference
+  const [verseStart, setVerseStart] = useState<number | null>(null);
+  const [verseEnd, setVerseEnd] = useState<number | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const booksList = bibleVersion === 'Katolika' 
+    ? [...BIBLE_BOOKS, ...CATHOLIC_DEUTEROCANONICAL] 
+    : BIBLE_BOOKS;
 
   // Set testamentTab automatically when selected book changes
   useEffect(() => {
-    const bookMeta = BIBLE_BOOKS.find(b => b.name === selectedBook);
+    const bookMeta = booksList.find(b => b.name === selectedBook);
     if (bookMeta) {
       setTestamentTab(bookMeta.testament);
     }
-  }, [selectedBook]);
+  }, [selectedBook, bibleVersion]);
 
   // Sync elderly mode size
   useEffect(() => {
@@ -136,6 +205,12 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
       setTextSize(18);
     }
   }, [isElderlyMode]);
+
+  // Clear verse ranges when book or chapter changes
+  useEffect(() => {
+    setVerseStart(null);
+    setVerseEnd(null);
+  }, [selectedBook, selectedChapter]);
 
   // Clean audio on unmount
   useEffect(() => {
@@ -157,23 +232,76 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
 
   const currentVerses = getChapterVerses(selectedBook, selectedChapter);
 
-  // Audio text synthesis
+  // Apply user requested boundaries (e.g. Peter 1 Toko 3 Andiny 5 hatr@ 10)
+  // If no verse was requested: show ALL verses from 1 to the end (empty range)
+  const displayedVerses = currentVerses.filter(v => {
+    if (verseStart !== null) {
+      if (verseEnd !== null) {
+        return v.number >= verseStart && v.number <= verseEnd;
+      }
+      return v.number === verseStart;
+    }
+    return true; // show all
+  });
+
+  // Audio text synthesis with phonetic Malagasy optimization for multilingual TTS
   const handleToggleVoice = () => {
     if (isPlayingAudio) {
       window.speechSynthesis.cancel();
       setIsPlayingAudio(false);
     } else {
-      const textToRead = currentVerses
+      const textToRead = displayedVerses
         .map(v => `Andininy faha ${v.number}: ${v.text}`)
         .join('. ');
 
-      const utterance = new SpeechSynthesisUtterance(
-        `${selectedBook} toko faha ${selectedChapter}. ${textToRead}`
-      );
+      const fullText = `${selectedBook} toko faha ${selectedChapter}. ${textToRead}`;
+      const utterance = new SpeechSynthesisUtterance(fullText);
       
-      utterance.lang = 'fr-FR'; // French voice accents read Malagasy letters beautifully
-      utterance.rate = isElderlyMode ? 0.8 : 0.9;
-      utterance.pitch = 1.0;
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        const voices = window.speechSynthesis.getVoices();
+        
+        // 1. Look for native Malagasy voice ('mg')
+        let selectedVoice = voices.find(v => 
+          v.lang.toLowerCase().startsWith('mg') || 
+          v.name.toLowerCase().includes('malagasy')
+        );
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          utterance.lang = selectedVoice.lang;
+        } else {
+          // 2. Look for clear female French voice as perfect Malagasy phonetic proxy
+          const frenchVoices = voices.filter(v => v.lang.toLowerCase().startsWith('fr'));
+          const femaleFrench = frenchVoices.find(v => 
+            v.name.toLowerCase().includes('hortense') || 
+            v.name.toLowerCase().includes('julie') || 
+            v.name.toLowerCase().includes('aurelie') || 
+            v.name.toLowerCase().includes('google') ||
+            v.name.toLowerCase().includes('female')
+          );
+          
+          selectedVoice = femaleFrench || frenchVoices[0];
+          if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            utterance.lang = selectedVoice.lang;
+            
+            // Malagasy letters pronunciation rules for French TTS:
+            // "o" is always pronounced "ou"
+            // "y" is always pronounced "i"
+            // "j" is pronounced "dz" or "di"
+            let phoneticText = fullText
+              .replace(/o/g, 'ou')
+              .replace(/ouou/g, 'ou')
+              .replace(/y/g, 'i')
+              .replace(/j/g, 'dz');
+              
+            utterance.text = phoneticText;
+          }
+        }
+      }
+
+      utterance.rate = isElderlyMode ? 0.75 : 0.85; // slower for perfect clear articulation
+      utterance.pitch = 1.05; // sweet, graceful female tone
 
       utterance.onend = () => setIsPlayingAudio(false);
       utterance.onerror = () => setIsPlayingAudio(false);
@@ -191,7 +319,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
     const maxResults = 80;
 
     // 1. Try to parse as reference search (e.g. "Jaona 3:16", "Salamo 23")
-    const parsedRef = parseBibleReference(searchQuery);
+    const parsedRef = parseBibleReference(searchQuery, bibleVersion);
     if (parsedRef) {
       const bookObj = parsedRef.book;
       const targetChapter = parsedRef.chapter || 1;
@@ -199,29 +327,22 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
       if (targetChapter > 0 && targetChapter <= bookObj.chapters) {
         const verses = getChapterVerses(bookObj.name, targetChapter);
         
-        if (parsedRef.verse) {
-          const targetVerse = parsedRef.verse;
-          const matchingVerse = verses.find(v => v.number === targetVerse);
-          if (matchingVerse) {
+        if (parsedRef.verseStart) {
+          const vStart = parsedRef.verseStart;
+          const vEnd = parsedRef.verseEnd || vStart;
+          
+          const matchingVerses = verses.filter(v => v.number >= vStart && v.number <= vEnd);
+          matchingVerses.forEach(v => {
             results.push({
               book: bookObj.name,
               chapter: targetChapter,
-              verseNumber: targetVerse,
-              text: matchingVerse.text
+              verseNumber: v.number,
+              text: v.text
             });
-          } else if (verses.length > 0) {
-            // Verse not found, suggest starting from first verse of that chapter
-            results.push({
-              book: bookObj.name,
-              chapter: targetChapter,
-              verseNumber: 1,
-              text: `Hanomboka hamaky an'i ${bookObj.name} Toko ${targetChapter} (Andininy faha-${targetVerse} tsy hita)`
-            });
-          }
+          });
         } else {
-          // Just book and chapter, show the first few verses of that chapter
-          const previewVerses = verses.slice(0, 15);
-          previewVerses.forEach(v => {
+          // Show all verses from 1 to the end
+          verses.forEach(v => {
             results.push({
               book: bookObj.name,
               chapter: targetChapter,
@@ -235,7 +356,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
 
     // 2. Perform text-based keyphrase search across all chapters (only for queries > 2 letters to keep it extremely fast)
     if (query.length >= 3) {
-      for (const b of BIBLE_BOOKS) {
+      for (const b of booksList) {
         if (results.length >= maxResults) break;
         for (let ch = 1; ch <= b.chapters; ch++) {
           if (results.length >= maxResults) break;
@@ -261,7 +382,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
     }
 
     // 3. Suggest books matching the name
-    BIBLE_BOOKS.forEach(b => {
+    booksList.forEach(b => {
       if (results.length < maxResults && b.name.toLowerCase().includes(query)) {
         const verses = getChapterVerses(b.name, 1);
         if (verses.length > 0) {
@@ -283,15 +404,15 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
 
   const searchResults = handleSearch();
 
-  // Filter 66 books list
-  const filteredBooks = BIBLE_BOOKS.filter(b => {
+  // Filter books list
+  const filteredBooks = booksList.filter(b => {
     const matchesTab = b.testament === testamentTab;
     const matchesQuery = b.name.toLowerCase().includes(bookQuery.toLowerCase()) || 
                          b.englishName.toLowerCase().includes(bookQuery.toLowerCase());
     return matchesTab && matchesQuery;
   });
 
-  const activeBookMeta = BIBLE_BOOKS.find(b => b.name === selectedBook) || BIBLE_BOOKS[18]; // Salamo is 18
+  const activeBookMeta = booksList.find(b => b.name === selectedBook) || booksList[0];
 
   // Helper for 3D buttons coloring
   const getCategoryColor = (cat: string) => {
@@ -371,6 +492,38 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* Bible translation version toggle (Protestanta vs Katolika) */}
+            <div className="flex bg-slate-50 dark:bg-slate-950 p-1 rounded-xl gap-1 border border-slate-150 dark:border-slate-800">
+              <button
+                onClick={() => {
+                  setBibleVersion('FJKM');
+                  setSelectedBook('Salamo');
+                  setSelectedChapter(23);
+                }}
+                className={`flex-1 py-1.5 px-2.5 rounded-lg text-center text-[10px] font-bold transition-all cursor-pointer ${
+                  bibleVersion === 'FJKM'
+                    ? 'bg-gradient-to-r from-violet-605 to-indigo-600 text-white shadow-xs font-black'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                }`}
+              >
+                📖 PROTESTANTA (FJKM)
+              </button>
+              <button
+                onClick={() => {
+                  setBibleVersion('Katolika');
+                  setSelectedBook('Salamo');
+                  setSelectedChapter(23);
+                }}
+                className={`flex-1 py-1.5 px-2.5 rounded-lg text-center text-[10px] font-bold transition-all cursor-pointer ${
+                  bibleVersion === 'Katolika'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs font-black'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                }`}
+              >
+                ✝️ KATOLIKA (DIEM/EKAR)
+              </button>
             </div>
 
             {/* If searching, only display results. Else, display books and chapters directory */}
@@ -507,6 +660,17 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
                         onClick={() => {
                           setSelectedBook(res.book);
                           setSelectedChapter(res.chapter);
+                          
+                          // Auto parse search query to apply direct verse-level boundaries
+                          const parsedRef = parseBibleReference(searchQuery, bibleVersion);
+                          if (parsedRef && parsedRef.verseStart) {
+                            setVerseStart(parsedRef.verseStart);
+                            setVerseEnd(parsedRef.verseEnd || parsedRef.verseStart);
+                          } else {
+                            setVerseStart(null);
+                            setVerseEnd(null);
+                          }
+                          
                           setActiveVerseNum(res.verseNumber);
                           setSearchQuery('');
                           setShowSelector(false); // Hide selector to showcase match full-width
@@ -596,7 +760,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
                 className="space-y-4 leading-relaxed select-text"
                 style={{ fontSize: `${textSize}px` }}
               >
-                {currentVerses.map((verse) => {
+                {displayedVerses.map((verse) => {
                   const isHighlighted = activeVerseNum === verse.number;
                   return (
                     <div 

@@ -16,6 +16,106 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
   const [selectedSongId, setSelectedSongId] = useState<string>(SONGS[0].id);
   const [isPlayingTune, setIsPlayingTune] = useState(false);
 
+  // Web Audio backing synthesizer for karaoke
+  const [audioCtx, setAudioCtx] = useState<AudioContext | null>(null);
+  const [synthInterval, setSynthInterval] = useState<any>(null);
+
+  const startKaraoke = (songNumber: number) => {
+    try {
+      // Create audio context
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      setAudioCtx(ctx);
+
+      let step = 0;
+      // Define a beautiful chord and notes sequence depending on the song
+      let notes: number[] = [];
+      if (songNumber === 1) {
+        // D major hymn: D4, F#4, A4, B4, A4 etc.
+        notes = [293.66, 369.99, 440.00, 493.88, 440.00, 369.99, 329.63, 293.66];
+      } else if (songNumber === 23) {
+        // G major pastoral: G4, B4, D5, C5, B4, A4, G4
+        notes = [392.00, 493.88, 587.33, 523.25, 493.88, 440.00, 392.00, 440.00];
+      } else if (songNumber === 104) {
+        // F major gospel: F4, A4, C5, D5, C5 etc.
+        notes = [349.23, 440.00, 523.25, 587.33, 523.25, 440.05, 392.00, 349.23];
+      } else {
+        // C major warm: C4, E4, G4, A4, G4
+        notes = [261.63, 329.63, 392.00, 440.00, 392.00, 329.63, 293.66, 261.63];
+      }
+
+      // Schedule notes playing every 0.6 seconds
+      const interval = setInterval(() => {
+        if (!ctx || ctx.state === 'closed') return;
+        
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        // Beautiful soft sine/triangle church organ voice
+        osc.type = 'triangle';
+        const currentFreq = notes[step % notes.length];
+        osc.frequency.setValueAtTime(currentFreq, ctx.currentTime);
+        
+        // Play an octave lower organ pedal too!
+        const pedalOsc = ctx.createOscillator();
+        pedalOsc.type = 'sine';
+        pedalOsc.frequency.setValueAtTime(currentFreq / 2, ctx.currentTime);
+
+        gainNode.gain.setValueAtTime(0.0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.05); // attack
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55); // decay
+        
+        osc.connect(gainNode);
+        pedalOsc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        osc.start();
+        pedalOsc.start();
+        osc.stop(ctx.currentTime + 0.6);
+        pedalOsc.stop(ctx.currentTime + 0.6);
+        
+        step++;
+      }, 600);
+
+      setSynthInterval(interval);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const stopKaraoke = () => {
+    if (synthInterval) {
+      clearInterval(synthInterval);
+      setSynthInterval(null);
+    }
+    if (audioCtx) {
+      audioCtx.close();
+      setAudioCtx(null);
+    }
+  };
+
+  const toggleTunePlay = () => {
+    if (isPlayingTune) {
+      stopKaraoke();
+      setIsPlayingTune(false);
+    } else {
+      startKaraoke(activeSong.number);
+      setIsPlayingTune(true);
+    }
+  };
+
+  const handleSelectSong = (id: string) => {
+    stopKaraoke();
+    setIsPlayingTune(false);
+    setSelectedSongId(id);
+  };
+
+  // Clean audio on unmount
+  React.useEffect(() => {
+    return () => {
+      stopKaraoke();
+    };
+  }, [audioCtx, synthInterval]);
+
   const filteredSongs = SONGS.filter(s => {
     return s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
            s.number.toString().includes(searchQuery) ||
@@ -70,10 +170,7 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
                   <button
                     id={`btn-song-${sg.id}`}
                     key={sg.id}
-                    onClick={() => {
-                      setSelectedSongId(sg.id);
-                      setIsPlayingTune(false);
-                    }}
+                    onClick={() => handleSelectSong(sg.id)}
                     className={`w-full text-left p-2 rounded-xl border flex items-center justify-between transition-all cursor-pointer relative ${
                       isSelected
                         ? 'bg-violet-600 border-violet-500 text-white font-extrabold shadow-sm'
@@ -128,7 +225,7 @@ export default function SongPage({ isElderlyMode }: SongPageProps) {
             {/* Play simulation accompaniment chord with beautiful 3D color trigger */}
             <button
               id="btn-tune-play"
-              onClick={() => setIsPlayingTune(!isPlayingTune)}
+              onClick={toggleTunePlay}
               className={`py-2 px-3 rounded-xl text-[10.5px] font-black flex items-center gap-1 transition-all cursor-pointer ${
                 isPlayingTune
                   ? 'btn-3d-rose'
