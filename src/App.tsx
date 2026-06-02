@@ -436,10 +436,10 @@ export default function App() {
               
               {/* Elegant Official Logo Badge at the top of the Tongasoa view - flushed all the way up */}
               <div className="relative w-full">
-                <ChurchLogo layout="square" className="rounded-t-none rounded-b-[32px] border-x-0 border-t-0 p-6 pt-8 w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800/80 shadow-xs" />
+                <ChurchLogo layout="square" className="rounded-t-none rounded-b-[24px] border-x-0 border-t-0 p-1.5 pt-2 pb-2 w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800/80 shadow-xs" />
                 
                 {/* Float Accessibility and Dark Mode toggles to the top right of the screen */}
-                <div className="absolute right-4 top-4 flex items-center gap-1.5 z-10">
+                <div className="absolute right-3 top-3 flex items-center gap-1.5 z-10">
                   {/* Elderly Friendly Toggle button */}
                   <button
                     id="btn-toggle-accessibility-home"
@@ -447,7 +447,7 @@ export default function App() {
                     className={`p-1.5 rounded-lg border transition-all text-[8.5px] font-black cursor-pointer flex items-center justify-center gap-0.5 ${
                       isElderlyMode
                         ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+                        : 'bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
                     }`}
                     title="Mora vakina be taona"
                   >
@@ -458,7 +458,7 @@ export default function App() {
                   <button
                     id="btn-toggle-dark-mode-home"
                     onClick={() => setDarkMode(!darkMode)}
-                    className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 hover:shadow-sm hover:bg-slate-100 dark:hover:bg-slate-750"
+                    className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 hover:shadow-sm hover:bg-slate-100 dark:hover:bg-slate-750"
                     title="Loko maizina"
                   >
                     {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-650" />}
@@ -469,12 +469,16 @@ export default function App() {
               {/* Home main padded container */}
               <div className="px-4 space-y-4">
 
-                {/* Interactive greeting with dynamic island feel */}
-                <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-4 text-white shadow-md relative overflow-hidden">
-                  <h2 className={`${isElderlyMode ? 'text-2xl' : 'text-lg'} font-black leading-tight text-white/95`}>
-                    🏡 <span className="text-yellow-300">{activeChurch.name}</span>
+                {/* Interactive greeting with dynamic island feel - enlarged to occupy the empty space */}
+                <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 rounded-3xl p-6 md:p-8 text-white shadow-md relative overflow-hidden flex flex-col justify-center min-h-[160px] md:min-h-[190px]">
+                  <div className="absolute -right-6 -bottom-6 text-white/5 pointer-events-none select-none">
+                    <BookOpen className="w-40 h-40" />
+                  </div>
+                  <h2 className={`${isElderlyMode ? 'text-3xl' : 'text-xl md:text-2xl'} font-black leading-tight text-white tracking-tight`}>
+                    🏡 <span>{activeChurch.name}</span>
                   </h2>
-                  <p className="text-[11.5px] text-violet-100 leading-snug mt-2 font-medium italic">
+                  <div className="w-12 h-1 bg-amber-400 rounded-full my-3"></div>
+                  <p className={`${isElderlyMode ? 'text-lg' : 'text-xs md:text-sm'} text-violet-100 leading-relaxed font-bold italic`}>
                     "{activeChurch.description || DEFAULT_SLOGAN}"
                   </p>
                 </div>

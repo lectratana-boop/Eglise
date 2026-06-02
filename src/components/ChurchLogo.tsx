@@ -15,17 +15,17 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
   if (layout === 'square') {
     const sizeClass = isExpanded 
       ? "w-full h-96 max-w-full" 
-      : "w-full h-72 max-w-full";
+      : "w-full h-[180px] sm:h-[220px] max-w-full";
       
     return (
-      <div className={`relative flex flex-col items-center justify-center p-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-150 dark:border-slate-800 shadow-xs ${className}`}>
+      <div className={`relative flex flex-col items-center justify-start p-1.5 pt-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-150 dark:border-slate-800 shadow-xs ${className}`}>
         {/* Toggle Expand Button inside the logo card, right side */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
-          className="absolute right-4 top-4 p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-605 dark:text-slate-350 border border-slate-200 dark:border-slate-700 cursor-pointer active:scale-95 transition-all flex items-center justify-center shadow-xs z-10"
+          className="absolute right-3 top-3 p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-605 dark:text-slate-350 border border-slate-200 dark:border-slate-700 cursor-pointer active:scale-95 transition-all flex items-center justify-center shadow-xs z-10"
           title={isExpanded ? "Hanameloka" : "Agrandir"}
         >
           {isExpanded ? (
