@@ -31,6 +31,7 @@ interface YouthPageProps {
   isElderlyMode: boolean;
   members: Member[];
   churchRoles: string[];
+  loggedInMember: Member | null;
 }
 
 // Default initial posts in case localStorage is empty
@@ -103,18 +104,14 @@ const getMemberAvatar = (memberId: string) => {
   return avatars[sum % avatars.length];
 };
 
-export default function YouthPage({ isElderlyMode, members, churchRoles }: YouthPageProps) {
+export default function YouthPage({ isElderlyMode, members, churchRoles, loggedInMember }: YouthPageProps) {
   // Posts stored in state & localStorage
   const [posts, setPosts] = useState<SampanaPost[]>(() => {
     const saved = localStorage.getItem('mifandray_sampana_posts');
     return saved ? JSON.parse(saved) : INITIAL_SAMPANA_POSTS;
   });
 
-  // Current session dynamic simulation
-  const [activeMemberId, setActiveMemberId] = useState<string>(() => {
-    const jean = members.find(m => m.name.toLowerCase().includes('jean'));
-    return jean?.id || members[0]?.id || '';
-  });
+  const activeMemberId = loggedInMember?.id || '';
 
   // Keep posts synced in localStorage
   useEffect(() => {
@@ -122,7 +119,7 @@ export default function YouthPage({ isElderlyMode, members, churchRoles }: Youth
   }, [posts]);
 
   // Find active member object
-  const activeUser = members.find(m => m.id === activeMemberId);
+  const activeUser = members.find(m => m.id === activeMemberId) || loggedInMember;
 
   // Parse active member's Sampana lists
   const getSimulatedUserSampana = (): string[] => {
@@ -316,8 +313,10 @@ export default function YouthPage({ isElderlyMode, members, churchRoles }: Youth
     setEditingContent('');
   };
 
-  // Filter posts in current viewed Sampana
-  const currentSampanaPosts = posts.filter(p => p.sampanaName === viewedSampana);
+  // Filter and sort posts in current viewed Sampana (newest first / le dernier poste s'affiche en premier en haut)
+  const currentSampanaPosts = [...posts]
+    .filter(p => p.sampanaName === viewedSampana)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Time formatting helper
   const formatTime = (isoString: string) => {
@@ -337,32 +336,44 @@ export default function YouthPage({ isElderlyMode, members, churchRoles }: Youth
   };
 
   return (
-    <div className="space-y-4">
-      {/* 1. HIGH FIDELITY PROFESSIONAL MEMBER BUSINESS CARD (CARTE DE VISITE AS SHOWN IN PHOTO) */}
+    <div className="space-y-4 animate-fadeIn">
+      {/* Dynamic Sampana Room Selector at the absolute top (en haut) */}
+      {activeUser && userSampanaList.length > 1 && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs flex flex-col gap-1.5 animate-scaleIn">
+          <span className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">
+            Misafidiana Sampana ho jerena:
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {userSampanaList.map((samp) => {
+              const isSelected = viewedSampana === samp;
+              return (
+                <button
+                  key={samp}
+                  onClick={() => setViewedSampana(samp)}
+                  className={`px-3 py-1.5 text-xs font-black rounded-lg cursor-pointer transition-all active:scale-95 ${
+                    isSelected
+                      ? 'bg-violet-650 text-white shadow-xs'
+                      : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-850 text-slate-650 dark:text-slate-400 border border-slate-150/50 dark:border-slate-800/80'
+                  }`}
+                >
+                  {samp}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 1. HIGH FIDELITY PROFESSIONAL MEMBER BUSINESS CARD (CARTE DE VISITE) */}
       {activeUser ? (
         <div id="mifandray-member-card" className="bg-gradient-to-r from-[#1e155c] via-[#231570] to-[#2c138d] text-white p-6 rounded-3xl shadow-xl relative overflow-hidden ring-1 ring-violet-500/20 max-w-full">
           {/* Subtle light reflections */}
           <div className="absolute top-0 right-0 w-36 h-36 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
-          {/* SOKAFY NY MPIKAMBANA - Top-right subtle selector on the business card */}
-          <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-[#170e4b]/80 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-violet-500/35">
-            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping shrink-0" />
-            <label htmlFor="user-identity-select" className="text-[9px] font-black text-violet-200 uppercase tracking-wider hidden xs:inline">
-              Mpanoratra:
-            </label>
-            <select
-              id="user-identity-select"
-              value={activeMemberId}
-              onChange={(e) => setActiveMemberId(e.target.value)}
-              className="bg-transparent text-[#f9c21b] font-black text-xs outline-none cursor-pointer border-none p-0 focus:ring-0 max-w-[120px] xs:max-w-[160px] truncate"
-            >
-              {members.map((m) => (
-                <option key={m.id} value={m.id} className="text-slate-900 bg-white">
-                  {m.name}
-                </option>
-              ))}
-            </select>
+          {/* Gold Decorative Tag to match high polish cards */}
+          <div className="absolute top-4 right-4 z-10 text-[9.5px] font-black uppercase tracking-wider text-[#f9c21b] bg-white/10 px-2.5 py-1 rounded-lg border border-white/10">
+            F.P.F.I Mpikambana
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10 pt-4 sm:pt-0">
@@ -441,7 +452,7 @@ export default function YouthPage({ isElderlyMode, members, churchRoles }: Youth
                   <div className="inline-flex items-center gap-1.5 bg-[#170e4b]/60 border border-violet-500/40 px-3.5 py-1.5 rounded-lg min-w-0 max-w-full">
                     <span className="text-[8.5px] font-black text-violet-200 tracking-wider">SAMPANA:</span>
                     <span className="text-[10px] font-black text-[#f9c21b] truncate">
-                      {userSampanaList.length > 0 ? userSampanaList.join(', ') : (activeUser.role || 'Mpitahiry vola')}
+                      {viewedSampana || userSampanaList.join(', ') || activeUser.role || 'Mpikambana tsotra'}
                     </span>
                   </div>
                 </div>
@@ -450,92 +461,22 @@ export default function YouthPage({ isElderlyMode, members, churchRoles }: Youth
             </div>
           </div>
         </div>
-      ) : (
-        <div id="mifandray-member-card-fallback" className="bg-[#1e155c] text-white p-6 rounded-3xl shadow-xl border border-violet-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-amber-400 rounded-full animate-bounce" />
-            <span className="text-xs font-black uppercase text-violet-200 tracking-wider">
-              Sokafy ny mombamomba ny mpikambana mpizara:
-            </span>
-          </div>
-          <select
-            id="user-identity-select"
-            value={activeMemberId}
-            onChange={(e) => setActiveMemberId(e.target.value)}
-            className="bg-white/10 hover:bg-white/15 text-[#f9c21b] border border-white/20 font-black text-xs px-3.5 py-2 rounded-xl outline-none cursor-pointer w-full sm:w-56"
-          >
-            <option value="" className="text-slate-900 bg-white">-- Mifidiana Mpikambana --</option>
-            {members.map((m) => (
-              <option key={m.id} value={m.id} className="text-slate-900 bg-white">
-                {m.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      ) : null}
 
-      {/* 2. SAMPANA TAB SELECTORS AT THE TOP */}
-      {activeUser && userSampanaList.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-xs">
-          <div className="text-[9.5px] font-black text-slate-450 dark:text-slate-500 uppercase px-2 pb-1.5 pt-1">
-            Ny Sampanao (Mifidiana izay ho jerena ao amin'ny safidy ambony):
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {userSampanaList.map((samp) => {
-              const isSelected = viewedSampana === samp;
-              return (
-                <button
-                  key={samp}
-                  onClick={() => setViewedSampana(samp)}
-                  className={`px-3 py-2 text-xs font-black rounded-lg cursor-pointer transition-all active:scale-95 ${
-                    isSelected
-                      ? 'bg-violet-600 text-white shadow-xs'
-                      : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-850 text-slate-655 dark:text-slate-300'
-                  }`}
-                >
-                  {samp}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 3. CORE DEPARTMENT SCREEN */}
-      {!activeUser ? (
-        <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl p-10 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 space-y-2">
-          <HelpCircle className="w-12 h-12 mx-auto text-slate-400" />
-          <h3 className="font-bold text-slate-700 dark:text-slate-300">Tsy misy mpikambana tester voafidy</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Azafady mifidiana mpikambana iray ao amin'ny menu eo ambony (Simulated User Session) mba handefasanao hafatra, hanaovana fanehoan-kevitra, na hifidianana ny sampana mifanaraka aminy.
-          </p>
-        </div>
-      ) : userSampanaList.length === 0 ? (
+      {/* 2. CORE DEPARTMENT SCREEN - MOVED ALL THE WAY UP AND DE-CLUTTERED AS REQUESTED */}
+      {activeUser && userSampanaList.length === 0 && (
         <div className="bg-rose-50/40 dark:bg-rose-950/10 border border-rose-100 dark:border-rose-900/40 rounded-2xl p-8 text-center space-y-3">
           <MessageSquareOff className="w-10 h-10 mx-auto text-rose-500" />
-          <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm">Tsy mahazo miditra amin'ny Sampana ianao</h3>
+          <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm">Tsy mbola nahazo Sampana ianao</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-            Ity mpikambana mipika ity (<strong className="text-slate-700 dark:text-slate-300">{activeUser.name}</strong>) dia tsy mbola misy sampana voaray. 
-            Mankanesa any amin'ny pejy fahatelo <strong>"Fitantanana"</strong>, ovao ny mombamomba azy na ny andraikiny ary asio sampana (ohatra: STK, SLK, Dorkasy).
+            Ry <strong className="text-slate-700 dark:text-slate-300">{activeUser.name}</strong>, tsy mbola manana sampana voatondro mavitrika ianao ao amin'ny rafitra. 
+            Mifandraisa amin'ny Mpitantana (Admin / Fitantanana) mba hampidirana anao amin'ny Sampana na hanovanao ny andraikitrao.
           </p>
         </div>
-      ) : (
+      )}
+
+      {activeUser && userSampanaList.length > 0 && (
         <div className="space-y-4">
-          {/* Header indicator inside Room */}
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-205 dark:border-slate-850 shadow-xs flex items-center justify-between gap-3">
-            <div>
-              <span className="text-[9px] font-extrabold py-0.5 px-2 bg-violet-100 dark:bg-violet-950 text-violet-750 dark:text-violet-300 rounded-full uppercase tracking-wider">
-                Resaka ao an-tokantrano
-              </span>
-              <h2 className={`${isElderlyMode ? 'text-2xl' : 'text-base'} font-black text-slate-850 dark:text-slate-100 mt-1 flex items-center gap-1.5`}>
-                <Users className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                <span>{viewedSampana}</span>
-              </h2>
-            </div>
-            <div className="text-[10px] font-mono font-bold bg-violet-50 dark:bg-violet-950/40 border border-violet-150 dark:border-violet-850/80 p-2 rounded-xl text-violet-750 dark:text-violet-350 shrink-0">
-              ⚡ Space Mavitrika
-            </div>
-          </div>
 
           {/* Form to submit POST inside room */}
           <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 p-4 rounded-2xl shadow-xs space-y-3">

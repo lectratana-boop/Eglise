@@ -26,6 +26,7 @@ import AgendaPage from './components/AgendaPage';
 import SongPage from './components/SongPage';
 import YouthPage from './components/YouthPage';
 import ChurchLogo from './components/ChurchLogo';
+import LoginPage from './components/LoginPage';
 
 // Lucide icons
 import {
@@ -75,6 +76,39 @@ export default function App() {
     const saved = localStorage.getItem('mifandray_members');
     return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
   });
+
+  const [loggedInMember, setLoggedInMember] = useState<Member | null>(() => {
+    const saved = localStorage.getItem('mifandray_logged_in_member');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (loggedInMember) {
+      localStorage.setItem('mifandray_logged_in_member', JSON.stringify(loggedInMember));
+    } else {
+      localStorage.removeItem('mifandray_logged_in_member');
+    }
+  }, [loggedInMember]);
+
+  const handleRegisterAndLogin = (name: string, phone: string) => {
+    const newMember: Member = {
+      id: `mem-${Date.now()}`,
+      churchId: activeChurchId || 'fjkm-isotry',
+      name: name,
+      phone: phone,
+      address: "Lot 26 ter mahamasina",
+      role: "Sampana Tanora Kristiana (STK)" // default sampana
+    };
+    setMembers(prev => [...prev, newMember]);
+    setLoggedInMember(newMember);
+  };
 
   const [announcements, setAnnouncements] = useState<Announcement[]>(() => {
     const saved = localStorage.getItem('mifandray_announcements');
@@ -445,6 +479,14 @@ export default function App() {
         
         {/* TOP STATUS BAR REMOVED AND LEFT CLEAN AS REQUESTED */}
 
+        {!loggedInMember ? (
+          <LoginPage
+            members={members}
+            onLogin={setLoggedInMember}
+            onRegisterAndLogin={handleRegisterAndLogin}
+          />
+        ) : (
+          <>
         {/* COMPREHENSIVE PHONE TOP HEADER ACTION RAIL - hidden on home screen */}
         {activeTab !== 'Accueil' && (
           <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800 px-4 py-2.5 flex items-center justify-between gap-1 shrink-0">
@@ -454,6 +496,19 @@ export default function App() {
 
             {/* Quick Accessibilities inside header */}
             <div className="flex items-center gap-1 shrink-0 justify-end">
+              {/* Logout button */}
+              <button
+                id="btn-logout"
+                onClick={() => {
+                  if (confirm("Hivoaka ny kaontinao ve ianao?")) {
+                    setLoggedInMember(null);
+                  }
+                }}
+                className="p-1 px-2 text-[9px] font-black tracking-wide rounded-lg border border-rose-200 dark:border-rose-950 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 cursor-pointer active:scale-95 transition-all shadow-xs flex items-center justify-center shrink-0"
+                title="Hivoaka ny kaontinao"
+              >
+                Hivoaka
+              </button>
               {/* Elderly Friendly Toggle button */}
               <button
                 id="btn-toggle-accessibility"
@@ -503,6 +558,19 @@ export default function App() {
                 
                 {/* Float Accessibility and Dark Mode toggles to the top right of the screen */}
                 <div className="absolute right-3 top-3 flex items-center gap-1.5 z-10">
+                  {/* Logout button */}
+                  <button
+                    id="btn-logout-home"
+                    onClick={() => {
+                      if (confirm("Hivoaka ny kaontinao ve ianao?")) {
+                        setLoggedInMember(null);
+                      }
+                    }}
+                    className="p-1.5 px-2.5 text-[9px] font-black tracking-wide rounded-lg border border-rose-200 dark:border-rose-950 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 cursor-pointer active:scale-95 transition-all shadow-xs flex items-center justify-center shrink-0"
+                    title="Hivoaka ny kaontinao"
+                  >
+                    Hivoaka
+                  </button>
                   {/* Elderly Friendly Toggle button */}
                   <button
                     id="btn-toggle-accessibility-home"
@@ -705,6 +773,7 @@ export default function App() {
               isElderlyMode={isElderlyMode}
               members={members}
               churchRoles={churchRoles}
+              loggedInMember={loggedInMember}
             />
           )}
 
@@ -1146,6 +1215,9 @@ export default function App() {
 
             </div>
           </div>
+        )}
+
+          </>
         )}
 
       </div>
