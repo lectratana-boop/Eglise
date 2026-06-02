@@ -120,6 +120,14 @@ export default function App() {
   const [editVerseText, setEditVerseText] = useState('');
   const [editVerseRef, setEditVerseRef] = useState('');
 
+  // Custom announcements edit states to customize categories
+  const [editFivorianaTitle, setEditFivorianaTitle] = useState('');
+  const [editFivorianaContent, setEditFivorianaContent] = useState('');
+  const [editHetsikaTitle, setEditHetsikaTitle] = useState('');
+  const [editHetsikaContent, setEditHetsikaContent] = useState('');
+  const [editHafaTitle, setEditHafaTitle] = useState('');
+  const [editHafaContent, setEditHafaContent] = useState('');
+
   // Sync state to localStorage on modification
   useEffect(() => {
     localStorage.setItem('mifandray_churches', JSON.stringify(churches));
@@ -132,8 +140,14 @@ export default function App() {
       setEditDescription(activeChObj.description || '');
       setEditVerseText(activeChObj.customVerseText || '');
       setEditVerseRef(activeChObj.customVerseRef || '');
+      setEditFivorianaTitle(activeChObj.customFivorianaTitle || '');
+      setEditFivorianaContent(activeChObj.customFivorianaContent || '');
+      setEditHetsikaTitle(activeChObj.customHetsikaTitle || '');
+      setEditHetsikaContent(activeChObj.customHetsikaContent || '');
+      setEditHafaTitle(activeChObj.customHafaTitle || '');
+      setEditHafaContent(activeChObj.customHafaContent || '');
     }
-  }, [activeChurchId]);
+  }, [activeChurchId, churches]);
 
   useEffect(() => {
     localStorage.setItem('mifandray_members', JSON.stringify(members));
@@ -225,14 +239,38 @@ export default function App() {
       alert("Tsy azo avela ho foana ny anaran'ny fiangonana!");
       return;
     }
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+
     setChurches(prev => prev.map(ch => {
       if (ch.id === activeChurchId) {
+        const isFivorianaUpdated = 
+          editFivorianaTitle !== (ch.customFivorianaTitle || '') || 
+          editFivorianaContent !== (ch.customFivorianaContent || '');
+          
+        const isHetsikaUpdated = 
+          editHetsikaTitle !== (ch.customHetsikaTitle || '') || 
+          editHetsikaContent !== (ch.customHetsikaContent || '');
+          
+        const isHafaUpdated = 
+          editHafaTitle !== (ch.customHafaTitle || '') || 
+          editHafaContent !== (ch.customHafaContent || '');
+
         return {
           ...ch,
           name: editName,
           description: editDescription,
           customVerseText: editVerseText,
-          customVerseRef: editVerseRef
+          customVerseRef: editVerseRef,
+          customFivorianaTitle: editFivorianaTitle,
+          customFivorianaContent: editFivorianaContent,
+          customFivorianaDate: isFivorianaUpdated ? todayStr : (ch.customFivorianaDate || todayStr),
+          customHetsikaTitle: editHetsikaTitle,
+          customHetsikaContent: editHetsikaContent,
+          customHetsikaDate: isHetsikaUpdated ? todayStr : (ch.customHetsikaDate || todayStr),
+          customHafaTitle: editHafaTitle,
+          customHafaContent: editHafaContent,
+          customHafaDate: isHafaUpdated ? todayStr : (ch.customHafaDate || todayStr)
         };
       }
       return ch;
@@ -261,6 +299,47 @@ export default function App() {
   const handleRandomPromise = () => {
     const nextIdx = (promiseIndex + 1) % DAILY_PROMISES.length;
     setPromiseIndex(nextIdx);
+  };
+
+  // Helper to resolve specific category announcement (Fivoriana, Hetsika, Sokajy Hafa)
+  const getDisplayAnnouncement = (cat: 'fivoriana' | 'hetsika' | 'hafa') => {
+    const customTitle = 
+      cat === 'fivoriana' ? activeChurch.customFivorianaTitle :
+      cat === 'hetsika' ? activeChurch.customHetsikaTitle :
+      activeChurch.customHafaTitle;
+      
+    const customContent = 
+      cat === 'fivoriana' ? activeChurch.customFivorianaContent :
+      cat === 'hetsika' ? activeChurch.customHetsikaContent :
+      activeChurch.customHafaContent;
+
+    const customDate = 
+      cat === 'fivoriana' ? activeChurch.customFivorianaDate :
+      cat === 'hetsika' ? activeChurch.customHetsikaDate :
+      activeChurch.customHafaDate;
+
+    // Use customized admin fields only if they are not blank / empty
+    if (customTitle && customTitle.trim() && customContent && customContent.trim()) {
+      return {
+        id: `custom-${cat}`,
+        title: customTitle.trim(),
+        content: customContent.trim(),
+        date: customDate || new Date().toISOString().split('T')[0],
+        category: cat,
+        isCustom: true
+      };
+    }
+
+    // Default Fallback
+    const defaultAnn = announcements.find(a => a.churchId === activeChurchId && a.category === cat);
+    if (defaultAnn) {
+      return {
+        ...defaultAnn,
+        isCustom: false
+      };
+    }
+
+    return null;
   };
 
   // Bottom primary tab bar items (Mobile Native layout style)
@@ -292,19 +371,7 @@ export default function App() {
       */}
       <div className="w-full md:max-w-[420px] md:h-[840px] md:rounded-[40px] md:border-[12px] md:border-slate-900 md:shadow-2xl bg-white dark:bg-slate-900 md:relative md:overflow-hidden flex flex-col min-h-screen md:min-h-0">
         
-        {/* MOCK PHONE TOP STATUS BAR (Visible to look exactly like an app layout) */}
-        <div className="bg-slate-100 dark:bg-slate-950 px-6 py-2 flex justify-between items-center text-[10px] font-bold font-mono text-slate-500 dark:text-slate-400 select-none shrink-0 relative z-30">
-          <span>10:20 ⛪</span>
-          
-          {/* Simulated hardware camera punch-hole (Dynamic island style) exclusively on desktop */}
-          <div className="hidden md:block w-24 h-4 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-1.5 shadow-inner z-50"></div>
-          
-          <div className="flex items-center gap-1.5">
-            <span>Ao amin'ny Tompo</span>
-            <span>📶</span>
-            <span>🔋 100%</span>
-          </div>
-        </div>
+        {/* TOP STATUS BAR REMOVED AND LEFT CLEAN AS REQUESTED */}
 
         {/* COMPREHENSIVE PHONE TOP HEADER ACTION RAIL */}
         <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800 px-4 py-2.5 flex items-center justify-between gap-1 shrink-0">
@@ -350,7 +417,7 @@ export default function App() {
         )}
 
         {/* MOBILE ACTIVE TAB CONTENT DISPLAY VIEWPORT */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin dark:bg-slate-950">
+        <div className={`flex-1 overflow-y-auto scrollbar-thin dark:bg-slate-950 ${activeTab === 'Accueil' ? 'p-0 pb-5' : 'p-4 space-y-5'}`}>
           
           {/* View Tab Selector Gate */}
 
@@ -358,11 +425,14 @@ export default function App() {
           {activeTab === 'Accueil' && (
             <div className="space-y-4 animate-fadeIn">
               
-              {/* Elegant Official Logo Badge at the top of the Tongasoa view */}
-              <ChurchLogo layout="square" className="bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 p-5" />
+              {/* Elegant Official Logo Badge at the top of the Tongasoa view - flushed all the way up */}
+              <ChurchLogo layout="square" className="rounded-t-none rounded-b-[32px] border-x-0 border-t-0 p-6 pt-5 w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800/80 shadow-xs" />
 
-              {/* Interactive greeting with dynamic island feel */}
-              <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-4 text-white shadow-md relative overflow-hidden">
+              {/* Home main padded container */}
+              <div className="px-4 space-y-4">
+
+                {/* Interactive greeting with dynamic island feel */}
+                <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-4 text-white shadow-md relative overflow-hidden">
                 <h2 className={`${isElderlyMode ? 'text-2xl' : 'text-lg'} font-black leading-tight text-white/95`}>
                   🏡 <span className="text-yellow-300">{activeChurch.name}</span>
                 </h2>
@@ -444,7 +514,10 @@ export default function App() {
                   </div>
  
                   <div className="space-y-4 pt-1">
-                    {announcements.filter(a => a.churchId === activeChurchId).map((ann) => {
+                    {['fivoriana', 'hetsika', 'hafa'].map((cat) => {
+                      const ann = getDisplayAnnouncement(cat as 'fivoriana' | 'hetsika' | 'hafa');
+                      if (!ann) return null;
+
                       const categoryColors = ann.category === 'fivoriana' 
                         ? 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-350 border border-purple-200/50 dark:border-purple-800/40' 
                         : ann.category === 'hetsika'
@@ -455,7 +528,7 @@ export default function App() {
                         ? 'Fivoriana 🗓️' 
                         : ann.category === 'hetsika'
                         ? 'Hetsika 🌟'
-                        : 'Filazana hafa 📢';
+                        : 'Sokajy Hafa 📢';
 
                       const dateParts = ann.date ? ann.date.split('-') : [];
                       const formattedDate = dateParts.length === 3 
@@ -487,15 +560,12 @@ export default function App() {
                         </div>
                       );
                     })}
-                    {announcements.filter(a => a.churchId === activeChurchId).length === 0 && (
-                      <div className="text-center py-8">
-                        <p className="text-[11px] text-slate-400 font-bold dark:text-slate-500">📭 Tsy misy filazana vaovao amin'izao fotoana izao.</p>
-                      </div>
-                    )}
                   </div>
                 </div>
  
               </div>
+
+              </div> {/* Close Home main padded container */}
  
             </div>
           )}
@@ -622,6 +692,91 @@ export default function App() {
                         placeholder="Ohatra: Salamo 23:1"
                         className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-805 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500 font-mono"
                       />
+                    </div>
+                  </div>
+
+                  {/* Custom Welcome Screen Announcements Section */}
+                  <div className="grid grid-cols-1 gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <div className="space-y-1">
+                      <span className="block text-[10px] font-black text-slate-400 uppercase">Vaovao sy Filazana ao amin'ny Tongasoa</span>
+                      <p className="text-[9.5px] text-slate-400 leading-normal">
+                        Ovao eto ny filazana ho hita ao amin'ny pejin'ny Tongasoa. Raha avela foana ny banga, dia haverina ho an'ny default izany.
+                      </p>
+                    </div>
+
+                    {/* 1. FIVORIANA */}
+                    <div className="p-2.5 bg-purple-50/45 dark:bg-purple-950/20 border border-purple-100/60 dark:border-purple-900/30 rounded-lg space-y-2">
+                      <span className="text-[8.5px] px-1.5 py-0.5 bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-black rounded-full uppercase">1. Fivoriana 🗓️</span>
+                      <div>
+                        <label className="block text-[8.5px] font-bold text-slate-500 uppercase mb-0.5">Anaran'ny Fivoriana (Title)</label>
+                        <input
+                          type="text"
+                          value={editFivorianaTitle}
+                          onChange={(e) => setEditFivorianaTitle(e.target.value)}
+                          placeholder="Default (Anaran'ny fivoriana)"
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-805 rounded-md p-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8.5px] font-bold text-slate-500 uppercase mb-0.5">Vontoatiny (Content)</label>
+                        <textarea
+                          value={editFivorianaContent}
+                          onChange={(e) => setEditFivorianaContent(e.target.value)}
+                          placeholder="Default (Andraikitra na fandaharam-potoana...)"
+                          rows={2}
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-805 rounded-md p-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-purple-500 leading-snug"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 2. HETSIKA */}
+                    <div className="p-2.5 bg-amber-50/45 dark:bg-amber-950/20 border border-amber-100/60 dark:border-amber-900/30 rounded-lg space-y-2">
+                      <span className="text-[8.5px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950 text-amber-850 dark:text-amber-305 font-black rounded-full uppercase">2. Hetsika 🌟</span>
+                      <div>
+                        <label className="block text-[8.5px] font-bold text-slate-500 uppercase mb-0.5">Anaran'ny Hetsika (Title)</label>
+                        <input
+                          type="text"
+                          value={editHetsikaTitle}
+                          onChange={(e) => setEditHetsikaTitle(e.target.value)}
+                          placeholder="Default (Hetsika manokana)"
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-805 rounded-md p-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-amber-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8.5px] font-bold text-slate-500 uppercase mb-0.5">Vontoatiny (Content)</label>
+                        <textarea
+                          value={editHetsikaContent}
+                          onChange={(e) => setEditHetsikaContent(e.target.value)}
+                          placeholder="Default (antsipirihany momba ny hetsika...)"
+                          rows={2}
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-805 rounded-md p-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-amber-500 leading-snug"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 3. SOKAJY HAFA */}
+                    <div className="p-2.5 bg-indigo-50/45 dark:bg-indigo-950/20 border border-indigo-100/60 dark:border-indigo-900/30 rounded-lg space-y-2">
+                      <span className="text-[8.5px] px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-805 dark:text-indigo-300 font-black rounded-full uppercase">3. Sokajy Hafa 📢</span>
+                      <div>
+                        <label className="block text-[8.5px] font-bold text-slate-500 uppercase mb-0.5">Anaran'ny Filazana hafa (Title)</label>
+                        <input
+                          type="text"
+                          value={editHafaTitle}
+                          onChange={(e) => setEditHafaTitle(e.target.value)}
+                          placeholder="Default (Filazana hafa...)"
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-805 rounded-md p-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8.5px] font-bold text-slate-500 uppercase mb-0.5">Vontoatiny (Content)</label>
+                        <textarea
+                          value={editHafaContent}
+                          onChange={(e) => setEditHafaContent(e.target.value)}
+                          placeholder="Default (filazana antsipirihany manokana hafa...)"
+                          rows={2}
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-md p-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-1 focus:ring-indigo-500 leading-snug"
+                        />
+                      </div>
                     </div>
                   </div>
 

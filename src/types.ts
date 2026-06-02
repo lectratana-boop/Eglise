@@ -13,6 +13,15 @@ export interface Church {
   sharedProgramEnabled?: boolean; // synchronisé avec le programme national de la dénomination
   customVerseText?: string;
   customVerseRef?: string;
+  customFivorianaTitle?: string;
+  customFivorianaContent?: string;
+  customFivorianaDate?: string;
+  customHetsikaTitle?: string;
+  customHetsikaContent?: string;
+  customHetsikaDate?: string;
+  customHafaTitle?: string;
+  customHafaContent?: string;
+  customHafaDate?: string;
 }
 
 export interface Member {

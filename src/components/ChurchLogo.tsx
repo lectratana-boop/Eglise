@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 
 interface ChurchLogoProps {
   layout?: 'square' | 'horizontal';
@@ -7,11 +8,13 @@ interface ChurchLogoProps {
 }
 
 export default function ChurchLogo({ layout = 'horizontal', className = '', badgeSize = 'h-9 w-9' }: ChurchLogoProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   // SVG of the circular logo badge
-  const LogoBadge = () => (
+  const LogoBadge = ({ size = badgeSize }: { size?: string }) => (
     <svg
       viewBox="0 0 200 200"
-      className={`${badgeSize} shrink-0 select-none`}
+      className={`${size} shrink-0 select-none transition-all duration-300`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -65,10 +68,30 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
   );
 
   if (layout === 'square') {
+    const sizeClass = isExpanded 
+      ? "h-28 w-28 xs:h-36 xs:w-36 sm:h-44 sm:w-44" 
+      : "h-16 w-16 xs:h-20 xs:w-20 sm:h-24 sm:w-24";
+      
     return (
-      <div className={`flex flex-col items-center text-center p-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm ${className}`}>
-        {/* Big logo badge */}
-        <LogoBadge />
+      <div className={`relative flex flex-col items-center text-center p-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-150 dark:border-slate-800 shadow-sm ${className}`}>
+        {/* Toggle Expand Button inside the logo card, right side */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          className="absolute right-4 top-4 p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 text-[#003366] dark:text-sky-305 border border-slate-200 dark:border-slate-700 cursor-pointer active:scale-95 transition-all flex items-center justify-center shadow-xs z-10"
+          title={isExpanded ? "Hanameloka" : "Agrandir"}
+        >
+          {isExpanded ? (
+            <Minimize2 className="w-3.5 h-3.5" />
+          ) : (
+            <Maximize2 className="w-3.5 h-3.5" />
+          )}
+        </button>
+
+        {/* Big logo badge - using high-resolution crisp SVGs */}
+        <LogoBadge size={sizeClass} />
         
         {/* Texts matching custom logo */}
         <div className="mt-3.5 space-y-1 select-none">
