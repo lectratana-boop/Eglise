@@ -14,11 +14,11 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
 
   if (layout === 'square') {
     const sizeClass = isExpanded 
-      ? "w-72 h-72 max-w-full" 
-      : "w-44 h-44 max-w-full";
+      ? "w-full h-96 max-w-full" 
+      : "w-full h-72 max-w-full";
       
     return (
-      <div className={`relative flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-150 dark:border-slate-800 shadow-xs ${className}`}>
+      <div className={`relative flex flex-col items-center justify-center p-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-150 dark:border-slate-800 shadow-xs ${className}`}>
         {/* Toggle Expand Button inside the logo card, right side */}
         <button
           onClick={(e) => {
@@ -41,18 +41,8 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
             src={churchLogo}
             alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
             referrerPolicy="no-referrer"
-            className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal dark:bg-white rounded-2xl p-1"
+            className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal dark:bg-white rounded-2xl"
           />
-        </div>
-
-        {/* Text descriptions matching the new church name */}
-        <div className="mt-3.5 space-y-1 select-none">
-          <h2 className="text-sm font-black tracking-[0.15em] text-amber-700 dark:text-amber-500 uppercase">
-            Fiangonana Protestante Fifohazana
-          </h2>
-          <div className="text-[10px] font-bold tracking-[0.2em] text-slate-500 dark:text-slate-400">
-            F.P.Fi
-          </div>
         </div>
       </div>
     );
