@@ -59,14 +59,14 @@ export default function LoginPage({ members, onLogin, onRegisterAndLogin }: Logi
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-64 h-64 bg-violet-600/5 rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute bottom-10 left-10 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none z-0" />
 
-      {/* Top Header section with F.P.Fi Church Logo - Balanced size for prominent clarity and background visibility */}
+      {/* Top Header section with F.P.Fi Church Logo in its original white space card - completely uncropped */}
       <div className="w-full text-center py-4 animate-fadeIn flex justify-center relative z-10">
-        <div className="mx-auto w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-white/95 p-4 flex items-center justify-center shadow-2xl border border-violet-500/15 overflow-hidden transition-all hover:scale-[1.02]">
+        <div className="mx-auto w-52 h-52 sm:w-60 sm:h-60 rounded-3xl bg-white p-5 flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden transition-all hover:scale-[1.02]">
           <img
             src={churchLogo}
             alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
             referrerPolicy="no-referrer"
-            className="w-full h-full object-contain mix-blend-multiply rounded-full scale-102"
+            className="w-full h-full object-contain bg-white rounded-2xl"
           />
         </div>
       </div>

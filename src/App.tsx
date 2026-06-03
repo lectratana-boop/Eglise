@@ -566,7 +566,7 @@ export default function App() {
               
               {/* Elegant Official Logo Badge at the top of the Tongasoa view - flushed all the way up */}
               <div className="relative w-full">
-                <ChurchLogo layout="square" className="rounded-t-none rounded-b-[24px] border-x-0 border-t-0 p-1.5 pt-2 pb-2 w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800/80 shadow-xs" />
+                <ChurchLogo layout="square" className="rounded-t-none rounded-b-[24px] border-x-0 border-t-0 p-3 pt-3 pb-3 w-full bg-white border-b border-slate-150 shadow-md" />
                 
                 {/* Float Accessibility and Dark Mode toggles to the top right of the screen */}
                 <div className="absolute right-3 top-3 flex items-center gap-1.5 z-10">
