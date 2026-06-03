@@ -566,8 +566,8 @@ export default function App() {
               
               {/* Sleek action bar replacing the big square logo card as requested */}
               <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-xs">
-                <span className="font-sans text-xs font-black tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent uppercase">
-                  F.P.Fi Tokana
+                <span className="font-sans text-[10px] sm:text-xs font-black tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent uppercase truncate pr-2">
+                  F.P.Fi Fiangonana Protestanta Fifohazana
                 </span>
                 
                 {/* Float Accessibility and Dark Mode toggles to the top right of the screen */}
