@@ -63,7 +63,7 @@ export default function LoginPage({ members, onLogin, onRegisterAndLogin }: Logi
       <div className="w-full text-center py-4 animate-fadeIn flex justify-center relative z-10">
         <div className="mx-auto w-52 h-52 sm:w-60 sm:h-60 rounded-3xl bg-white p-5 flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden transition-all hover:scale-[1.02]">
           <img
-            src={churchLogo}
+            src={`${churchLogo}?v=2`}
             alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
             referrerPolicy="no-referrer"
             className="w-full h-full object-contain bg-white rounded-2xl"
