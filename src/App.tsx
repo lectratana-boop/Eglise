@@ -48,7 +48,8 @@ import {
   Volume2,
   X,
   PhoneCall,
-  Plus
+  Plus,
+  Star
 } from 'lucide-react';
 
 const DEFAULT_SLOGAN = "Fampiharana ho an'ny fiangonana eto Madagasikara: Baiboly Masina, fandalinana, fihirana, ary varavarana fifandraisana mivantana eo amin'ny mpino sy ny fiangonana rehetra.";
@@ -88,6 +89,30 @@ export default function App() {
     }
     return null;
   });
+
+  const [userScores, setUserScores] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem('mifandray_user_scores_v1');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mifandray_user_scores_v1', JSON.stringify(userScores));
+  }, [userScores]);
+
+  const handleUpdateScore = (memberId: string, diff: number) => {
+    setUserScores(prev => {
+      const current = prev[memberId] || 0;
+      const next = Math.max(0, current + diff); // cap at 0
+      return { ...prev, [memberId]: next };
+    });
+  };
 
   useEffect(() => {
     if (loggedInMember) {
@@ -474,7 +499,7 @@ export default function App() {
     { key: 'Accueil', label: 'Tongasoa', icon: <Home className="w-5 h-5" /> },
     { key: 'Bible', label: 'Baiboly', icon: <BookOpen className="w-5 h-5" /> },
     { key: 'Jeunes', label: 'Sampana', icon: <Users className="w-5 h-5" /> },
-    { key: 'Quiz', label: 'Quiz', icon: <Award className="w-5 h-5" /> },
+    { key: 'Quiz', label: 'Kilalao', icon: <Award className="w-5 h-5" /> },
   ];
 
   // Secondary item drawer elements
@@ -519,6 +544,17 @@ export default function App() {
               
               {/* Controls on a dedicated line just below, aligned to the right */}
               <div className="flex items-center justify-end gap-2 w-full">
+                {/* Total points balance badge */}
+                {loggedInMember && (
+                  <div 
+                    id="pts-balance-val"
+                    className="p-1 px-2.5 text-[9.5px] font-black tracking-wide rounded-lg bg-amber-500 text-slate-950 flex items-center gap-1 shrink-0 shadow-sm animate-scaleIn"
+                    title="Isa manontolo (Quiz + Safidy)"
+                  >
+                    <Star className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                    <span>Isa: {userScores[loggedInMember.id] || 0} pts</span>
+                  </div>
+                )}
                 {/* Logout button */}
                 <button
                   id="btn-logout"
@@ -752,7 +788,16 @@ export default function App() {
           )}
 
           {activeTab === 'Quiz' && (
-            <QuizPage isElderlyMode={isElderlyMode} />
+            <QuizPage 
+              isElderlyMode={isElderlyMode} 
+              loggedInMember={loggedInMember}
+              userScore={loggedInMember ? (userScores[loggedInMember.id] || 0) : 0}
+              onAddPoints={(pts) => {
+                if (loggedInMember) {
+                  handleUpdateScore(loggedInMember.id, pts);
+                }
+              }}
+            />
           )}
 
           {activeTab === 'Settings' && (
