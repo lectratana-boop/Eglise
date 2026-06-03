@@ -564,12 +564,14 @@ export default function App() {
           {activeTab === 'Accueil' && (
             <div className="space-y-4 animate-fadeIn">
               
-              {/* Elegant Official Logo Badge at the top of the Tongasoa view - flushed all the way up */}
-              <div className="relative w-full">
-                <ChurchLogo layout="square" className="rounded-t-none rounded-b-[24px] border-x-0 border-t-0 p-3 pt-3 pb-3 w-full bg-white border-b border-slate-150 shadow-md" />
+              {/* Sleek action bar replacing the big square logo card as requested */}
+              <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-xs">
+                <span className="font-sans text-xs font-black tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent uppercase">
+                  F.P.Fi Tokana
+                </span>
                 
                 {/* Float Accessibility and Dark Mode toggles to the top right of the screen */}
-                <div className="absolute right-3 top-3 flex items-center gap-1.5 z-10">
+                <div className="flex items-center gap-1.5 z-10">
                   {/* Logout button */}
                   <button
                     id="btn-logout-home"

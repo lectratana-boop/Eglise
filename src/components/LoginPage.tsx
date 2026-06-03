@@ -49,7 +49,7 @@ export default function LoginPage({ members, onLogin, onRegisterAndLogin }: Logi
 
   return (
     <div 
-      className="min-h-screen flex flex-col justify-between text-white font-sans overflow-y-auto p-6 relative bg-cover bg-center bg-no-repeat"
+      className="min-h-screen flex flex-col justify-center text-white font-sans overflow-y-auto p-6 relative bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${loginBackground})` }}
     >
       {/* Light tint overlay to make the beautiful waterfall fully visible and legible */}
@@ -58,17 +58,6 @@ export default function LoginPage({ members, onLogin, onRegisterAndLogin }: Logi
       {/* Dynamic light glows */}
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-64 h-64 bg-violet-600/5 rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute bottom-10 left-10 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none z-0" />
-
-      {/* Top Header section with F.P.Fi Church Logo in its original white space card - completely uncropped */}
-      <div className="w-full text-center py-4 animate-fadeIn flex justify-center relative z-10">
-        <div className="mx-auto w-52 h-52 sm:w-60 sm:h-60 rounded-3xl bg-white p-5 flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden transition-all hover:scale-[1.02]">
-          <img
-            src={churchLogo}
-            alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
-            className="w-full h-full object-contain bg-white rounded-2xl"
-          />
-        </div>
-      </div>
 
       {/* Main Login Card with Selection Mode inside */}
       <div className="w-full max-w-sm mx-auto bg-slate-950/80 backdrop-blur-md border border-slate-800/40 p-5 rounded-3xl shadow-2xl space-y-4 my-2 relative z-10">
