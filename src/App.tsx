@@ -499,54 +499,54 @@ export default function App() {
           />
         ) : (
           <>
-        {/* COMPREHENSIVE PHONE TOP HEADER ACTION RAIL - hidden on home screen */}
-        {activeTab !== 'Accueil' && (
-          <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800 px-4 py-2.5 flex items-center justify-between gap-1 shrink-0">
-            <div className="flex-1 flex justify-start py-0.5">
-              <ChurchLogo layout="horizontal" badgeSize="h-8.5 w-8.5" />
-            </div>
+            {/* UNIFIED PHONE TOP HEADER ACTION RAIL FOR ALL PAGES */}
+            <header className="bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800 px-4 py-3 flex flex-col gap-2 shadow-xs shrink-0 z-30">
+              <div className="w-full">
+                <span className="font-sans text-[11px] sm:text-xs font-black tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent uppercase block">
+                  F.P.FI FIANGONANA PROTESTANTA FIFOHAZANA
+                </span>
+              </div>
+              
+              {/* Controls on a dedicated line just below, aligned to the right */}
+              <div className="flex items-center justify-end gap-2 w-full">
+                {/* Logout button */}
+                <button
+                  id="btn-logout"
+                  onClick={() => {
+                    if (confirm("Hivoaka ny kaontinao ve ianao?")) {
+                      setLoggedInMember(null);
+                    }
+                  }}
+                  className="p-1 px-2.5 text-[9px] font-black tracking-wide rounded-lg border border-rose-200 dark:border-rose-950 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 cursor-pointer active:scale-95 transition-all shadow-xs flex items-center justify-center shrink-0"
+                  title="Hivoaka ny kaontinao"
+                >
+                  Hivoaka
+                </button>
+                {/* Elderly Friendly Toggle button */}
+                <button
+                  id="btn-toggle-accessibility"
+                  onClick={() => setIsElderlyMode(!isElderlyMode)}
+                  className={`p-1 rounded-lg border transition-all text-[8.5px] font-black cursor-pointer flex items-center justify-center gap-0.5 ${
+                    isElderlyMode
+                      ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-705 shadow-xs'
+                  }`}
+                  title="Mora vakina be taona"
+                >
+                  <Accessibility className="w-3.5 h-3.5" />
+                </button>
 
-            {/* Quick Accessibilities inside header */}
-            <div className="flex items-center gap-1 shrink-0 justify-end">
-              {/* Logout button */}
-              <button
-                id="btn-logout"
-                onClick={() => {
-                  if (confirm("Hivoaka ny kaontinao ve ianao?")) {
-                    setLoggedInMember(null);
-                  }
-                }}
-                className="p-1 px-2 text-[9px] font-black tracking-wide rounded-lg border border-rose-200 dark:border-rose-950 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 cursor-pointer active:scale-95 transition-all shadow-xs flex items-center justify-center shrink-0"
-                title="Hivoaka ny kaontinao"
-              >
-                Hivoaka
-              </button>
-              {/* Elderly Friendly Toggle button */}
-              <button
-                id="btn-toggle-accessibility"
-                onClick={() => setIsElderlyMode(!isElderlyMode)}
-                className={`p-1 rounded-lg border transition-all text-[8.5px] font-black cursor-pointer flex items-center justify-center gap-0.5 ${
-                  isElderlyMode
-                    ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
-                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-705'
-                }`}
-                title="Mora vakina be taona"
-              >
-                <Accessibility className="w-3 h-3" />
-              </button>
-
-              {/* Theme switcher */}
-              <button
-                id="btn-toggle-dark-mode"
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-1 rounded-lg border border-slate-200 dark:border-slate-705 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 hover:shadow-sm"
-                title="Loko maizina"
-              >
-                {darkMode ? <Sun className="w-3 h-3 text-amber-500 fill-amber-400" /> : <Moon className="w-3 h-3 text-slate-650" />}
-              </button>
-            </div>
-          </header>
-        )}
+                {/* Theme switcher */}
+                <button
+                  id="btn-toggle-dark-mode"
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-1 rounded-lg border border-slate-200 dark:border-slate-705 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 shadow-xs"
+                  title="Loko maizina"
+                >
+                  {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-650" />}
+                </button>
+              </div>
+            </header>
 
         {/* ACCESSIBLE ANNOUNCEMENT RAIL */}
         {isElderlyMode && (
@@ -562,69 +562,17 @@ export default function App() {
 
           {/* 1. TONGASOA (HOME SCREEN) */}
           {activeTab === 'Accueil' && (
-            <div className="space-y-4 animate-fadeIn">
-                       {/* Sleek action bar with title on its own row and controls descended below to prevent any truncation */}
-              <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800 px-4 py-3 flex flex-col gap-2.5 shadow-sm">
-                <div className="w-full">
-                  <span className="font-sans text-[11px] sm:text-xs font-black tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent uppercase block">
-                    F.P.Fi Fiangonana Protestanta Fifohazana
-                  </span>
-                </div>
-                
-                {/* Control buttons descended below the title with a clean separator if needed */}
-                <div className="flex items-center justify-end gap-1.5 z-10">
-                  {/* Logout button */}
-                  <button
-                    id="btn-logout-home"
-                    onClick={() => {
-                      if (confirm("Hivoaka ny kaontinao ve ianao?")) {
-                        setLoggedInMember(null);
-                      }
-                    }}
-                    className="p-1.5 px-2.5 text-[9px] font-black tracking-wide rounded-lg border border-rose-200 dark:border-rose-950 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 cursor-pointer active:scale-95 transition-all shadow-xs flex items-center justify-center shrink-0"
-                    title="Hivoaka ny kaontinao"
-                  >
-                    Hivoaka
-                  </button>
-                  {/* Elderly Friendly Toggle button */}
-                  <button
-                    id="btn-toggle-accessibility-home"
-                    onClick={() => setIsElderlyMode(!isElderlyMode)}
-                    className={`p-1.5 rounded-lg border transition-all text-[8.5px] font-black cursor-pointer flex items-center justify-center gap-0.5 ${
-                      isElderlyMode
-                        ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
-                    }`}
-                    title="Mora vakina be taona"
-                  >
-                    <Accessibility className="w-3.5 h-3.5" />
-                  </button>
- 
-                  {/* Theme switcher */}
-                  <button
-                    id="btn-toggle-dark-mode-home"
-                    onClick={() => setDarkMode(!darkMode)}
-                    className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-300 cursor-pointer active:scale-95 hover:shadow-sm hover:bg-slate-100 dark:hover:bg-slate-750"
-                    title="Loko maizina"
-                  >
-                    {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-650" />}
-                  </button>
-                </div>
-              </div>
+            <div className="space-y-4 animate-fadeIn animate-duration-300">
 
               {/* Home main padded container */}
-              <div className="px-4 space-y-4">
+              <div className="px-4 space-y-4 pt-4">
 
                 {/* Interactive greeting with dynamic island feel - enlarged to occupy the empty space */}
-                <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 rounded-3xl p-6 md:p-8 text-white shadow-md relative overflow-hidden flex flex-col justify-center min-h-[160px] md:min-h-[190px]">
+                <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 rounded-3xl p-6 md:p-8 text-white shadow-md relative overflow-hidden flex flex-col justify-center min-h-[180px] md:min-h-[220px]">
                   <div className="absolute -right-6 -bottom-6 text-white/5 pointer-events-none select-none">
-                    <BookOpen className="w-40 h-40" />
+                    <BookOpen className="w-48 h-48" />
                   </div>
-                  <h2 className={`${isElderlyMode ? 'text-3xl' : 'text-xl md:text-2xl'} font-black leading-tight text-white tracking-tight`}>
-                    🏡 <span>{activeChurch.name}</span>
-                  </h2>
-                  <div className="w-12 h-1 bg-amber-400 rounded-full my-3"></div>
-                  <p className={`${isElderlyMode ? 'text-lg' : 'text-xs md:text-sm'} text-violet-100 leading-relaxed font-bold italic`}>
+                  <p className={`${isElderlyMode ? 'text-2xl font-black' : 'text-base sm:text-lg md:text-xl font-extrabold leading-relaxed'} text-white text-center font-sans tracking-wide italic`}>
                     "{activeChurch.description || DEFAULT_SLOGAN}"
                   </p>
                 </div>
