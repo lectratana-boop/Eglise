@@ -52,16 +52,16 @@ export default function LoginPage({ members, onLogin, onRegisterAndLogin }: Logi
       className="min-h-screen flex flex-col justify-between text-white font-sans overflow-y-auto p-6 relative bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${loginBackground})` }}
     >
-      {/* Dark tint overlay for ultimate overlay readability, especially middle & bottom sections */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/65 to-slate-950/95 pointer-events-none z-0" />
+      {/* Light tint overlay to make the beautiful waterfall fully visible and legible */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/35 pointer-events-none z-0" />
       
       {/* Dynamic light glows */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-64 h-64 bg-violet-600/10 rounded-full blur-3xl pointer-events-none z-0" />
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-64 h-64 bg-violet-600/5 rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute bottom-10 left-10 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none z-0" />
 
-      {/* Top Header section with F.P.Fi Church Logo - Upscaled 3x for prominent clarity */}
-      <div className="w-full text-center py-6 animate-fadeIn flex justify-center relative z-10">
-        <div className="mx-auto w-72 h-72 sm:w-85 sm:h-85 rounded-full bg-white p-5 flex items-center justify-center shadow-2xl border border-violet-500/10 overflow-hidden">
+      {/* Top Header section with F.P.Fi Church Logo - Balanced size for prominent clarity and background visibility */}
+      <div className="w-full text-center py-4 animate-fadeIn flex justify-center relative z-10">
+        <div className="mx-auto w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-white/95 p-4 flex items-center justify-center shadow-2xl border border-violet-500/15 overflow-hidden transition-all hover:scale-[1.02]">
           <img
             src={churchLogo}
             alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
@@ -73,14 +73,7 @@ export default function LoginPage({ members, onLogin, onRegisterAndLogin }: Logi
 
       {/* Main Login Card with Selection Mode inside */}
       <div className="w-full max-w-sm mx-auto bg-slate-950/80 backdrop-blur-md border border-slate-800/40 p-5 rounded-3xl shadow-2xl space-y-4 my-2 relative z-10">
-        <div className="text-center">
-          <h2 className="text-base font-black text-white">
-            Fidirana Mpikambana
-          </h2>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            Mifidiana ny karazam-pidiranao eto ambany dia ampidiro ny anaranao sy ny findainao.
-          </p>
-        </div>
+        {/* Removed 'Fidirana Mpikambana' and description text as requested to highlight the waterfall background */}
 
         {/* 2 COMPULSORY ACCESSIBILITY ROLE SELECTORS (ADMIN OR USER) */}
         <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
