@@ -563,15 +563,16 @@ export default function App() {
           {/* 1. TONGASOA (HOME SCREEN) */}
           {activeTab === 'Accueil' && (
             <div className="space-y-4 animate-fadeIn">
-              
-              {/* Sleek action bar replacing the big square logo card as requested */}
-              <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-xs">
-                <span className="font-sans text-[10px] sm:text-xs font-black tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent uppercase truncate pr-2">
-                  F.P.Fi Fiangonana Protestanta Fifohazana
-                </span>
+                       {/* Sleek action bar with title on its own row and controls descended below to prevent any truncation */}
+              <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800 px-4 py-3 flex flex-col gap-2.5 shadow-sm">
+                <div className="w-full">
+                  <span className="font-sans text-[11px] sm:text-xs font-black tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent uppercase block">
+                    F.P.Fi Fiangonana Protestanta Fifohazana
+                  </span>
+                </div>
                 
-                {/* Float Accessibility and Dark Mode toggles to the top right of the screen */}
-                <div className="flex items-center gap-1.5 z-10">
+                {/* Control buttons descended below the title with a clean separator if needed */}
+                <div className="flex items-center justify-end gap-1.5 z-10">
                   {/* Logout button */}
                   <button
                     id="btn-logout-home"
@@ -598,7 +599,7 @@ export default function App() {
                   >
                     <Accessibility className="w-3.5 h-3.5" />
                   </button>
-
+ 
                   {/* Theme switcher */}
                   <button
                     id="btn-toggle-dark-mode-home"
