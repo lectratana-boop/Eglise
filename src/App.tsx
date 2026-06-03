@@ -28,6 +28,10 @@ import YouthPage from './components/YouthPage';
 import ChurchLogo from './components/ChurchLogo';
 import LoginPage from './components/LoginPage';
 
+// @ts-ignore
+import churchLogo from './assets/images/church_logo_1780395512214.png';
+
+
 // Lucide icons
 import {
   Home,
@@ -64,6 +68,30 @@ const DAILY_PROMISES = [
 ];
 
 export default function App() {
+  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(0);
+
+  useEffect(() => {
+    // Dynamic loading duration between 2 and 5 seconds (2000ms to 5000ms)
+    const randomDuration = Math.floor(Math.random() * 3000) + 2000;
+    const intervalTime = 30; // ms intervals
+    const totalSteps = randomDuration / intervalTime;
+    let currentStep = 0;
+
+    const progressInterval = setInterval(() => {
+      currentStep++;
+      const pct = Math.min(Math.round((currentStep / totalSteps) * 100), 100);
+      setLoadProgress(pct);
+      
+      if (currentStep >= totalSteps) {
+        clearInterval(progressInterval);
+        setIsAppLoading(false);
+      }
+    }, intervalTime);
+
+    return () => clearInterval(progressInterval);
+  }, []);
+
   // State management populated with localStorage persistence
   const [churches, setChurches] = useState<Church[]>(() => {
     return INITIAL_CHURCHES;
@@ -523,9 +551,50 @@ export default function App() {
       */}
       <div className="w-full md:max-w-[420px] md:h-[840px] md:rounded-[40px] md:border-[12px] md:border-slate-900 md:shadow-2xl bg-white dark:bg-slate-900 md:relative md:overflow-hidden flex flex-col min-h-screen md:min-h-0">
         
-        {/* TOP STATUS BAR REMOVED AND LEFT CLEAN AS REQUESTED */}
+        {isAppLoading ? (
+          <div className="flex-1 bg-white flex flex-col items-center justify-center p-6 animate-fadeIn relative overflow-hidden select-none">
+            {/* Elegant Background Gold Glow matching official colors */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-amber-100/30 rounded-full blur-3xl pointer-events-none" />
+            
+            {/* Official F.P.Fi Logo Centered, perfectly untouched, using exactly the photo file */}
+            <div className="relative z-10 w-64 h-64 flex items-center justify-center animate-scaleIn bg-white rounded-3xl p-4 shadow-xs border border-slate-100/60">
+              <img
+                src={churchLogo}
+                alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
+                className="w-full h-full object-contain bg-white rounded-2xl"
+              />
+            </div>
 
-        {!loggedInMember ? (
+            {/* loading spinner and progress bar */}
+            <div className="mt-8 flex flex-col items-center gap-2.5 relative z-10 w-full max-w-[220px]">
+              {/* Spinner loader with fine gold ring */}
+              <div className="w-7 h-7 rounded-full border-[3px] border-amber-500/10 border-t-amber-500 animate-spin" />
+              
+              <span className="text-[10px] sm:text-[11px] font-sans tracking-wider text-amber-600/90 font-black uppercase mt-1">
+                Mampiditra... {loadProgress}%
+              </span>
+              
+              {/* Elegant Progress Bar */}
+              <div className="w-full h-2 bg-slate-105 shadow-inner rounded-full overflow-hidden border border-slate-200/60 relative">
+                <div 
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 h-full rounded-full transition-all duration-75"
+                  style={{
+                    width: `${loadProgress}%`
+                  }}
+                />
+              </div>
+            </div>
+            
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center z-10 w-full px-4">
+              <span className="text-[10px] font-bold text-slate-405 font-sans tracking-wide block">
+                FANTARIN-TSOA VAOVAO • BAIBOLY • FIHIRANA
+              </span>
+              <p className="text-[9px] font-mono text-slate-350 mt-1">
+                Fampiharana Ofisialy F.P.Fi
+              </p>
+            </div>
+          </div>
+        ) : !loggedInMember ? (
           <LoginPage
             members={members}
             churchRoles={churchRoles}
