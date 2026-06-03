@@ -102,32 +102,50 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
   const [wheelRotation, setWheelRotation] = useState<number>(0);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [spinOutcome, setSpinOutcome] = useState<any | null>(null);
+  const [showCongrats, setShowCongrats] = useState<boolean>(false);
   
-  // Timer for cooldown countdown trigger
-  const [timeRemainingBonus, setTimeRemainingBonus] = useState<number>(0); // remaining miliseconds
+  // States representing remaining spins and active cooldown countdown trigger
+  const [spinsRemainingBonus, setSpinsRemainingBonus] = useState<number>(5);
+  const [bonusCooldownMs, setBonusCooldownMs] = useState<number>(0); // remaining miliseconds
 
-  // Use interval to update cooldown ticker
+  // Use interval to update cooldown ticker and spins remaining
   useEffect(() => {
     if (!loggedInMember) return;
     
     const checkCooldown = () => {
-      const lastSpinTime = localStorage.getItem(`mifandray_last_spin_${loggedInMember.id}`);
-      if (lastSpinTime) {
-        const diff = Date.now() - parseInt(lastSpinTime, 10);
-        // Cooldown duration = 15 minutes = 15 * 60 * 1000 = 900,000 ms
-        const remaining = 900000 - diff;
-        if (remaining > 0) {
-          setTimeRemainingBonus(remaining);
+      const storedWindowStart = localStorage.getItem(`mifandray_spin_window_start_${loggedInMember.id}`);
+      const storedSpinsRemaining = localStorage.getItem(`mifandray_spins_remaining_${loggedInMember.id}`);
+      
+      const now = Date.now();
+      const fifteenMinutes = 15 * 60 * 1000; // 900,000 ms
+
+      if (storedWindowStart) {
+        const windowStart = parseInt(storedWindowStart, 10);
+        const elapsed = now - windowStart;
+        
+        if (elapsed >= fifteenMinutes) {
+          // Cooldown period expired! Reset back to 5 free spins.
+          setSpinsRemainingBonus(5);
+          setBonusCooldownMs(0);
+          localStorage.removeItem(`mifandray_spin_window_start_${loggedInMember.id}`);
+          localStorage.setItem(`mifandray_spins_remaining_${loggedInMember.id}`, "5");
         } else {
-          setTimeRemainingBonus(0);
+          const remaining = storedSpinsRemaining ? parseInt(storedSpinsRemaining, 10) : 5;
+          setSpinsRemainingBonus(remaining);
+          if (remaining <= 0) {
+            setBonusCooldownMs(fifteenMinutes - elapsed);
+          } else {
+            setBonusCooldownMs(0);
+          }
         }
       } else {
-        setTimeRemainingBonus(0);
+        setSpinsRemainingBonus(5);
+        setBonusCooldownMs(0);
       }
     };
 
     checkCooldown();
-    const subInterval = setInterval(checkCooldown, 1050);
+    const subInterval = setInterval(checkCooldown, 1000);
     return () => clearInterval(subInterval);
   }, [loggedInMember, isSpinning]);
 
@@ -210,9 +228,9 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
     const activeQuestion = activeQuestions[currentQuestionIdx];
     
     if (selectedOption === activeQuestion.answerIndex) {
-      // Correct answer - gives +10 points directly to top balance!
+      // Correct answer - gives +1 point directly to top balance!
       setSessionScore(prev => prev + 1);
-      onAddPoints(10);
+      onAddPoints(1);
     } else {
       setWrongAnswersCount(prev => prev + 1);
     }
@@ -264,18 +282,47 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
 
   // Turn Wheel mechanism
   const handleSpinWheel = () => {
-    if (!loggedInMember || isSpinning || timeRemainingBonus > 0) return;
+    if (!loggedInMember || isSpinning || (spinsRemainingBonus <= 0 && bonusCooldownMs > 0)) return;
+
+    const now = Date.now();
+    const fifteenMinutes = 15 * 60 * 1000;
+
+    let storedWindowStart = localStorage.getItem(`mifandray_spin_window_start_${loggedInMember.id}`);
+    let storedSpinsRemaining = localStorage.getItem(`mifandray_spins_remaining_${loggedInMember.id}`);
+
+    let windowStart = storedWindowStart ? parseInt(storedWindowStart, 10) : now;
+    let spinsLeft = storedSpinsRemaining ? parseInt(storedSpinsRemaining, 10) : 5;
+
+    // Reset window if 15 mins passed
+    if (storedWindowStart && now - windowStart >= fifteenMinutes) {
+      windowStart = now;
+      spinsLeft = 5;
+    }
+
+    if (spinsLeft <= 0) {
+      return;
+    }
+
+    // Start a new window if first spin of the batch
+    if (!storedWindowStart || (storedWindowStart && now - parseInt(storedWindowStart, 10) >= fifteenMinutes)) {
+      windowStart = now;
+      localStorage.setItem(`mifandray_spin_window_start_${loggedInMember.id}`, windowStart.toString());
+    }
+
+    const nextSpinsLeft = spinsLeft - 1;
+    localStorage.setItem(`mifandray_spins_remaining_${loggedInMember.id}`, nextSpinsLeft.toString());
+    setSpinsRemainingBonus(nextSpinsLeft);
 
     // Reset current outcome view
     setSpinOutcome(null);
+    setShowCongrats(false);
     setIsSpinning(true);
 
     // Pick a random segment index (0 to 20)
     const targetIdx = Math.floor(Math.random() * 21);
     const segmentAngle = 360 / 21;
     
-    // Calculate final spin target to point at pointer
-    // Standard rotation offset so chosen element stops nicely at top pointer boundary (270 degrees in math coordinates)
+    // Calculate final spin target so chosen element lands on top pointer boundary
     const extraRotations = 8 * 360; // 8 full spins
     const segmentOffset = (21 - targetIdx) * segmentAngle;
     
@@ -286,10 +333,8 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
       setIsSpinning(false);
       const chosenSeg = WHEEL_SEGMENTS[targetIdx];
       setSpinOutcome(chosenSeg);
+      setShowCongrats(true);
 
-      // Save time in localStorage
-      localStorage.setItem(`mifandray_last_spin_${loggedInMember.id}`, Date.now().toString());
-      
       // Update score callback
       onAddPoints(chosenSeg.points);
     }, 4000);
@@ -675,7 +720,7 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
                         <span>Mifandrama amin'ny sora-pandaharana...</span>
                       ) : (
                         <span className={selectedOption === activeQuestions[currentQuestionIdx]?.answerIndex ? "text-emerald-650 font-black" : "text-rose-500 font-black"}>
-                          {selectedOption === activeQuestions[currentQuestionIdx]?.answerIndex ? "✓ Marina marina tsara ! +10 pts" : "✕ Nahemotra ny fidirana !"}
+                          {selectedOption === activeQuestions[currentQuestionIdx]?.answerIndex ? "✓ Marina marina tsara ! +1 pt" : "✕ Nahemotra ny fidirana !"}
                         </span>
                       )}
                     </div>
@@ -733,42 +778,52 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
         /* ======================== TAB B: BONUS (WHEEL) REGION ======================== */
         <div className="space-y-4">
           
-          {/* Intro header for bonus wheel */}
+          {/* Intro header for bonus wheel with customized description */}
           <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 p-4 rounded-2xl shadow-xs space-y-2">
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-850 pb-2.5">
               <span className="text-[10px] font-mono py-0.5 px-2 bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 rounded font-black uppercase tracking-wider">
-                🎁 ZARA HASINA MAHASOA
+                🎁 ZARA HASINA MAHASOA (ROUE)
               </span>
 
-              {/* Cooldown Display Tag */}
-              {timeRemainingBonus > 0 && (
-                <div className="bg-rose-50 border border-rose-220 text-rose-600 dark:bg-rose-950/20 dark:border-rose-900 px-2 py-0.5 rounded text-[10px] font-mono font-black animate-pulse flex items-center gap-1">
-                  <Timer className="w-3 h-3 text-rose-500" />
-                  <span>Sisa: {formatTimeLeftBonus(timeRemainingBonus)}</span>
-                </div>
-              )}
+              {/* Status display of attempts remaining */}
+              <div className="text-[11px] font-black text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                <span>Andrana sisa:</span>
+                <span className="bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded-md font-mono">{spinsRemainingBonus} / 5</span>
+              </div>
             </div>
             
-            <p className="text-xs text-slate-500 leading-normal">
-              Azonao ahodina in-1 isaky ny <strong>15 minitra</strong> ny kodiarana! Misy voka-tsoa maro toy ny isa +10, +20, +50 ary tenen-tsoa hafa, saingy tandremo ny baomba 💣 izay mety hanala isa -20 pts.
+            <p className="text-[11.5px] text-slate-500 font-bold leading-relaxed bg-amber-500/5 p-3 rounded-xl border border-amber-505/15 text-center">
+              « Ahodino isaky ny 15 mn ny kodiarana! Tombony : +10, +20, +50, sns. Tandremo ny baomba 💣 : -20 pts. »
             </p>
           </div>
 
-          {/* WHEEL BODY ASSEMBLED IN GORGEOUS HIGH SPEC CARDS */}
+          {/* WHEEL BODY ASSEMBLED IN GORGEOUS HIGH SPEC CARDS WITH ENLARGED DIMENSIONS */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl shadow-md flex flex-col items-center justify-center space-y-6 relative overflow-hidden">
             
-            {/* Visual spinning apparatus */}
-            <div className="relative w-64 h-64 flex items-center justify-center shrink-0">
+            {/* Spinning statistics inline label bar */}
+            <div className="flex gap-2 text-xs font-bold w-full justify-between items-center px-1">
+              <span className="text-[10.5px] text-slate-400 uppercase font-black tracking-wider">Mihodina in-5 isaky ny 15 minitra</span>
+              
+              {bonusCooldownMs > 0 && (
+                <div className="bg-rose-50 border border-rose-220 text-rose-600 dark:bg-rose-950/20 dark:border-rose-900 px-2 py-0.5 rounded text-[10px] font-mono font-black animate-pulse flex items-center gap-1 shadow-xs">
+                  <Timer className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Miverina afaka: {formatTimeLeftBonus(bonusCooldownMs)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Visual spinning apparatus - SIGNIFICANTLY ENLARGED to 330px */}
+            <div className="relative w-72 h-72 sm:w-[330px] sm:h-[330px] flex items-center justify-center shrink-0">
               
               {/* Pointing arrow at the top boundary */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30 filter drop-shadow-sm pointer-events-none">
-                <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-amber-500" />
-                <div className="w-1.5 h-1.5 bg-white rounded-full absolute -top-1.5 left-1/2 -translate-x-1/2" />
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30 filter drop-shadow-md pointer-events-none">
+                <div className="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[22px] border-t-amber-500" />
+                <div className="w-2 h-2 bg-white rounded-full absolute -top-1.5 left-1/2 -translate-x-1/2" />
               </div>
 
               {/* ROTATING CIRCULAR GRID ELEMENT */}
               <div 
-                className="w-full h-full rounded-full border-[8px] border-slate-900 dark:border-slate-950 shadow-2xl relative overflow-hidden"
+                className="w-full h-full rounded-full border-[10px] border-slate-900 dark:border-slate-950 shadow-2xl relative overflow-hidden"
                 style={{
                   transform: `rotate(${wheelRotation}deg)`,
                   transition: isSpinning ? 'transform 4000ms cubic-bezier(0.15, 0.85, 0.35, 1)' : 'none',
@@ -809,13 +864,13 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
                           stroke="#1e293b" 
                           strokeWidth="0.5" 
                         />
-                        {/* Label Overlay text */}
+                        {/* Label Overlay text - ENLARGED size from 6.5 to 8 */}
                         <text
                           x={tx}
                           y={ty}
                           fill="#ffffff"
-                          fontSize="6.5"
-                          fontWeight="920"
+                          fontSize="8"
+                          fontWeight="940"
                           textAnchor="middle"
                           dominantBaseline="central"
                           transform={`rotate(${textAngle + 90}, ${tx}, ${ty})`}
@@ -831,54 +886,104 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
                 <div className="absolute inset-2 border-[2px] border-white/20 rounded-full pointer-events-none" />
               </div>
 
-              {/* Pin Center Core Knob */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-slate-900 border-4 border-amber-400 shadow-md flex items-center justify-center z-10 select-none">
-                <div className="w-2.5 h-2.5 bg-amber-400 rounded-full animate-ping" />
+              {/* Pin Center Core Knob - ENLARGED to w-16 h-16 with Star inside */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-slate-900 border-[5px] border-amber-400 shadow-xl flex flex-col items-center justify-center z-10 select-none">
+                <span className="text-xl font-black text-amber-400 leading-none">⭐</span>
+                <div className="absolute w-full h-full bg-amber-400/10 rounded-full animate-ping pointer-events-none" />
               </div>
 
             </div>
 
+            {/* CONGRATULATIONS OVERLAY (Shown on completing spin) */}
+            {showCongrats && spinOutcome && (
+              <div className="absolute inset-0 bg-slate-950/95 dark:bg-slate-950/98 rounded-3xl flex flex-col items-center justify-center p-6 text-center z-40 animate-scaleIn space-y-4">
+                
+                {spinOutcome.points > 0 ? (
+                  // Positives / Win layout
+                  <div className="space-y-3 flex flex-col items-center">
+                    <div className="w-16 h-16 bg-emerald-500/10 border-2 border-emerald-500 rounded-full flex items-center justify-center text-3xl animate-bounce">
+                      🎉
+                    </div>
+                    <span className="text-[10px] font-mono tracking-widest text-emerald-400 font-bold uppercase">
+                      MARIHAFA MANDRESY
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-black text-white">
+                      TOHAVA MAMIRAPIRATRA !
+                    </h3>
+                    
+                    <div className="my-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl px-6 py-2 border-b-[4px] border-emerald-700 font-mono font-black text-lg shadow-md">
+                      {spinOutcome.text}
+                    </div>
+
+                    <p className="text-xs text-slate-350 max-w-xs leading-relaxed">
+                      Ny bitsiky ny lanitra dia manome anao fahazavana! <br />
+                      Miarahaba anao nahomby tamin'ny alalan'ny kodiarana vintana.
+                    </p>
+                  </div>
+                ) : (
+                  // Bomb / Warning layout
+                  <div className="space-y-3 flex flex-col items-center">
+                    <div className="w-16 h-16 bg-rose-500/10 border-2 border-rose-500 rounded-full flex items-center justify-center text-3xl animate-pulse">
+                      💣
+                    </div>
+                    <span className="text-[10px] font-mono tracking-widest text-rose-400 font-bold uppercase">
+                      MANDRANITRA BAOMBA
+                    </span>
+                    <h3 className="text-xl font-black text-white">
+                      OH RY KOTROKA !
+                    </h3>
+                    
+                    <div className="my-2 bg-gradient-to-r from-rose-600 to-rose-700 text-white rounded-2xl px-6 py-2 border-b-[4px] border-rose-900 font-mono font-black text-base shadow-md">
+                      Isa nahemotra -20 pts
+                    </div>
+
+                    <p className="text-xs text-slate-300 max-w-xs leading-relaxed">
+                      Aza tezitra na kivy velively! Ampitomboy fotsiny ny fitsapana ambaratonga fa mbola afaka manandrana indray ianao.
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCongrats(false);
+                    setSpinOutcome(null);
+                  }}
+                  className="py-2.5 px-6 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black tracking-wider rounded-xl text-xs active:scale-[0.97] transition-all cursor-pointer select-none"
+                >
+                  MANKASITRAKA INDRINDRA 🙏
+                </button>
+              </div>
+            )}
+
             {/* BUTTON TRIGGERS AND STATE EXPOSURE REGENTS */}
             <div className="w-full text-center space-y-4">
               
-              {spinOutcome ? (
-                /* Showcase won item */
-                <div className="p-3 bg-violet-50 dark:bg-violet-955/20 border border-violet-150 dark:border-violet-850 rounded-2xl animate-scaleIn space-y-1 mx-auto max-w-xs">
-                  <h4 className="text-[10px] font-black uppercase text-violet-650 dark:text-violet-400 tracking-wider">Vosandrana nahomby!</h4>
-                  <div className="text-base font-black text-slate-800 dark:text-white flex items-center justify-center gap-1">
-                    <span>Nahazo vokatra:</span>
-                    <span 
-                      className="px-2.5 py-0.5 rounded-lg text-white text-xs font-black"
-                      style={{ backgroundColor: spinOutcome.color }}
-                    >
-                      {spinOutcome.text}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500">{spinOutcome.desc}</p>
-                </div>
-              ) : (
-                <div className="text-xs text-slate-400 font-bold">
-                  {isSpinning ? "Mihodina ny kodiarana... Andraso kely !" : "Tsindrio ny bokotra hahazoana valim-panomezana !"}
-                </div>
-              )}
+              <div className="text-xs text-slate-400 font-bold">
+                {isSpinning ? "Mihodina ny kodiarana... Andraso kely !" : "Tsindrio ny bokotra hahazoana valim-panomezana !"}
+              </div>
 
               <button
                 type="button"
                 id="btn-spin-wheel"
-                disabled={isSpinning || timeRemainingBonus > 0}
+                disabled={isSpinning || (spinsRemainingBonus <= 0 && bonusCooldownMs > 0)}
                 onClick={handleSpinWheel}
                 className={`py-3 px-8 text-xs font-black uppercase tracking-wider rounded-2xl shadow-lg border-b-[4px] transition-all cursor-pointer select-none shrink-0 ${
-                  timeRemainingBonus > 0
-                    ? 'bg-slate-100 hover:bg-slate-100 text-slate-400 border-slate-300 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-900 cursor-not-allowed border-b-2'
+                  spinsRemainingBonus <= 0 && bonusCooldownMs > 0
+                    ? 'bg-slate-150 text-slate-400 border-slate-300 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-900 cursor-not-allowed border-b-2'
                     : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 border-orange-700 active:translate-y-[2px] active:border-b-[1px] text-slate-950'
                 }`}
               >
-                {isSpinning ? "Andraso kely..." : timeRemainingBonus > 0 ? "Mbola mihidy (Katrana)" : "AHODINO NY KODIARANA ➔"}
+                {isSpinning ? "Andraso kely..." : (spinsRemainingBonus <= 0 && bonusCooldownMs > 0) ? "Mbola mihidy (Katrana)" : "AHODINO NY KODIARANA ➔"}
               </button>
 
-              {timeRemainingBonus > 0 && (
+              {bonusCooldownMs > 0 && spinsRemainingBonus <= 0 ? (
                 <div className="text-[10px] text-slate-450 dark:text-slate-550 leading-relaxed font-bold">
-                  Mbola afaka mihodina indray ianao rehefa afaka <strong>{formatTimeLeftBonus(timeRemainingBonus)}</strong>
+                  Mbola afaka mihodina indray ianao rehefa afaka <strong>{formatTimeLeftBonus(bonusCooldownMs)}</strong>
+                </div>
+              ) : (
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">
+                  Azonao ahodina in-<span className="text-amber-500 font-mono font-black">{spinsRemainingBonus}</span> fanampiny ianao amin'ity anjaranao ity.
                 </div>
               )}
 
