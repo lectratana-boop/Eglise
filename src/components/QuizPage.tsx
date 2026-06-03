@@ -331,39 +331,45 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
   return (
     <div className="space-y-4 font-sans animate-fadeIn">
       
-      {/* 1. TAB SELECTOR MAIN HEADER BUTTON REGENTS */}
-      <div className="grid grid-cols-2 gap-2 bg-slate-150 dark:bg-slate-900/80 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
-        <button
-          type="button"
-          onClick={() => {
-            setActivePlayTab('quiz');
-          }}
-          className={`py-3 px-1 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2 select-none active:scale-[0.98] ${
-            activePlayTab === 'quiz'
-              ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md'
-              : 'text-slate-550 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white bg-transparent'
-          }`}
-        >
-          <Award className="w-4 h-4 shrink-0" />
-          <span>FIFANINANANA QUIZ</span>
-        </button>
+      {/* 1. OVERLAPPING 3D TAB SELECTOR MAIN HEADER */}
+      <div className="relative flex items-center justify-center w-full px-1 py-1.5">
+        <div className="flex w-full max-w-sm items-center justify-center -space-x-3.5 isolate">
+          
+          {/* LEFT QUIZ BUTTON */}
+          <button
+            type="button"
+            onClick={() => {
+              setActivePlayTab('quiz');
+            }}
+            className={`w-1/2 py-2.5 px-3 rounded-2xl text-[9.5px] font-black uppercase tracking-wider transition-all cursor-pointer select-none flex items-center justify-center gap-1.5 border ${
+              activePlayTab === 'quiz'
+                ? 'z-20 scale-[1.03] bg-gradient-to-r from-violet-600 to-indigo-650 text-white border-violet-500 shadow-[0_5px_0_0_#4f46e5,_0_8px_16px_rgba(99,102,241,0.25)]'
+                : 'z-10 scale-[0.97] opacity-80 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 shadow-[0_3px_0_0_#cbd5e1,_0_4px_8px_rgba(0,0,0,0.08)] translate-y-[2px]'
+            }`}
+          >
+            <Award className="w-3.5 h-3.5 shrink-0" />
+            <span>Quiz</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setActivePlayTab('bonus');
-            // reset level to avoid overlap
-            setSelectedLevel(null);
-          }}
-          className={`py-3 px-1 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2 select-none active:scale-[0.98] ${
-            activePlayTab === 'bonus'
-              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
-              : 'text-slate-550 dark:text-slate-400 hover:text-slate-705 dark:hover:text-white bg-transparent'
-          }`}
-        >
-          <Sparkles className="w-4 h-4 shrink-0 animate-pulse text-amber-400" />
-          <span>ROUE DU BONUS</span>
-        </button>
+          {/* RIGHT BONUS BUTTON */}
+          <button
+            type="button"
+            onClick={() => {
+              setActivePlayTab('bonus');
+              // reset level to avoid overlap
+              setSelectedLevel(null);
+            }}
+            className={`w-1/2 py-2.5 px-3 rounded-2xl text-[9.5px] font-black uppercase tracking-wider transition-all cursor-pointer select-none flex items-center justify-center gap-1.5 border ${
+              activePlayTab === 'bonus'
+                ? 'z-20 scale-[1.03] bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 border-amber-400 shadow-[0_5px_0_0_#b45309,_0_8px_16px_rgba(245,158,11,0.25)]'
+                : 'z-10 scale-[0.97] opacity-80 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 shadow-[0_3px_0_0_#cbd5e1,_0_4px_8px_rgba(0,0,0,0.08)] translate-y-[2px]'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 shrink-0 animate-pulse text-amber-500" />
+            <span>Bonus</span>
+          </button>
+
+        </div>
       </div>
 
       {activePlayTab === 'quiz' ? (
