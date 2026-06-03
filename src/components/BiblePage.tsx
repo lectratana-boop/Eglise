@@ -723,28 +723,7 @@ export default function BiblePage({ isElderlyMode }: BiblePageProps) {
                 </div>
               </div>
 
-              {/* TTS Voice trigger with tactile 3D effect */}
-              <button
-                id="btn-voice-synthesis"
-                onClick={handleToggleVoice}
-                className={`py-2 px-3 rounded-xl text-xs font-black shadow-sm flex items-center gap-1.5 transition-all cursor-pointer active:translate-y-[2px] ${
-                  isPlayingAudio
-                    ? 'bg-rose-500 border-b-[4px] border-rose-700 text-white active:border-b-[2px]'
-                    : 'bg-emerald-600 border-b-[4px] border-emerald-850 text-white active:border-b-[2px]'
-                }`}
-              >
-                {isPlayingAudio ? (
-                  <>
-                    <VolumeX className="w-4 h-4 animate-pulse fill-white" />
-                    <span>Hajanony</span>
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="w-4 h-4 fill-white" />
-                    <span>Vakio Feo</span>
-                  </>
-                )}
-              </button>
+
             </div>
 
             {/* Verses Scroll list */}

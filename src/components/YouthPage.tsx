@@ -600,21 +600,21 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
   return (
     <div className="space-y-4 animate-fadeIn">
       {/* Dynamic Sampana Room Selector at the absolute top (en haut) */}
-      {activeUser && userSampanaList.length > 1 && (
+      {activeUser && userSampanaList.length > 0 && (
         <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs flex flex-col gap-1.5 animate-scaleIn">
-          <span className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">
-            Misafidiana Sampana ho jerena:
+          <span className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider animate-pulse">
+            Sokajy Sampana misy anao (Ahodina miankavia/miankavanana raha maromaro) • {userSampanaList.length} voafidy
           </span>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap py-1 scrollbar-thin scrollbar-thumb-violet-300 dark:scrollbar-thumb-violet-800 w-full">
             {userSampanaList.map((samp) => {
               const isSelected = viewedSampana === samp;
               return (
                 <button
                   key={samp}
                   onClick={() => setViewedSampana(samp)}
-                  className={`px-3 py-1.5 text-xs font-black rounded-lg cursor-pointer transition-all active:scale-95 ${
+                  className={`px-3.5 py-2 text-xs font-black rounded-xl cursor-pointer transition-all active:scale-95 shrink-0 ${
                     isSelected
-                      ? 'bg-violet-650 text-white shadow-xs'
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-650 text-white shadow-md'
                       : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-850 text-slate-650 dark:text-slate-400 border border-slate-150/50 dark:border-slate-800/80'
                   }`}
                 >

@@ -97,14 +97,16 @@ export default function App() {
     }
   }, [loggedInMember]);
 
-  const handleRegisterAndLogin = (name: string, phone: string, requestedRole?: string) => {
+  const handleRegisterAndLogin = (name: string, phone: string, requestedRoles: string[], address?: string) => {
+    const rolesList = (requestedRoles && requestedRoles.length > 0) ? requestedRoles : ["Sampana Tanora Kristiana (STK)"];
     const newMember: Member = {
       id: `mem-${Date.now()}`,
       churchId: activeChurchId || 'fjkm-isotry',
       name: name,
       phone: phone,
-      address: requestedRole === 'Mpitandrina' ? "Bureau Fifohazana Isotry" : "Lot 26 ter mahamasina",
-      role: requestedRole || "Sampana Tanora Kristiana (STK)" // default sampana
+      address: address || "Lot 26 ter mahamasina",
+      role: rolesList.join(', '),
+      roles: rolesList
     };
     setMembers(prev => [...prev, newMember]);
     setLoggedInMember(newMember);
@@ -501,6 +503,7 @@ export default function App() {
         {!loggedInMember ? (
           <LoginPage
             members={members}
+            churchRoles={churchRoles}
             onLogin={setLoggedInMember}
             onRegisterAndLogin={handleRegisterAndLogin}
           />
@@ -606,18 +609,7 @@ export default function App() {
                   — {activeVerseRef}
                 </p>
  
-                {/* TTS Reader for daily promise */}
-                <button
-                  onClick={() => {
-                    const utterance = new SpeechSynthesisUtterance(activeVerseText);
-                    utterance.lang = 'fr-FR';
-                    utterance.rate = isElderlyMode ? 0.8 : 0.9;
-                    window.speechSynthesis.speak(utterance);
-                  }}
-                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-705 dark:text-slate-200 text-[10px] font-black rounded-xl cursor-pointer flex items-center justify-center gap-1 border border-slate-200/50 dark:border-slate-800"
-                >
-                  🔊 Henoy amin'ny Feo
-                </button>
+
               </div>
  
               {/* Grid of latest News & Events inline preview */}
@@ -628,7 +620,7 @@ export default function App() {
                   <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
                     <div className="flex items-center gap-1.5">
                       <span className="text-base">📢</span>
-                      <span className="text-[11px] font-extrabold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Vaovao sy Filazana</span>
+                      <span className="text-[11px] font-extrabold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Vaovao sy filazana</span>
                     </div>
                     <button
                       onClick={() => setActiveTab('Annonces')}
@@ -850,7 +842,7 @@ export default function App() {
                   {/* Custom Welcome Screen Announcements Section */}
                   <div className="grid grid-cols-1 gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
                     <div className="space-y-1">
-                      <span className="block text-[10px] font-black text-slate-400 uppercase">Vaovao sy Filazana ao amin'ny Tongasoa</span>
+                      <span className="block text-[10px] font-black text-slate-400 uppercase">Vaovao sy filazana ao amin'ny tongasoa</span>
                       <p className="text-[9.5px] text-slate-400 leading-normal">
                         Ovao eto ny filazana ho hita ao amin'ny pejin'ny Tongasoa. Raha avela foana ny banga, dia haverina ho an'ny default izany.
                       </p>
