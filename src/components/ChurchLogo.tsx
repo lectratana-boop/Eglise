@@ -38,9 +38,8 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
         {/* Elegant original gold church logo on its native spacious white background */}
         <div className={`transition-all duration-300 flex items-center justify-center bg-white ${sizeClass}`}>
           <img
-            src={`${churchLogo}?v=2`}
+            src={churchLogo}
             alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
-            referrerPolicy="no-referrer"
             className="w-full h-full object-contain rounded-2xl bg-white"
           />
         </div>
@@ -53,9 +52,8 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
     <div className={`flex items-center select-none ${className}`}>
       <div className={`bg-white rounded-lg p-0.5 border border-slate-150 ${badgeSize} flex items-center justify-center overflow-hidden`}>
         <img
-          src={`${churchLogo}?v=2`}
+          src={churchLogo}
           alt="F.P.Fi"
-          referrerPolicy="no-referrer"
           className="max-w-full max-h-full object-contain bg-white"
         />
       </div>
