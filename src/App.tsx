@@ -502,8 +502,8 @@ export default function App() {
             {/* UNIFIED PHONE TOP HEADER ACTION RAIL FOR ALL PAGES */}
             <header className="bg-white dark:bg-slate-900 border-b border-slate-150 dark:border-slate-800 px-4 py-3 flex flex-col gap-2 shadow-xs shrink-0 z-30">
               <div className="w-full">
-                <span className="font-sans text-[11px] sm:text-xs font-black tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent uppercase block">
-                  F.P.FI FIANGONANA PROTESTANTA FIFOHAZANA
+                <span className="font-sans text-[11px] sm:text-xs font-black tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent block">
+                  F.P.Fi FIANGONANA PROTESTANTA FIFOHAZANA
                 </span>
               </div>
               
