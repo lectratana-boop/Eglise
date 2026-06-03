@@ -23,7 +23,7 @@ export const INITIAL_MEMBERS: Member[] = [
   { id: "m-tantely", churchId: "fjkm-isotry", name: "Tantely", phone: "034 29 944 17", address: "Lot 26 ter mahamasina", role: "Sampana Tanora Kristiana (STK)" },
 
   // FJKM Isotry Fitiavana members
-  { id: "m1", churchId: "fjkm-isotry", name: "Andry Rakotomalala", phone: "034 12 345 67", address: "Isotry II G 12", role: "Loholona" },
+  { id: "m1", churchId: "fjkm-isotry", name: "Andry Rakotomalala", phone: "034 12 345 67", address: "Isotry II G 12", role: "Diakra" },
   { id: "m2", churchId: "fjkm-isotry", name: "Miora Rasoarilalao", phone: "032 98 765 43", address: "67Ha Atsimo III Y 3", role: "Diakra" },
   { id: "m3", churchId: "fjkm-isotry", name: "Jean Razafindrabe", phone: "033 45 678 90", address: "Ampefiloha Block 5", role: "Mpitahiry vola" },
   { id: "m4", churchId: "fjkm-isotry", name: "Soa Rabetafika", phone: "034 56 789 12", address: "Anosy, ruelle 2", role: "Mpihira (Chorale)" },
@@ -32,7 +32,7 @@ export const INITIAL_MEMBERS: Member[] = [
   { id: "m5", churchId: "ekar-antanimena", name: "Faly Randriamanantena", phone: "034 99 222 11", address: "Antanimena, Villa Rose", role: "Pretra / Katekista" },
   { id: "m6", churchId: "ekar-antanimena", name: "Landry Rakotoarison", phone: "033 77 111 33", address: "Ankorondrano Est", role: "Mpikambana Tanora" },
   { id: "m7", churchId: "ekar-antanimena", name: "Chantal Rasoanaivo", phone: "032 44 888 99", address: "Ivandry, rihana 2", role: "Komitin'ny mpiantoka" },
-
+ 
   // FLM Ambatovinaky members
   { id: "m8", churchId: "flm-ambatovinaky", name: "Pastor Michel Rabenandrasana", phone: "034 55 444 33", address: "Ambatovinaky, Villa Finoana", role: "Mpitandrina" },
   { id: "m9", churchId: "flm-ambatovinaky", name: "Nirina Randria", phone: "033 11 999 88", address: "Faravohitra ambony", role: "Lehiben'ny Chorale" },
@@ -44,10 +44,10 @@ export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
   {
     id: "a1",
     churchId: "fjkm-isotry",
-    title: "Fivorian'ny Diakra sy Loholona",
+    title: "Fivorian'ny Diakra",
     date: "2026-06-03",
     category: "fivoriana",
-    content: "Ampandrenesina ny vahoaka andriamanitra fa hisy fivoriana maika ho an'ny Diakra sy Loholona rehetra ny Alahady izao aorian meva ny fanompoam-pivavahana. Handinihana ny asa fanamboarana ny tempoly."
+    content: "Ampandrenesina ny vahoaka andriamanitra fa hisy fivoriana maika ho an'ny Diakra rehetra ny Alahady izao aorian meva ny fanompoam-pivavahana. Handinihana ny asa fanamboarana ny tempoly."
   },
   {
     id: "a2",

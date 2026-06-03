@@ -191,7 +191,7 @@ export default function MembersPage({
           }`}
         >
           <Plus className="w-5 h-5 stroke-[2.5]" />
-          <span>Hampiditra Mpikambana Vaovao</span>
+          <span>Hampiditra</span>
         </button>
       </div>
 
@@ -336,7 +336,7 @@ export default function MembersPage({
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="font-black text-slate-850 dark:text-white text-lg leading-tight">
-                  Hampiditra Mpikambana Vaovao
+                  Hampiditra
                 </h3>
                 <p className="text-xs text-slate-450 dark:text-slate-400">
                   Ampidiro eto ny mombamomba azy sy ny andraikiny rehetra.
@@ -475,7 +475,7 @@ export default function MembersPage({
                   type="submit"
                   className="flex-1 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black rounded-xl shadow-md cursor-pointer text-xs"
                 >
-                  Hampiditra ho Membra
+                  Hampiditra
                 </button>
                 <button
                   type="button"

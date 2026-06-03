@@ -141,10 +141,9 @@ export default function App() {
       "Sampana Vokovoko Manga",
       "SAMPATI (Sampana Mpanazava sy Tily)",
       "Sampana Fifohazana (SAFIF)",
-      "Sampana SFL (Sampana Fiangonana sy ny Loholona)",
+      "Sampana SF (Sampana Fiangonana)",
       "Chorales (Pihira choral / Antoko mpihira)",
       "Mpampianatra sekoly alahady",
-      "Loholona",
       "Diakra",
       "Mpitandrina",
       "Secretaire"
@@ -333,6 +332,14 @@ export default function App() {
       id: `ev-${Date.now()}`
     };
     setEvents(prev => [...prev, fresh]);
+  };
+
+  const handleUpdateEvent = (id: string, updatedFields: Partial<ChurchEvent>) => {
+    setEvents(prev => prev.map(ev => ev.id === id ? { ...ev, ...updatedFields } : ev));
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    setEvents(prev => prev.filter(ev => ev.id !== id));
   };
 
   const handleAddSermon = (newSermon: Omit<Sermon, 'id'>) => {
@@ -727,6 +734,8 @@ export default function App() {
               churchId={activeChurchId}
               events={events}
               onAddEvent={handleAddEvent}
+              onUpdateEvent={handleUpdateEvent}
+              onDeleteEvent={handleDeleteEvent}
               isElderlyMode={isElderlyMode}
             />
           )}
@@ -1065,31 +1074,6 @@ export default function App() {
                   onDeleteMember={handleDeleteMember}
                   isElderlyMode={isElderlyMode}
                 />
-              </div>
-
-              {/* Core general reset settings panel */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 p-4 rounded-xl shadow-xs space-y-3">
-                <h3 className="font-extrabold text-xs text-slate-800 dark:text-white uppercase">Paramètres PWA</h3>
-                <p className="text-[10px] text-slate-400">Asa mpanorina sy fikirana ny rakitra ho an'ny iombonan'ny finoana.</p>
-                
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex flex-col gap-2">
-                  <div className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-150 text-[10px] space-y-1">
-                    <span className="font-bold text-slate-700 block">Drafitra fampianarana:</span>
-                    <span className="text-slate-400">PWA Target Mode: APK Android Wrapper 2026.</span>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      if (confirm("Haverina amin'ny voalohany ve ny rakitra rehetra (Reset all data)?")) {
-                        localStorage.clear();
-                        window.location.reload();
-                      }
-                    }}
-                    className="w-full py-2 bg-rose-600 hover:bg-rose-700 font-bold border-b-[4px] border-rose-800 text-white rounded-lg cursor-pointer transition-all active:translate-y-[1px] active:border-b-[1px] text-[10.5px]"
-                  >
-                    Hamarina ny Data rehetra (Reset) ✕
-                  </button>
-                </div>
               </div>
             </div>
           )}

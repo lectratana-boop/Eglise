@@ -120,7 +120,7 @@ export default function AnnouncementsPage({
           }`}
         >
           <Plus className="w-5 h-5 stroke-[2.5]" />
-          <span>Hampiditra Filazana vaovao</span>
+          <span>Hampiditra</span>
         </button>
       </div>
 
@@ -282,7 +282,7 @@ export default function AnnouncementsPage({
             <div className="p-5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-white text-lg">
-                  Hampiditra Filazana vaovao
+                  Hampiditra
                 </h3>
                 <p className="text-xs text-slate-450 dark:text-slate-400">
                   Soraty eto ny lohahevitra sy ny pitsopitsony fampandrenesana ho an'ny fiangonana.

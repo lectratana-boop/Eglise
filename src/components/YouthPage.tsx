@@ -132,7 +132,7 @@ export default function YouthPage({ isElderlyMode, members, churchRoles, loggedI
       'Dorkasy': { balance: 1890000, lastExpense: 450000, expenseLabel: 'Fanampiana sy fizarana sakafo' },
       'VFTM': { balance: 620500, lastExpense: 85000, expenseLabel: 'Tsakitsaky sy ranom-boankazo' },
       'Sampana SAF': { balance: 980000, lastExpense: 150000, expenseLabel: 'Fahasalamana fototra' },
-      'Sampana SFL (Sampana Fiangonana sy ny Loholona)': { balance: 1500000, lastExpense: 200000, expenseLabel: 'Fivorian\'ny Loholona' }
+      'Sampana SF (Sampana Fiangonana)': { balance: 1500000, lastExpense: 200000, expenseLabel: 'Fivorian\'ny Fiangonana' }
     };
   });
 
