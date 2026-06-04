@@ -1,13 +1,102 @@
 <!doctype html>
-<html lang="mg">
+<html lang="mg" style="background-color: #020617;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/src/assets/images/church_logo_1780395512214.png" />
     <title>Fiangonana eto Madagascar</title>
+    <style>
+      /* Ensure absolute black/slate background universally to prevent any white splash on mobile WebView initialization */
+      html, body {
+        background-color: #020617 !important;
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      
+      /* Pure CSS loading container which will be automatically replaced when React mounts */
+      .mobile-splash {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        background-color: #020617;
+      }
+
+      .logo-pulse {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #8b5cf6, #4f46e5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+        margin-bottom: 20px;
+        animation: pulseAnimation 2s infinite ease-in-out;
+      }
+
+      .cross-icon {
+        font-size: 38px;
+        color: #ffffff;
+      }
+
+      .splash-title {
+        color: #f8fafc;
+        font-size: 18px;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .splash-subtitle {
+        color: #a78bfa;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-top: 5px;
+      }
+
+      .splash-spinner {
+        width: 24px;
+        height: 24px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #8b5cf6;
+        border-radius: 50%;
+        animation: spinAnimation 0.8s infinite linear;
+        margin-top: 30px;
+      }
+
+      @keyframes pulseAnimation {
+        0%, 100% { transform: scale(1.0); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3); }
+        50% { transform: scale(1.08); box-shadow: 0 15px 35px rgba(139, 92, 246, 0.5); }
+      }
+
+      @keyframes spinAnimation {
+        to { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Splash Screen immediately visible during mobile loading sequence. React mounts over this. -->
+      <div class="mobile-splash">
+        <div class="logo-pulse">
+          <span class="cross-icon">🇲🇬</span>
+        </div>
+        <h1 class="splash-title">MIFANDRAY</h1>
+        <p class="splash-subtitle">Fiangonana eto Madagascar</p>
+        <div class="splash-spinner"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
