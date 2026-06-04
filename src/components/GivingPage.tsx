@@ -284,7 +284,7 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
           }`}
         >
           <Coins className="w-4 h-4" />
-          <span>VAINGA 1 : Tahirim-bola 📥</span>
+          <span>Tahirim-bola 📥</span>
         </button>
 
         <button
@@ -297,7 +297,7 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
           }`}
         >
           <Target className="w-4 h-4" />
-          <span>VAINGA 2 : Tanjona 🎯</span>
+          <span>Tanjona 🎯</span>
         </button>
       </div>
 
@@ -393,7 +393,7 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
 
                     {/* Vola miditra/mivoaka (Amount) */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-extrabold text-slate-500 uppercase">Vola mifanitsy (Ar) :</label>
+                      <label className="text-[10px] font-extrabold text-slate-500 uppercase">Vola :</label>
                       <input
                         type="number"
                         required
@@ -406,7 +406,7 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
 
                     {/* Reason */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-extrabold text-slate-500 uppercase">Antony na Fanazavana fohy :</label>
+                      <label className="text-[10px] font-extrabold text-slate-500 uppercase">Antony :</label>
                       <input
                         type="text"
                         required
@@ -419,7 +419,7 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
 
                     {/* User / Responsible staff */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-extrabold text-slate-400 uppercase">Mpitantana na Mpandoa adidy :</label>
+                      <label className="text-[10px] font-extrabold text-slate-400 uppercase">Mpitantana :</label>
                       <input
                         type="text"
                         value={finMember}
@@ -486,7 +486,7 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
                           <div className="flex items-center justify-between gap-1.5 flex-wrap text-[10px] text-slate-450">
                             <span className="flex items-center gap-0.5 font-semibold">
                               <User className="w-3 h-3 text-slate-400" />
-                              Andrapandray: {rec.memberOrStaff}
+                              Mpandray: {rec.memberOrStaff}
                             </span>
                             <span className="font-mono">
                               📅 {rec.date}
@@ -528,8 +528,8 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
                   🏦
                 </div>
                 <div>
-                  <h3 className="font-black text-xs sm:text-sm uppercase tracking-wider text-slate-200">KAISSA PAR TAPITRA (VALINY NY CAISSE)</h3>
-                  <p className="text-[10px] text-indigo-300">Fikambanana ankapobeny manontolo ny fiangonana izao</p>
+                  <h3 className="font-black text-xs sm:text-sm uppercase tracking-wider text-slate-200">Caisse</h3>
+                  <p className="text-[10px] text-indigo-300">Tamberina ankapobeny manontolo ny fiangonana</p>
                 </div>
               </div>
               <div className="text-right">
@@ -541,11 +541,11 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
               <div className="space-y-0.5">
-                <span className="text-[9.5px] uppercase font-bold text-slate-300">Fitongonan'ny Tahiry</span>
+                <span className="text-[9.5px] uppercase font-bold text-slate-300">Tahiry</span>
                 <p className="text-lg font-black font-mono text-emerald-400">+{formattedMoney(totalIncomings)}</p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[9.5px] uppercase font-bold text-slate-300">Fitongonan'ny Fandaniana</span>
+                <span className="text-[9.5px] uppercase font-bold text-slate-300">Fandaniana</span>
                 <p className="text-lg font-black font-mono text-rose-300">-{formattedMoney(totalOutgoings)}</p>
               </div>
               <div className="space-y-0.5 bg-white/5 p-3 rounded-2xl border border-white/10">
@@ -580,7 +580,7 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
                     
                     {/* Project Title */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-extrabold text-slate-500 uppercase">Anaran'ny Tetikasa :</label>
+                      <label className="text-[10px] font-extrabold text-slate-500 uppercase">Tetikasa :</label>
                       <input
                         type="text"
                         required
@@ -593,7 +593,7 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
 
                     {/* Project Description */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-extrabold text-slate-500 uppercase">Fanazavana momba izany :</label>
+                      <label className="text-[10px] font-extrabold text-slate-500 uppercase">fanazavana :</label>
                       <textarea
                         value={projDesc}
                         onChange={(e) => setProjDesc(e.target.value)}
