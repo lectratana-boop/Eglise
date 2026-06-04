@@ -15,12 +15,12 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-// Explicit 5 image slideshow urls representing major christian aesthetics as requested
+// Explicit 5 image slideshow urls representing major waterfall aesthetics as requested
 const SLIDESHOW_IMAGES = [
-  "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80", // Aquarium tropical poissons
-  "https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?auto=format&fit=crop&w=1200&q=80", // Aquarium récif corallien coloré
-  "https://images.unsplash.com/photo-1432406845153-61488c7b6b9c?auto=format&fit=crop&w=1200&q=80", // Chute d'eau sur montagne (tropical waterfall)
+  "https://images.unsplash.com/photo-1432406845153-61488c7b6b9c?auto=format&fit=crop&w=1200&q=80", // Majestic mountain-side waterfall
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80", // Yosemite magnifique cascade montagne
+  "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1200&q=80", // Gorgeous sunlit canyon waterfall 
+  "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=1200&q=80", // Lush tropical volcanic waterfall
   "https://images.unsplash.com/photo-1470071449604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80"  // Cascade brumeuse matin montagne
 ];
 
@@ -117,7 +117,7 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center text-white font-sans overflow-hidden p-4 relative">
+    <div className="min-h-screen flex flex-col justify-end pb-10 sm:pb-16 text-white font-sans overflow-hidden p-4 relative">
       
       {/* Dynamic Ken Burns Slideshow Keyframe Definitions */}
       <style>{`
