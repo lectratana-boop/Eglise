@@ -51,7 +51,8 @@ import {
   X,
   PhoneCall,
   Plus,
-  Star
+  Star,
+  ArrowLeft
 } from 'lucide-react';
 
 const DEFAULT_SLOGAN = "Fampiharana ho an'ny fiangonana eto Madagasikara: Baiboly Masina, fandalinana, fihirana, ary varavarana fifandraisana mivantana eo amin'ny mpino sy ny fiangonana rehetra.";
@@ -604,7 +605,21 @@ export default function App() {
         )}
 
         {/* MOBILE ACTIVE TAB CONTENT DISPLAY VIEWPORT */}
-        <div className={`flex-1 overflow-y-auto scrollbar-thin dark:bg-slate-950 ${activeTab === 'Accueil' ? 'p-0 pb-5' : 'p-4 space-y-5'}`}>
+        <div className={`flex-1 overflow-y-auto scrollbar-thin dark:bg-slate-950 ${activeTab === 'Accueil' ? 'p-0 pb-5' : 'p-4 space-y-4'}`}>
+          
+          {/* Universal Back Button for Subpages */}
+          {activeTab !== 'Accueil' && (
+            <button
+              onClick={() => {
+                setActiveTab('Accueil');
+                setShowMoreMenu(false);
+              }}
+              className="flex items-center gap-2 text-[10.5px] text-slate-505 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-black uppercase tracking-wider bg-slate-100/80 hover:bg-slate-200 dark:bg-slate-900/60 dark:hover:bg-slate-800 py-2 px-3.5 rounded-xl cursor-pointer active:scale-95 transition-all w-fit shadow-xs shrink-0 select-none border border-slate-200/30 dark:border-slate-800/80"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-violet-605" />
+              <span>Hiverina (Home / Tongasoa)</span>
+            </button>
+          )}
           
           {/* View Tab Selector Gate */}
 

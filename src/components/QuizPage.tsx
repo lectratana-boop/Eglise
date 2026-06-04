@@ -841,10 +841,10 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
                   transition: isSpinning ? 'transform 4000ms cubic-bezier(0.15, 0.85, 0.35, 1)' : 'none',
                 }}
               >
-                {/* SVG sector drawing of 21 slices */}
+                {/* SVG sector drawing of dynamically sized slices */}
                 <svg viewBox="0 0 200 200" className="w-full h-full transform rotate-[261deg]">
                   {WHEEL_SEGMENTS.map((seg, i) => {
-                    const totalSegments = 21;
+                    const totalSegments = WHEEL_SEGMENTS.length;
                     const radius = 98;
                     const center = 100;
                     const degPerSegment = 360 / totalSegments;

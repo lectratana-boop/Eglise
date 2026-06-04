@@ -119,19 +119,33 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
   return (
     <div className="min-h-screen flex flex-col justify-center text-white font-sans overflow-hidden p-4 relative">
       
-      {/* 5-Image Slideshow Background Layer with Fade Transition */}
+      {/* Dynamic Ken Burns Slideshow Keyframe Definitions */}
+      <style>{`
+        @keyframes slideshowKenBurns {
+          0% { transform: scale(1.0) translate(0, 0); }
+          50% { transform: scale(1.16) translate(-1.5%, -0.8%); }
+          100% { transform: scale(1.0) translate(0, 0); }
+        }
+        .animate-slideshowKenBurns {
+          animation: slideshowKenBurns 24s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* 5-Image Slideshow Background Layer with Fade and Ken Burns Animated Motion */}
       <div className="absolute inset-0 z-0 select-none overflow-hidden bg-slate-950">
         {SLIDESHOW_IMAGES.map((imgUrl, idx) => (
           <div
             key={imgUrl}
             style={{ backgroundImage: `url(${imgUrl})` }}
-            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[1500ms] ease-in-out ${
-              activeImageIdx === idx ? 'opacity-40 scale-100' : 'opacity-0 scale-[1.03]'
+            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[1800ms] ease-in-out ${
+              activeImageIdx === idx 
+                ? 'opacity-[0.82] animate-slideshowKenBurns scale-100 z-10' 
+                : 'opacity-0 scale-[1.04] z-0'
             }`}
           />
         ))}
-        {/* Soft elegant glassmorphic tint over background layer to make forms highly legible */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-900/70 to-slate-950/90 backdrop-blur-[2px]" />
+        {/* Soft high-contrast vignette overlay to keep text fully legible without blurring the gorgeous images */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-slate-950/40 to-slate-950/85 z-10" />
       </div>
 
       {/* Main Login Card - Refined and Elegant Christian Design */}

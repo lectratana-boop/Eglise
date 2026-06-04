@@ -27,6 +27,7 @@ export default function MembersPage({
   isElderlyMode
 }: MembersPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMemberForDetail, setSelectedMemberForDetail] = useState<Member | null>(null);
   
   // Registration Form State
   const [isAdding, setIsAdding] = useState(false);
@@ -66,9 +67,7 @@ export default function MembersPage({
 
   const filteredMembers = members.filter(m => {
     const matchesChurch = m.churchId === churchId;
-    const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (m.role || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          m.phone.includes(searchQuery);
+    const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesChurch && matchesSearch;
   });
 
@@ -211,122 +210,185 @@ export default function MembersPage({
 
       {/* Roster lists & filters with responsive search */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm p-5 space-y-4">
-        
-        <div className="relative">
+             <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Karohy amin'ny anarana, andraikitra na finday..."
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-100 outline-none transition-all focus:ring-2 focus:ring-violet-500"
+            placeholder="Karohy amin'ny anarana ny mpikambana..."
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-205 dark:border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-850 dark:text-slate-100 outline-none transition-all focus:ring-2 focus:ring-violet-500 font-semibold"
           />
-          <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" />
+          <Search className="w-5 h-5 text-slate-405 absolute left-3.5 top-3.5" />
         </div>
 
-        {/* Members card layout - reduced to half size to view more members at once */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+        {/* Members card layout: Maximize display space by showing ONLY photo and name */}
+        <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {filteredMembers.length === 0 ? (
             <div className="col-span-full text-center py-8 text-slate-400 dark:text-slate-500">
               <User className="w-10 h-10 mx-auto mb-1 text-slate-300 dark:text-slate-700" />
-              <p className="text-xs font-semibold">Tsy nisy mpikambana voaray hita mifanaraka amin'ny fikarohanao.</p>
+              <p className="text-xs font-semibold font-sans">Tsy nisy mpikambana voaray hita mifanaraka amin'ny fikarohanao.</p>
             </div>
           ) : (
             filteredMembers.map((member) => {
-              const parsedRoles = member.roles || (member.role ? member.role.split(', ') : []);
               return (
-                <div
+                <button
+                  type="button"
                   id={`member-card-${member.id}`}
                   key={member.id}
-                  className="p-2.5 rounded-xl border border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-850 hover:shadow-sm transition-all flex flex-col justify-between gap-2 h-full text-left"
+                  onClick={() => setSelectedMemberForDetail(member)}
+                  className="p-3 rounded-2xl border border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-2 cursor-pointer group active:scale-[0.98] outline-none select-none"
                 >
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full border border-violet-200 dark:border-violet-850 overflow-hidden shrink-0 bg-violet-50 dark:bg-violet-950 flex items-center justify-center">
-                        {member.photo ? (
-                          <img
-                            src={member.photo}
-                            alt={member.name}
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-[10px] uppercase font-black text-violet-600 dark:text-violet-400">
-                            {member.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 truncate" title={member.name}>
-                          {member.name}
-                        </h3>
-                      </div>
-                    </div>
-                    
-                    {/* Flex wrap list of assigned roles (miniaturized) */}
-                    <div className="flex flex-wrap gap-0.5">
-                      {parsedRoles.length > 0 ? (
-                        parsedRoles.slice(0, 2).map((roleName) => (
-                          <span key={roleName} className="inline-flex items-center gap-0.5 text-[7.5px] bg-violet-50 dark:bg-violet-950/50 text-violet-650 dark:text-violet-350 px-1 py-0.5 rounded font-extrabold tracking-tight truncate max-w-full">
-                            <Briefcase className="w-2 h-2 shrink-0" />
-                            <span className="truncate max-w-[65px]">{roleName}</span>
-                          </span>
-                        ))
-                      ) : (
-                        <span className="inline-flex items-center gap-0.5 text-[7.5px] bg-slate-50 dark:bg-slate-900 text-slate-450 px-1 py-0.5 rounded font-extrabold">
-                          Tsotra
-                        </span>
-                      )}
-                      {parsedRoles.length > 2 && (
-                        <span className="inline-flex items-center text-[7px] bg-amber-50 dark:bg-amber-950/30 text-amber-600 px-1 py-0.5 rounded font-black">
-                          +{parsedRoles.length - 2}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-0.5 text-[9px] text-slate-500 dark:text-slate-400 pt-0.5">
-                      <p className="flex items-center gap-1 font-mono font-semibold truncate">
-                        <Phone className="w-2.5 h-2.5 text-slate-400 shrink-0" />
-                        <span>{member.phone}</span>
-                      </p>
-                      <p className="flex items-center gap-1 truncate" title={member.address}>
-                        <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{member.address}</span>
-                      </p>
-                    </div>
+                  <div className="w-14 h-14 rounded-full border-2 border-slate-100 dark:border-slate-800 group-hover:border-violet-400 overflow-hidden shrink-0 bg-violet-50 dark:bg-violet-950 flex items-center justify-center transition-all relative">
+                    {member.photo ? (
+                      <img
+                        src={member.photo}
+                        alt={member.name}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <span className="text-xs uppercase font-black text-violet-600 dark:text-violet-400">
+                        {member.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                      </span>
+                    )}
                   </div>
-
-                  <div className="flex items-center justify-between gap-1 border-t border-slate-100 dark:border-slate-800/60 pt-2 shrink-0">
-                    <button
-                      onClick={() => startEdit(member)}
-                      className="flex-1 py-1 px-1.5 rounded bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-350 border border-slate-150 dark:border-slate-700 font-bold text-[8.5px] flex items-center justify-center gap-0.5 cursor-pointer active:scale-95 transition-all"
-                      title="Hanova"
-                    >
-                      <Edit2 className="w-2.5 h-2.5 text-violet-600" />
-                      <span>Hanova</span>
-                    </button>
-                    <button
-                      onClick={() => onDeleteMember(member.id)}
-                      className="py-1 px-1.5 rounded bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-bold text-[8.5px] flex items-center justify-center gap-0.5 cursor-pointer active:scale-95 transition-all border border-rose-100/60 dark:border-rose-900/30"
-                      title="Hamafa"
-                    >
-                      <Trash2 className="w-2.5 h-2.5 text-rose-600" />
-                      <span>Hamafa</span>
-                    </button>
-                    <button
-                      onClick={() => handleCallSimulation(member.name)}
-                      className="w-5 h-5 rounded bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 cursor-pointer border border-emerald-100 dark:border-emerald-900 absolute-none"
-                      title="Hiantso finday"
-                    >
-                      <Phone className="w-2.5 h-2.5 fill-current" />
-                    </button>
-                  </div>
-                </div>
+                  
+                  <h3 className="text-[11.5px] font-black text-slate-800 dark:text-slate-150 line-clamp-2 w-full leading-snug group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors" title={member.name}>
+                    {member.name}
+                  </h3>
+                </button>
               );
             })
           )}
         </div>
       </div>
+
+      {/* Pop-up for Member Full Profile View */}
+      {selectedMemberForDetail && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-150 dark:border-slate-800 shadow-2xl w-full max-w-xs overflow-hidden animate-scaleIn">
+            
+            {/* Elegant Colorful Banner */}
+            <div className="h-16 bg-gradient-to-r from-violet-600 to-indigo-700 relative flex justify-end p-3">
+              <button
+                type="button"
+                onClick={() => setSelectedMemberForDetail(null)}
+                className="w-6 h-6 bg-black/25 hover:bg-black/45 text-white rounded-full flex items-center justify-center transition-all cursor-pointer backdrop-blur-xs"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Profile Avatar floating */}
+            <div className="px-4 pb-5 pt-1 text-center relative">
+              <div className="w-20 h-20 rounded-full border-[3px] border-white dark:border-slate-900 overflow-hidden bg-violet-50 dark:bg-violet-950 flex items-center justify-center mx-auto -mt-10 shadow-md relative z-10">
+                {selectedMemberForDetail.photo ? (
+                  <img
+                    src={selectedMemberForDetail.photo}
+                    alt={selectedMemberForDetail.name}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xl uppercase font-black text-violet-600 dark:text-violet-400">
+                    {selectedMemberForDetail.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                  </span>
+                )}
+              </div>
+
+              {/* Member Basic info */}
+              <h3 className="text-sm font-black text-slate-850 dark:text-white mt-2 pb-0.5 select-all leading-tight">
+                {selectedMemberForDetail.name}
+              </h3>
+              
+              {/* Roles Chips */}
+              <div className="flex flex-wrap gap-1 justify-center mt-2 max-h-24 overflow-y-auto">
+                {(selectedMemberForDetail.roles || (selectedMemberForDetail.role ? selectedMemberForDetail.role.split(', ') : [])).length > 0 ? (
+                  (selectedMemberForDetail.roles || (selectedMemberForDetail.role ? selectedMemberForDetail.role.split(', ') : [])).map((r) => (
+                    <span
+                      key={r}
+                      className="text-[8.5px] font-black uppercase tracking-wider bg-violet-50 dark:bg-violet-950/40 text-violet-650 dark:text-violet-300 border border-violet-100 dark:border-violet-900 px-2 py-0.5 rounded-full"
+                    >
+                      {r}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-[8.5px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full">
+                    Mpikambana Tsotra
+                  </span>
+                )}
+              </div>
+
+              {/* Contact Information block */}
+              <div className="mt-4 space-y-2 p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl text-left border border-slate-150 dark:border-slate-850/60">
+                <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                  <Phone className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[8px] text-slate-400 block font-bold leading-normal uppercase">Laharana Finday</span>
+                    <span className="font-mono text-[10.5px] font-black text-slate-800 dark:text-slate-200 select-all">{selectedMemberForDetail.phone}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                  <MapPin className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[8px] text-slate-400 block font-bold leading-normal uppercase">Toerana / Fonenana</span>
+                    <span className="font-semibold text-[10px] text-slate-850 dark:text-slate-200 leading-snug">{selectedMemberForDetail.address || 'Tsy voasoratra ny adiresy'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Interactive buttons */}
+              <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800/60 block space-y-2 shrink-0">
+                
+                {/* Simulated Call button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleCallSimulation(selectedMemberForDetail.name);
+                    setSelectedMemberForDetail(null);
+                  }}
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow"
+                >
+                  <Phone className="w-3 h-3 fill-current" />
+                  <span>Hiantso finday</span>
+                </button>
+
+                {/* Edit & Delete Actions row */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      startEdit(selectedMemberForDetail);
+                      setSelectedMemberForDetail(null);
+                    }}
+                    className="py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-black text-[9px] uppercase rounded-xl cursor-pointer transition-all flex items-center justify-center gap-0.5"
+                  >
+                    <Edit2 className="w-2.5 h-2.5 text-violet-600" />
+                    <span>Hanova</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const idToDelete = selectedMemberForDetail.id;
+                      setSelectedMemberForDetail(null);
+                      onDeleteMember(idToDelete);
+                    }}
+                    className="py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 text-rose-600 dark:text-rose-450 font-black text-[9px] uppercase rounded-xl border border-rose-100 dark:border-rose-900/40 cursor-pointer transition-all flex items-center justify-center gap-1"
+                  >
+                    <Trash2 className="w-2.5 h-2.5 text-rose-600" />
+                    <span>Hamafa</span>
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Pop-up form to register a new member with Multi-select Roles */}
       {isAdding && (
