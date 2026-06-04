@@ -27,6 +27,7 @@ import SongPage from './components/SongPage';
 import YouthPage from './components/YouthPage';
 import ChurchLogo from './components/ChurchLogo';
 import LoginPage from './components/LoginPage';
+import CelestialAnimation from './components/CelestialAnimation';
 
 
 // Lucide icons
@@ -66,7 +67,7 @@ const DAILY_PROMISES = [
 ];
 
 export default function App() {
-  const [isAppLoading, setIsAppLoading] = useState(false);
+  const [isAppLoading, setIsAppLoading] = useState(true);
 
   // State management populated with localStorage persistence
   const [churches, setChurches] = useState<Church[]>(() => {
@@ -525,7 +526,9 @@ export default function App() {
       */}
       <div className="w-full md:max-w-[420px] md:h-[840px] md:rounded-[40px] md:border-[12px] md:border-slate-900 md:shadow-2xl bg-white dark:bg-slate-900 md:relative md:overflow-hidden flex flex-col min-h-screen md:min-h-0">
         
-        {!loggedInMember ? (
+        {isAppLoading ? (
+          <CelestialAnimation onComplete={() => setIsAppLoading(false)} />
+        ) : !loggedInMember ? (
           <LoginPage
             members={members}
             churchRoles={churchRoles}
