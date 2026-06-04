@@ -119,7 +119,10 @@ export default function GivingPage({ churchId, loggedInMember, isElderlyMode }: 
   }, [projects]);
 
   // Is Admin or Secretariat check
-  const isAdminOrSecretStaff = loggedInMember?.roles?.includes('Mpitandrina') || loggedInMember?.roles?.includes('Secretaire');
+  const isAdminOrSecretStaff = loggedInMember?.roles?.some(r => 
+    ['Mpitandrina', 'Secretaire', 'Mpitahiry vola', 'Admin', 'Président', 'Comité', 'Mpamolavola'].includes(r)
+  ) || loggedInMember?.id === 'm-admin' || 
+       ['Mpitandrina', 'Secretaire', 'Mpitahiry vola', 'Admin', 'Président', 'Comité'].includes(loggedInMember?.role || '');
 
   // --- Financial Form States ---
   const [finAmount, setFinAmount] = useState('');
