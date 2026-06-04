@@ -117,3 +117,23 @@ export interface BibleChapter {
   chapter: number;
   verses: { number: number; text: string }[];
 }
+
+export interface ChurchProject {
+  id: string;
+  churchId: string;
+  title: string;
+  description: string;
+  targetAmount: number;
+  raisedAmount: number;
+  status: 'mandeha' | 'vitany';
+}
+
+export interface FinancialRecord {
+  id: string;
+  churchId: string;
+  type: 'tahiry' | 'fandaniana';
+  amount: number;
+  reason: string;
+  date: string;
+  memberOrStaff: string;
+}

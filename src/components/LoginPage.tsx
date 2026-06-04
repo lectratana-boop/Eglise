@@ -3,23 +3,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Member } from '../types';
 import { 
   LogIn, 
   Phone, 
   User, 
   ShieldAlert, 
-  UserPlus, 
-  MapPin, 
-  CheckSquare, 
-  Square,
   Lock,
   Unlock,
   AlertTriangle
 } from 'lucide-react';
-// @ts-ignore
-import loginBackground from '../assets/images/waterfall_background_1780423242474.png';
+
+// Explicit 5 image slideshow urls representing major christian aesthetics as requested
+const SLIDESHOW_IMAGES = [
+  "https://images.unsplash.com/photo-1438032005730-c779502df39b?auto=format&fit=crop&w=1200&q=80", // église (cathedral stone light rays)
+  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=80", // nature (sunlit forest stream)
+  "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1200&q=80", // prière (candlelit praying hands)
+  "https://images.unsplash.com/photo-1507434965515-61970f2bd7c6?auto=format&fit=crop&w=1200&q=80", // Bible (open scriptures scriptures open altar bg)
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80"  // paysage chrétien (majestic mountain peaks)
+];
 
 interface LoginPageProps {
   members: Member[];
@@ -29,23 +32,25 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ members, churchRoles, onLogin, onRegisterAndLogin }: LoginPageProps) {
-  // Tabs: 'login' for Logging In, 'register' for "Insertion Membre pour connecte"
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  
   const [loginType, setLoginType] = useState<'user' | 'admin'>('user');
   
   // Login Form states
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   
-  // Registration Form states
-  const [regName, setRegName] = useState('');
-  const [regPhone, setRegPhone] = useState('');
-  const [regAddress, setRegAddress] = useState('');
-  const [regSelectedRoles, setRegSelectedRoles] = useState<string[]>(["Sampana Tanora Kristiana (STK)"]);
-
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Slideshow state
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+
+  // Background slideshow timing loop
+  useEffect(() => {
+    const slideTimer = setInterval(() => {
+      setActiveImageIdx(prev => (prev + 1) % SLIDESHOW_IMAGES.length);
+    }, 4500); // Transitions to next landscape every 4.5 seconds
+    return () => clearInterval(slideTimer);
+  }, []);
 
   // Permanent Lock States stored in localStorage
   const [attempts, setAttempts] = useState<number>(() => {
@@ -96,46 +101,12 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
         localStorage.setItem('mifandray_login_locked', 'true');
         setError("⚠️ Efa nanao hadisoana in-3 ianao. Voasakana tanteraka ny fidiranao tamin'ny sehatra!");
       } else {
-        setError(`⚠️ Tsy mifanaraka indrindra amin'ny anarana na laharana misy ao amin'ny rafitra. Sisa andrana: ${3 - nextAttempts}`);
+        setError(`⚠️ Tsy mifanaraka indrindra amin'ny anarana na laharana misy ao amin'ny rafitra ny fampahalalana nomenao. Sisa andrana: ${3 - nextAttempts}`);
       }
     }
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (!regName.trim() || !regPhone.trim()) {
-      setError("Fenoy ny anarana sy ny laharana finday azafady!");
-      return;
-    }
-
-    if (regSelectedRoles.length === 0) {
-      setError("Azafady misafidiana sampana iray na maromaro misy anao!");
-      return;
-    }
-
-    // Insert new member and auto-connect
-    onRegisterAndLogin(
-      regName.trim(),
-      regPhone.trim(),
-      regSelectedRoles,
-      regAddress.trim() || "Lot 26 ter mahamasina"
-    );
-
-    setSuccess("Nahomby ny fampidirana anao! Tafiditra ianao izao.");
-  };
-
-  const handleToggleRegRole = (role: string) => {
-    if (regSelectedRoles.includes(role)) {
-      setRegSelectedRoles(prev => prev.filter(r => r !== role));
-    } else {
-      setRegSelectedRoles(prev => [...prev, role]);
-    }
-  };
-
-  // Subtle function to reset lock for developers testing the application
+  // Reset lock for developers/admins testing the application
   const handleDevResetLock = () => {
     setAttempts(0);
     setIsLocked(false);
@@ -146,61 +117,45 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
   };
 
   return (
-    <div 
-      className="min-h-screen flex flex-col justify-center text-white font-sans overflow-y-auto p-4 relative bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${loginBackground})` }}
-    >
-      {/* Light tint overlay to make the beautiful waterfall fully visible and legible */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/60 pointer-events-none z-0" />
+    <div className="min-h-screen flex flex-col justify-center text-white font-sans overflow-hidden p-4 relative">
+      
+      {/* 5-Image Slideshow Background Layer with Fade Transition */}
+      <div className="absolute inset-0 z-0 select-none overflow-hidden bg-slate-950">
+        {SLIDESHOW_IMAGES.map((imgUrl, idx) => (
+          <div
+            key={imgUrl}
+            style={{ backgroundImage: `url(${imgUrl})` }}
+            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[1500ms] ease-in-out ${
+              activeImageIdx === idx ? 'opacity-40 scale-100' : 'opacity-0 scale-[1.03]'
+            }`}
+          />
+        ))}
+        {/* Soft elegant glassmorphic tint over background layer to make forms highly legible */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-900/70 to-slate-950/90 backdrop-blur-[2px]" />
+      </div>
 
-      {/* Main Login Card with Selection Mode inside */}
-      <div className="w-full max-w-sm mx-auto bg-slate-950/90 backdrop-blur-md border border-slate-800 p-5 rounded-3xl shadow-2xl space-y-4 my-2 relative z-10">
+      {/* Main Login Card - Refined and Elegant Christian Design */}
+      <div className="w-full max-w-sm mx-auto bg-slate-950/80 backdrop-blur-lg border-2 border-slate-800/80 p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] space-y-5 my-2 relative z-10 animate-scaleIn">
         
-        {/* TAB HEADER SELECTOR (HIDITRA VS HAMPIDITRA MPIKAMBANA) */}
-        <div className="grid grid-cols-2 gap-2 bg-slate-900 p-1 rounded-2xl border border-slate-800">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('login');
-              setError('');
-            }}
-            className={`py-2 px-1 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-1 select-none ${
-              activeTab === 'login'
-                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white bg-transparent'
-            }`}
-          >
-            <LogIn className="w-3.5 h-3.5" />
-            <span>Hiditra</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('register');
-              setError('');
-            }}
-            className={`py-2 px-1 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-1 select-none ${
-              activeTab === 'register'
-                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white bg-transparent'
-            }`}
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>Hampiditra</span>
-          </button>
+        {/* Divine Logo/Header Accent */}
+        <div className="text-center space-y-1">
+          <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-650 rounded-full flex items-center justify-center mx-auto shadow-md shadow-amber-500/20">
+            <span className="text-2xl font-black text-slate-950 leading-none">🕊️</span>
+          </div>
+          <h1 className="text-lg font-black tracking-wide text-white">FIANGONANTSY</h1>
+          <p className="text-[10px] text-amber-500 font-mono uppercase tracking-[0.2em] font-bold">Mifandray Fiangonana</p>
         </div>
 
         {/* ERROR OR SUCCESS FLASHERS */}
         {error && (
-          <div className="p-3 bg-rose-950/60 border border-rose-800 text-rose-300 text-[11px] rounded-xl font-bold flex flex-col items-center gap-1 text-center animate-shake">
-            <AlertTriangle className="w-4 h-4 text-rose-400" />
+          <div className="p-3 bg-red-950/60 border border-red-800 text-red-200 text-[11px] rounded-xl font-semibold flex flex-col items-center gap-1 text-center animate-shake leading-snug">
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{error}</span>
             {isLocked && (
               <button 
                 type="button" 
                 onClick={handleDevResetLock}
-                className="mt-1 px-2.5 py-0.5 bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-[9px] rounded-md font-black uppercase cursor-pointer"
+                className="mt-1.5 px-2.5 py-0.5 bg-red-900/60 hover:bg-red-800 text-rose-200 text-[9px] rounded font-black uppercase cursor-pointer"
               >
                 Fanalana sakana (Dev Reset)
               </button>
@@ -214,181 +169,98 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
           </div>
         )}
 
-        {activeTab === 'login' ? (
-          /* ================= LOGIN VIEW ================= */
-          <form onSubmit={handleLoginSubmit} className="space-y-3">
-            
-            {/* USER OR ADMIN SECTOR */}
-            <div className="grid grid-cols-2 gap-2 bg-slate-950/60 p-1 rounded-xl border border-slate-900">
-              <button
-                type="button"
-                disabled={isLocked}
-                onClick={() => setLoginType('user')}
-                className={`py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                  loginType === 'user' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                Mpikambana
-              </button>
-              <button
-                type="button"
-                disabled={isLocked}
-                onClick={() => setLoginType('admin')}
-                className={`py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                  loginType === 'admin' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                Fitantanana
-              </button>
-            </div>
-
-            {/* NAME INPUT */}
-            <div className="space-y-1">
-              <label htmlFor="login-name" className="text-[9px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
-                <User className="w-3 h-3 text-violet-400" />
-                <span>Anarana Feno indrindra (Exact) :</span>
-              </label>
-              <input
-                id="login-name"
-                type="text"
-                required
-                disabled={isLocked}
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setError('');
-                }}
-                placeholder={loginType === 'admin' ? "Anarana fitantanana (Admin)" : "Soraty ny anaranao feno misy ao"}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white font-bold outline-none focus:ring-1 focus:ring-violet-500 transition-all placeholder:text-slate-650"
-              />
-            </div>
-
-            {/* PHONE INPUT */}
-            <div className="space-y-1">
-              <label htmlFor="login-phone" className="text-[9px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
-                <Phone className="w-3 h-3 text-violet-400" />
-                <span>Laharana Finday (Exact) :</span>
-              </label>
-              <input
-                id="login-phone"
-                type="text"
-                required
-                disabled={isLocked}
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
-                  setError('');
-                }}
-                placeholder="Laharana finday tsy misy elanelana"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white font-bold outline-none focus:ring-1 focus:ring-violet-500 transition-all placeholder:text-slate-650 font-mono"
-              />
-            </div>
-
-            {/* SUBMIT BUTTON : Reduit par Hiditra (entrer) */}
+        {/* ================= LOGIN FORM ================= */}
+        <form onSubmit={handleLoginSubmit} className="space-y-4">
+          
+          {/* USER OR ADMIN SECTOR */}
+          <div className="grid grid-cols-2 gap-2 bg-slate-900/60 p-1 rounded-xl border border-slate-800/60">
             <button
-              type="submit"
+              type="button"
               disabled={isLocked}
-              className={`w-full py-2.5 text-xs font-black uppercase tracking-wide rounded-xl shadow-md cursor-pointer active:scale-[0.98] transition-all flex items-center justify-center gap-1 border-b-[3px] mt-2 disabled:opacity-45 disabled:cursor-not-allowed ${
-                loginType === 'admin'
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border-amber-700'
-                  : 'bg-gradient-to-r from-violet-605 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-indigo-800'
+              onClick={() => setLoginType('user')}
+              className={`py-1.5 rounded-lg text-[10.5px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                loginType === 'user' 
+                  ? 'bg-gradient-to-r from-violet-605 to-indigo-600 text-white shadow-sm' 
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <LogIn className="w-4 h-4 text-white" />
-              <span>Hiditra (entrer)</span>
+              Mpikambana
             </button>
-          </form>
-        ) : (
-          /* ================= REGISTRATION (INSERTION) VIEW ================= */
-          <form onSubmit={handleRegisterSubmit} className="space-y-3">
-            
-            {/* REGISTER NAME */}
-            <div className="space-y-1">
-              <label className="text-[9px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
-                <User className="w-3 h-3 text-violet-400" />
-                <span>Anarana Feno :</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={regName}
-                onChange={(e) => setRegName(e.target.value)}
-                placeholder="Ohatra: Naivo herinjaka"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white font-bold outline-none focus:ring-1 focus:ring-violet-500 transition-all"
-              />
-            </div>
-
-            {/* REGISTER PHONE */}
-            <div className="space-y-1">
-              <label className="text-[9px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
-                <Phone className="w-3 h-3 text-violet-400" />
-                <span>Laharana Finday :</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={regPhone}
-                onChange={(e) => setRegPhone(e.target.value)}
-                placeholder="Ohatra: 0340000000"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white font-bold outline-none focus:ring-1 focus:ring-violet-500 font-mono"
-              />
-            </div>
-
-            {/* REGISTER ADDRESS */}
-            <div className="space-y-1">
-              <label className="text-[9px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-violet-400" />
-                <span>Adiresy / Toerana :</span>
-              </label>
-              <input
-                type="text"
-                value={regAddress}
-                onChange={(e) => setRegAddress(e.target.value)}
-                placeholder="Ohatra: Lot III B 120 Isotry"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white font-bold outline-none focus:ring-1 focus:ring-violet-500"
-              />
-            </div>
-
-            {/* MULTIPLE SAMPANAS SELECTOR */}
-            <div className="space-y-1.5">
-              <span className="text-[9px] uppercase font-black text-slate-400 tracking-wider block">
-                Fidio ny Sampana misy anao (Azonao asiana maromaro):
-              </span>
-              
-              <div className="border border-slate-800 bg-slate-950/60 p-2.5 rounded-xl space-y-1.5 max-h-36 overflow-y-auto scrollbar-thin">
-                {churchRoles.filter(role => role !== 'Mpitandrina' && role !== 'Secretaire').map((roleName) => {
-                  const isChecked = regSelectedRoles.includes(roleName);
-                  return (
-                    <button
-                      type="button"
-                      key={roleName}
-                      onClick={() => handleToggleRegRole(roleName)}
-                      className={`w-full p-2 rounded-lg border text-left text-[11px] font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                        isChecked
-                          ? 'bg-violet-950/50 border-violet-750 text-violet-300'
-                          : 'bg-transparent border-slate-900 text-slate-400 hover:bg-slate-900/40'
-                      }`}
-                    >
-                      {isChecked ? (
-                        <CheckSquare className="w-3.5 h-3.5 text-violet-400 shrink-0" />
-                      ) : (
-                        <Square className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                      )}
-                      <span className="truncate">{roleName}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             <button
-              type="submit"
-              className="w-full py-2.5 text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-xl shadow-md border-b-[3px] border-indigo-800 cursor-pointer active:scale-[0.98] transition-all"
+              type="button"
+              disabled={isLocked}
+              onClick={() => setLoginType('admin')}
+              className={`py-1.5 rounded-lg text-[10.5px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                loginType === 'admin' 
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-sm' 
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
             >
-              Hampiditra sy hiditra ➔
+              Mpitantana
             </button>
-          </form>
-        )}
+          </div>
+
+          {/* NAME INPUT */}
+          <div className="space-y-1">
+            <label htmlFor="login-name" className="text-[9px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
+              <User className="w-3 h-3 text-violet-400" />
+              <span>Anarana Feno voasoratra (Exact) :</span>
+            </label>
+            <input
+              id="login-name"
+              type="text"
+              required
+              disabled={isLocked}
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError('');
+              }}
+              placeholder={loginType === 'admin' ? "Anaran'ny Mpitantana" : "Soraty ny anaranao feno misy ao"}
+              className="w-full bg-slate-900/80 border border-slate-800/80 rounded-xl px-3.5 py-2.5 text-xs text-white font-bold outline-none focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-slate-500"
+            />
+          </div>
+
+          {/* PHONE INPUT */}
+          <div className="space-y-1">
+            <label htmlFor="login-phone" className="text-[9px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
+              <Phone className="w-3 h-3 text-violet-400" />
+              <span>Laharana Finday nampidirina :</span>
+            </label>
+            <input
+              id="login-phone"
+              type="text"
+              required
+              disabled={isLocked}
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                setError('');
+              }}
+              placeholder="Soraty tsy misy elanelana (oh: 0341234567)"
+              className="w-full bg-slate-900/80 border border-slate-800/80 rounded-xl px-3.5 py-2.5 text-xs text-white font-bold outline-none focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-slate-500 font-mono"
+            />
+          </div>
+
+          {/* SUBMIT BUTTON - Elegant styled 3D look */}
+          <button
+            type="submit"
+            disabled={isLocked}
+            className={`w-full py-2.5 text-xs font-black uppercase tracking-wide rounded-xl shadow-md cursor-pointer active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 border-b-[4px] mt-4 disabled:opacity-45 disabled:cursor-not-allowed ${
+              loginType === 'admin'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-650 hover:from-amber-600 hover:to-amber-700 text-slate-950 border-amber-700'
+                : 'bg-gradient-to-r from-violet-605 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-indigo-805'
+            }`}
+          >
+            <LogIn className="w-3.5 h-3.5 shrink-0" />
+            <span>Hiditra (entrer)</span>
+          </button>
+        </form>
+
+        <div className="text-center text-[10px] text-slate-500 pt-1.5 border-t border-slate-900 font-semibold leading-relaxed">
+          Ny Mpitantana ihany no afaka manome lalana miditra. <br />
+          Mahazaka mpikambana hatramin'ny 500 nisoratra anarana. Security active 🛡️
+        </div>
 
       </div>
     </div>

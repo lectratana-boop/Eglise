@@ -25,31 +25,34 @@ import {
 } from 'lucide-react';
 import { generateQuestionsForLevel, QuizQuestion } from '../quizGenerator';
 
-// 21 Cases/Segments for Wheel of Fortune (Roue de la Chance)
+// Inspiring christian bible verses in Malagasy
+const BIBLE_VERSES = [
+  { ref: "Jaona 3:16", verse: "« Fa toy izao no nitiavan'Andriamanitra izao tontolo izao: nomen-ko dabilio ny Zanany lahitokana, mba tsy ho very izay rehetra mino Azy, fa hanana fiainana mandrakizay. »" },
+  { ref: "Salamo 23:1", verse: "« I Jehovah no Mpiandry ahy, tsy hanana fahantrana aho. Mampandry ahy amin'ny ahitra maitso Izy. »" },
+  { ref: "Filipiana 4:13", verse: "« Mahay ny zavatra rehetra aho ao amin'Andriamanitra Izay mampahery ahy. »" },
+  { ref: "Ohabolana 3:5", verse: "« Matokia an'i Jehovah amin'ny fonao rehetra, fa aza miantehitra amin'ny fahalalanao. »" },
+  { ref: "Isaia 41:10", verse: "« Aza matahotra hianao, fa momba anao Aho; aza miherikerika foana amin'ny tahotra, fa Andriamanitrao Aho. »" },
+  { ref: "Romana 8:28", verse: "« Ary fantatsika fa ny zavatra rehetra dia miara-miasa hahasoa izay tia an'Andriamanitra. »" },
+  { ref: "Josoa 1:9", verse: "« Tsy nandidy anao va Aho? Mahereza sy matokia; aza matahotra na mivadi-po, fa momba anao i Jehovah Andriamanitrao. »" }
+];
+
+// Exactly 15 cases/segments for reward wheel to ensure perfect text size legibility
 const WHEEL_SEGMENTS = [
-  { label: "💣", text: "Boamba 💣", points: -20, desc: "Aza tezitra! Nihemotra -20 pts ny isa azo.", color: '#e11d48' },
-  { label: "10p", text: "Isa 10 ⭐", points: 10, desc: "Nahazo isa +10 fanampiny tamin'ny kodiarana!", color: '#10b981' },
-  { label: "20p", text: "Isa 20 ⭐", points: 20, desc: "Nahazo isa +20 fanampiny tamin'ny kodiarana!", color: '#0d9488' },
-  { label: "50p", text: "Isa 50 ⭐", points: 50, desc: "Araraoty! Fahombiazana tsara indrindra nahazoana +50 pts!", color: '#d97706' },
-  { label: "🙏", text: "Vavaka 🙏", points: 15, desc: "Nahazo vavaka feno fahasoavana sy isa +15!", color: '#0284c7' },
-  { label: "📖", text: "Baiboly 📖", points: 25, desc: "Tenin'Andriamanitra hampitombo fahendrena sy hahazoana +25 pts!", color: '#6d28d9' },
-  { label: "❤️", text: "Fitiavana ❤️", points: 30, desc: "Fo feno fitiavana avy amin'ny Ray sy isa +30!", color: '#db2777' },
-
-  { label: "💣", text: "Boamba 💣", points: -20, desc: "Aza tezitra! Nihemotra -20 pts ny isa azo.", color: '#e11d48' },
-  { label: "10p", text: "Isa 10 ⭐", points: 10, desc: "Nahazo isa +10 fanampiny tamin'ny kodiarana!", color: '#10b981' },
-  { label: "20p", text: "Isa 20 ⭐", points: 20, desc: "Nahazo isa +20 fanampiny tamin'ny kodiarana!", color: '#0d9488' },
-  { label: "50p", text: "Isa 50 ⭐", points: 50, desc: "Araraoty! Fahombiazana tsara indrindra nahazoana +50 pts!", color: '#d97706' },
-  { label: "🙏", text: "Vavaka 🙏", points: 15, desc: "Nahazo vavaka feno fahasoavana sy isa +15!", color: '#0284c7' },
-  { label: "📖", text: "Baiboly 📖", points: 25, desc: "Tenin'Andriamanitra hampitombo fahendrena sy hahazoana +25 pts!", color: '#6d28d9' },
-  { label: "❤️", text: "Fitiavana ❤️", points: 30, desc: "Fo feno fitiavana avy amin'ny Ray sy isa +30!", color: '#db2777' },
-
-  { label: "💣", text: "Boamba 💣", points: -20, desc: "Aza tezitra! Nihemotra -20 pts ny isa azo.", color: '#e11d48' },
-  { label: "10p", text: "Isa 10 ⭐", points: 10, desc: "Nahazo isa +10 fanampiny tamin'ny kodiarana!", color: '#10b981' },
-  { label: "20p", text: "Isa 20 ⭐", points: 20, desc: "Nahazo isa +20 fanampiny tamin'ny kodiarana!", color: '#0d9488' },
-  { label: "50p", text: "Isa 50 ⭐", points: 50, desc: "Araraoty! Fahombiazana tsara indrindra nahazoana +50 pts!", color: '#d97706' },
-  { label: "🙏", text: "Vavaka 🙏", points: 15, desc: "Nahazo vavaka feno fahasoavana sy isa +15!", color: '#0284c7' },
-  { label: "📖", text: "Baiboly 📖", points: 25, desc: "Tenin'Andriamanitra hampitombo fahendrena sy hahazoana +25 pts!", color: '#6d28d9' },
-  { label: "❤️", text: "Fitiavana ❤️", points: 30, desc: "Fo feno fitiavana avy amin'ny Ray sy isa +30!", color: '#db2777' }
+  { label: "+10", text: "Isa +10 ⭐", points: 10, type: 'points', desc: "Nahazo isa +10 fanampiny tamin'ny kodiarana!", color: '#10b981' },
+  { label: "+20", text: "Isa +20 ⭐", points: 20, type: 'points', desc: "Nahazo isa +20 fanampiny tamin'ny kodiarana!", color: '#0d9488' },
+  { label: "💣", text: "Boamba 💣", points: -20, type: 'bomb', desc: "Aza tezitra! Nihemotra -20 pts ny isa azo.", color: '#e11d48' },
+  { label: "📖", text: "Baiboly 📖", points: 50, type: 'bible', desc: "Tena mahafinaritra! Nahazo teny fampanantenana ianao ary +50 pts rehefa avy namaky Baiboly!", color: '#6d28d9' },
+  { label: "❤️", text: "Cœur ❤️", points: 30, type: 'heart', desc: "Fitiavana feno avy amin'ny Ray sy isa +30!", color: '#db2777' },
+  { label: "+50", text: "Isa +50 ⭐", points: 50, type: 'points', desc: "Araraoty! Fahombiazana tsara indrindra nahazoana +50 pts!", color: '#d97706' },
+  { label: "+10", text: "Isa +10 ⭐", points: 10, type: 'points', desc: "Nahazo isa +10 fanampiny tamin'ny kodiarana!", color: '#10b981' },
+  { label: "💣", text: "Boamba 💣", points: -20, type: 'bomb', desc: "Aza tezitra! Nihemotra -20 pts ny isa azo.", color: '#e11d48' },
+  { label: "+20", text: "Isa +20 ⭐", points: 20, type: 'points', desc: "Nahazo isa +20 fanampiny tamin'ny kodiarana!", color: '#0d9488' },
+  { label: "📖", text: "Baiboly 📖", points: 50, type: 'bible', desc: "Tena mahafinaritra! Nahazo teny fampanantenana ianao ary +50 pts rehefa avy namaky Baiboly!", color: '#6d28d9' },
+  { label: "❤️", text: "Cœur ❤️", points: 30, type: 'heart', desc: "Fitiavana feno avy amin'ny Ray sy isa +30!", color: '#db2777' },
+  { label: "+50", text: "Isa +50 ⭐", points: 50, type: 'points', desc: "Araraoty! Fahombiazana tsara indrindra nahazoana +50 pts!", color: '#d97706' },
+  { label: "+10", text: "Isa +10 ⭐", points: 10, type: 'points', desc: "Nahazo isa +10 fanampiny tamin'ny kodiarana!", color: '#10b981' },
+  { label: "💣", text: "Boamba 💣", points: -20, type: 'bomb', desc: "Aza tezitra! Nihemotra -20 pts ny isa azo.", color: '#e11d48' },
+  { label: "+20", text: "Isa +20 ⭐", points: 20, type: 'points', desc: "Nahazo isa +20 fanampiny tamin'ny kodiarana!", color: '#0d9488' }
 ];
 
 interface QuizPageProps {
@@ -103,9 +106,10 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [spinOutcome, setSpinOutcome] = useState<any | null>(null);
   const [showCongrats, setShowCongrats] = useState<boolean>(false);
+  const [activeBibleVerse, setActiveBibleVerse] = useState<{ ref: string; verse: string } | null>(null);
   
   // States representing remaining spins and active cooldown countdown trigger
-  const [spinsRemainingBonus, setSpinsRemainingBonus] = useState<number>(5);
+  const [spinsRemainingBonus, setSpinsRemainingBonus] = useState<number>(15);
   const [bonusCooldownMs, setBonusCooldownMs] = useState<number>(0); // remaining miliseconds
 
   // Use interval to update cooldown ticker and spins remaining
@@ -124,13 +128,13 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
         const elapsed = now - windowStart;
         
         if (elapsed >= fifteenMinutes) {
-          // Cooldown period expired! Reset back to 5 free spins.
-          setSpinsRemainingBonus(5);
+          // Cooldown period expired! Reset back to 15 free spins.
+          setSpinsRemainingBonus(15);
           setBonusCooldownMs(0);
           localStorage.removeItem(`mifandray_spin_window_start_${loggedInMember.id}`);
-          localStorage.setItem(`mifandray_spins_remaining_${loggedInMember.id}`, "5");
+          localStorage.setItem(`mifandray_spins_remaining_${loggedInMember.id}`, "15");
         } else {
-          const remaining = storedSpinsRemaining ? parseInt(storedSpinsRemaining, 10) : 5;
+          const remaining = storedSpinsRemaining ? parseInt(storedSpinsRemaining, 10) : 15;
           setSpinsRemainingBonus(remaining);
           if (remaining <= 0) {
             setBonusCooldownMs(fifteenMinutes - elapsed);
@@ -139,7 +143,7 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
           }
         }
       } else {
-        setSpinsRemainingBonus(5);
+        setSpinsRemainingBonus(15);
         setBonusCooldownMs(0);
       }
     };
@@ -291,12 +295,12 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
     let storedSpinsRemaining = localStorage.getItem(`mifandray_spins_remaining_${loggedInMember.id}`);
 
     let windowStart = storedWindowStart ? parseInt(storedWindowStart, 10) : now;
-    let spinsLeft = storedSpinsRemaining ? parseInt(storedSpinsRemaining, 10) : 5;
+    let spinsLeft = storedSpinsRemaining ? parseInt(storedSpinsRemaining, 10) : 15;
 
     // Reset window if 15 mins passed
     if (storedWindowStart && now - windowStart >= fifteenMinutes) {
       windowStart = now;
-      spinsLeft = 5;
+      spinsLeft = 15;
     }
 
     if (spinsLeft <= 0) {
@@ -316,15 +320,16 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
     // Reset current outcome view
     setSpinOutcome(null);
     setShowCongrats(false);
+    setActiveBibleVerse(null);
     setIsSpinning(true);
 
-    // Pick a random segment index (0 to 20)
-    const targetIdx = Math.floor(Math.random() * 21);
-    const segmentAngle = 360 / 21;
+    // Pick a random segment index (0 to 14)
+    const targetIdx = Math.floor(Math.random() * 15);
+    const segmentAngle = 360 / 15;
     
     // Calculate final spin target so chosen element lands on top pointer boundary
     const extraRotations = 8 * 360; // 8 full spins
-    const segmentOffset = (21 - targetIdx) * segmentAngle;
+    const segmentOffset = (15 - targetIdx) * segmentAngle;
     
     const targetDegrees = wheelRotation + extraRotations + segmentOffset - (wheelRotation % 360);
     setWheelRotation(targetDegrees);
@@ -335,8 +340,15 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
       setSpinOutcome(chosenSeg);
       setShowCongrats(true);
 
-      // Update score callback
-      onAddPoints(chosenSeg.points);
+      if (chosenSeg.type === 'bible') {
+        // Randomly picker a bible promise for the user
+        const rVerse = BIBLE_VERSES[Math.floor(Math.random() * BIBLE_VERSES.length)];
+        setActiveBibleVerse(rVerse);
+        // Will grant 50 points AFTER they click read confirmation!
+      } else {
+        // Regular instantly credited points
+        onAddPoints(chosenSeg.points);
+      }
     }, 4000);
   };
 
@@ -898,61 +910,100 @@ export default function QuizPage({ isElderlyMode, loggedInMember, userScore, onA
             {showCongrats && spinOutcome && (
               <div className="absolute inset-0 bg-slate-950/95 dark:bg-slate-950/98 rounded-3xl flex flex-col items-center justify-center p-6 text-center z-40 animate-scaleIn space-y-4">
                 
-                {spinOutcome.points > 0 ? (
-                  // Positives / Win layout
-                  <div className="space-y-3 flex flex-col items-center">
-                    <div className="w-16 h-16 bg-emerald-500/10 border-2 border-emerald-500 rounded-full flex items-center justify-center text-3xl animate-bounce">
-                      🎉
+                {spinOutcome.type === 'bible' && activeBibleVerse ? (
+                  // BIBLE VERSE SPECIAL POPUP WITH CONDITIONAL SCORING
+                  <div className="space-y-4 flex flex-col items-center w-full">
+                    <div className="w-14 h-14 bg-violet-500/15 border-2 border-violet-500 rounded-full flex items-center justify-center text-3xl animate-bounce">
+                      📖
                     </div>
-                    <span className="text-[10px] font-mono tracking-widest text-emerald-400 font-bold uppercase">
-                      MARIHAFA MANDRESY
+                    <span className="text-[9px] font-mono tracking-widest text-violet-400 font-black uppercase">
+                      TENIN'ANDRIAMANITRA MASINA
                     </span>
-                    <h3 className="text-xl sm:text-2xl font-black text-white">
-                      TOHAVA MAMIRAPIRATRA !
+                    <h3 className="text-lg font-black text-amber-500 tracking-wide">
+                      {activeBibleVerse.ref}
                     </h3>
                     
-                    <div className="my-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl px-6 py-2 border-b-[4px] border-emerald-700 font-mono font-black text-lg shadow-md">
-                      {spinOutcome.text}
+                    <div className="my-1 p-3 bg-violet-950/40 border border-violet-800/40 rounded-2xl max-w-xs text-xs text-violet-100 italic font-semibold leading-relaxed shadow-inner">
+                      {activeBibleVerse.verse}
                     </div>
 
-                    <p className="text-xs text-slate-350 max-w-xs leading-relaxed">
-                      Ny bitsiky ny lanitra dia manome anao fahazavana! <br />
-                      Miarahaba anao nahomby tamin'ny alalan'ny kodiarana vintana.
+                    <p className="text-[10px] text-emerald-400 font-bold animate-pulse">
+                      📖 Vakio ny teny fampanantenana ka horaisinao ny +50 Pts !
                     </p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAddPoints(50); // Credit exactly 50 points AFTER reading as requested
+                        setShowCongrats(false);
+                        setSpinOutcome(null);
+                        setActiveBibleVerse(null);
+                      }}
+                      className="py-2.5 px-5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 text-[10.5px] font-black uppercase tracking-wider rounded-xl cursor-pointer shadow border-b-[3px] border-amber-800"
+                    >
+                      Vakiana sy Handray 50 pts 🙏
+                    </button>
                   </div>
                 ) : (
-                  // Bomb / Warning layout
-                  <div className="space-y-3 flex flex-col items-center">
-                    <div className="w-16 h-16 bg-rose-500/10 border-2 border-rose-500 rounded-full flex items-center justify-center text-3xl animate-pulse">
-                      💣
-                    </div>
-                    <span className="text-[10px] font-mono tracking-widest text-rose-400 font-bold uppercase">
-                      MANDRANITRA BAOMBA
-                    </span>
-                    <h3 className="text-xl font-black text-white">
-                      OH RY KOTROKA !
-                    </h3>
-                    
-                    <div className="my-2 bg-gradient-to-r from-rose-600 to-rose-700 text-white rounded-2xl px-6 py-2 border-b-[4px] border-rose-900 font-mono font-black text-base shadow-md">
-                      Isa nahemotra -20 pts
-                    </div>
+                  // Standard outcomes (Points, Hearts, Bomb)
+                  <div className="space-y-4 flex flex-col items-center w-full">
+                    {spinOutcome.points > 0 ? (
+                      // Positives / Win layout
+                      <div className="space-y-3 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-emerald-500/10 border-2 border-emerald-500 rounded-full flex items-center justify-center text-3xl animate-bounce">
+                          🎉
+                        </div>
+                        <span className="text-[10px] font-mono tracking-widest text-emerald-400 font-bold uppercase">
+                          MARIHAFA MANDRESY
+                        </span>
+                        <h3 className="text-xl sm:text-2xl font-black text-white">
+                          TOHAVA MAMIRAPIRATRA !
+                        </h3>
+                        
+                        <div className="my-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl px-6 py-2 border-b-[4px] border-emerald-700 font-mono font-black text-lg shadow-md">
+                          {spinOutcome.text}
+                        </div>
 
-                    <p className="text-xs text-slate-300 max-w-xs leading-relaxed">
-                      Aza tezitra na kivy velively! Ampitomboy fotsiny ny fitsapana ambaratonga fa mbola afaka manandrana indray ianao.
-                    </p>
+                        <p className="text-xs text-slate-350 max-w-xs leading-relaxed">
+                          Ny bitsiky ny lanitra dia manome anao fahazavana! <br />
+                          Miarahaba anao nahomby tamin'ny alalan'ny kodiarana vintana.
+                        </p>
+                      </div>
+                    ) : (
+                      // Bomb / Warning layout
+                      <div className="space-y-3 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-rose-500/10 border-2 border-rose-500 rounded-full flex items-center justify-center text-3xl animate-pulse">
+                          💣
+                        </div>
+                        <span className="text-[10px] font-mono tracking-widest text-rose-400 font-bold uppercase">
+                          MANDRANITRA BAOMBA
+                        </span>
+                        <h3 className="text-xl font-black text-white">
+                          OH RY KOTROKA !
+                        </h3>
+                        
+                        <div className="my-2 bg-gradient-to-r from-rose-600 to-rose-700 text-white rounded-2xl px-6 py-2 border-b-[4px] border-rose-900 font-mono font-black text-base shadow-md">
+                          Isa nahemotra -20 pts
+                        </div>
+
+                        <p className="text-xs text-slate-300 max-w-xs leading-relaxed">
+                          Aza tezitra na kivy velively! Ampitomboy fotsiny ny fitsapana ambaratonga fa mbola afaka manandrana indray ianao.
+                        </p>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCongrats(false);
+                        setSpinOutcome(null);
+                      }}
+                      className="py-2.5 px-6 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black tracking-wider rounded-xl text-xs active:scale-[0.97] transition-all cursor-pointer select-none"
+                    >
+                      MANKASITRAKA INDRINDRA 🙏
+                    </button>
                   </div>
                 )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCongrats(false);
-                    setSpinOutcome(null);
-                  }}
-                  className="py-2.5 px-6 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black tracking-wider rounded-xl text-xs active:scale-[0.97] transition-all cursor-pointer select-none"
-                >
-                  MANKASITRAKA INDRINDRA 🙏
-                </button>
               </div>
             )}
 

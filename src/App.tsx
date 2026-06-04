@@ -510,9 +510,7 @@ export default function App() {
   const secondaryMenuItems = [
     { key: 'Annonces', label: 'Filazana', icon: <Megaphone className="w-5 h-5" />, color: 'from-violet-500 to-purple-600' },
     { key: 'Events', label: 'Fandaharana', icon: <Calendar className="w-5 h-5" />, color: 'from-amber-400 to-orange-500' },
-    { key: 'Chorales', label: 'Fihirana', icon: <Music className="w-5 h-5" />, color: 'from-violet-650 to-indigo-600' },
-    { key: 'Dimes', label: 'Fanomezana', icon: <Heart className="w-5 h-5" />, color: 'from-rose-500 to-pink-605' },
-    { key: 'Sermons', label: 'Toriteny', icon: <Mic className="w-5 h-5" />, color: 'from-emerald-500 to-teal-600' },
+    { key: 'Dimes', label: 'Tahirim-bola sy Tanjona 💰', icon: <Heart className="w-5 h-5" />, color: 'from-rose-500 to-pink-605' },
     { key: 'Settings', label: 'Fitantanana', icon: <Settings className="w-5 h-5" />, color: 'from-slate-500 to-slate-700' }
   ];
 
@@ -732,17 +730,11 @@ export default function App() {
             <BiblePage isElderlyMode={isElderlyMode} />
           )}
 
-          {/* 3. CHORALES & HYMNALS DIRECTORY */}
-          {activeTab === 'Chorales' && (
-            <SongPage isElderlyMode={isElderlyMode} />
-          )}
-
-          {/* 4. DONATIONS & DIMES */}
+          {/* 4. TAHIRIM-BOLA & TANJONA */}
           {activeTab === 'Dimes' && (
             <GivingPage
               churchId={activeChurchId}
-              donations={donations}
-              onAddDonation={handleAddDonation}
+              loggedInMember={loggedInMember}
               isElderlyMode={isElderlyMode}
             />
           )}
@@ -779,15 +771,6 @@ export default function App() {
               churchRoles={churchRoles}
               loggedInMember={loggedInMember}
               onLogout={() => setLoggedInMember(null)}
-            />
-          )}
-
-          {activeTab === 'Sermons' && (
-            <SermonsPage
-              churchId={activeChurchId}
-              sermons={sermons}
-              onAddSermon={handleAddSermon}
-              isElderlyMode={isElderlyMode}
             />
           )}
 
