@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Sparkles, Star } from 'lucide-react';
+import { Sparkles, Star, Volume2, VolumeX, Music, Play, Pause, Disc } from 'lucide-react';
 // @ts-ignore
 import jesusGlorious from '../assets/images/jesus_glorious_1780573486313.png';
 
@@ -10,6 +10,10 @@ interface CelestialAnimationProps {
 
 export default function CelestialAnimation({ onComplete }: CelestialAnimationProps) {
   const [stars, setStars] = useState<{ id: number; top: string; left: string; size: number; delay: string; duration: string }[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   useEffect(() => {
     // Generate star coordinates on mount to avoid hydration mismatch
@@ -23,11 +27,65 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
     }));
     setStars(generated);
 
+    // Initialize Alexandra Burke - Hallelujah Audio
+    const audio = new Audio('https://archive.org/download/hallelujah-alexandra-burke/Hallelujah.mp3');
+    audio.loop = true;
+    audio.volume = 0.85;
+    audioRef.current = audio;
+
+    // Fast autoplay attempt
+    const attemptPlay = () => {
+      audio.play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch((err) => {
+          console.warn("Autoplay blocked by browser policy. Showing interactive play cue.", err);
+          setIsPlaying(false);
+        });
+    };
+
+    audio.addEventListener('canplaythrough', attemptPlay);
+    
+    // Play on load and user click fallback
+    const initTimer = setTimeout(attemptPlay, 1200);
+
     const timer = setTimeout(() => {
       onComplete();
     }, 45000);
-    return () => clearTimeout(timer);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('canplaythrough', attemptPlay);
+      clearTimeout(timer);
+      clearTimeout(initTimer);
+      audioRef.current = null;
+    };
   }, [onComplete]);
+
+  // Audio control toggle handlers
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    setHasUserInteracted(true);
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch(err => console.error("Playback error: ", err));
+    }
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioRef.current) return;
+    const nextMute = !isMuted;
+    audioRef.current.muted = nextMute;
+    setIsMuted(nextMute);
+  };
 
   return (
     <div className="fixed inset-0 w-screen h-screen bg-slate-950 overflow-hidden select-none flex flex-col justify-between p-8 z-[9999] animate-fadeIn text-white">
@@ -90,6 +148,22 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
         .animate-float {
           animation: float-gentle 6s ease-in-out infinite;
         }
+        @keyframes wave-bounce {
+          0%, 100% { transform: scaleY(0.3); }
+          50% { transform: scaleY(1); }
+        }
+        .audio-bar {
+          display: inline-block;
+          width: 2px;
+          height: 12px;
+          background-color: #38bdf8;
+          margin: 0 1px;
+          transform-origin: bottom;
+          animation: wave-bounce 1s ease-in-out infinite;
+        }
+        .audio-bar:nth-child(2) { animation-delay: 0.15s; }
+        .audio-bar:nth-child(3) { animation-delay: 0.3s; }
+        .audio-bar:nth-child(4) { animation-delay: 0.45s; }
       `}</style>
 
       {/* 1. BACKGROUND STARS */}
@@ -110,8 +184,50 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
         ))}
       </div>
 
-      {/* 2. TOP ACTION BAR WITH SKIP BUTTON */}
-      <div className="w-full flex justify-end z-30">
+      {/* 2. TOP ACTION BAR WITH AUDIO TOGGLE & SKIP BUTTON */}
+      <div className="w-full flex items-center justify-between z-30">
+        
+        {/* Playback Control Trigger */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={togglePlay}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider transition-all duration-300 pointer-events-auto shadow-md border ${
+              isPlaying 
+                ? 'bg-sky-500/20 text-sky-200 border-sky-400/30' 
+                : 'bg-amber-500/20 text-amber-300 border-amber-400/30 font-black animate-pulse'
+              }`}
+          >
+            {isPlaying ? (
+              <>
+                <div className="flex h-3 items-end pb-0.5 mr-0.5">
+                  <div className="audio-bar" />
+                  <div className="audio-bar" />
+                  <div className="audio-bar" />
+                  <div className="audio-bar" />
+                </div>
+                <span className="font-mono uppercase">Hallelujah</span>
+                <Pause className="w-3 h-3 text-sky-300 ml-1" />
+              </>
+            ) : (
+              <>
+                <Play className="w-3 h-3 text-amber-400 fill-amber-400 animate-bounce" />
+                <span className="uppercase font-mono">Hihira Hallelujah 🎵</span>
+              </>
+            )}
+          </button>
+
+          {isPlaying && (
+            <button
+              onClick={toggleMute}
+              className="p-1.5 rounded-full bg-slate-900/60 border border-slate-800 text-slate-300 hover:text-white transition-all pointer-events-auto"
+              title={isMuted ? "Ampandehano feo" : "Hampialao feo"}
+            >
+              {isMuted ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 text-sky-400" />}
+            </button>
+          )}
+        </div>
+
+        {/* Skip button */}
         <button 
           onClick={onComplete}
           className="bg-slate-900/40 hover:bg-slate-800/60 active:scale-95 text-sky-200/80 hover:text-sky-100 rounded-full px-4 py-1.5 text-[10px] uppercase font-bold tracking-widest border border-sky-500/20 transition-all cursor-pointer shadow-[0_0_15px_rgba(14,165,233,0.1)] back-blur-xs"
@@ -137,15 +253,25 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
       {/* 4. THE GLORIOUS CENTERPIECE IMAGE - JESUS CHRIST IN HIGHLIGHTED GLORY WITH ZOOM */}
       <div className="relative w-full flex items-center justify-center z-20 h-64 overflow-visible animate-float">
         <div 
+          onClick={togglePlay}
           style={{ transform: 'scale(2.0)' }}
-          className="relative w-28 h-28 rounded-full overflow-hidden border border-sky-400/25 bg-slate-950 flex items-center justify-center origin-center animate-glow"
+          className="relative w-28 h-28 rounded-full overflow-hidden border border-sky-400/25 bg-slate-950 flex items-center justify-center origin-center animate-glow cursor-pointer group"
+          title="Tsindrio hilalaovana / hampijanonana ny mozika"
         >
           <img 
             src={jesusGlorious} 
             alt="Jésus" 
-            className="w-full h-full object-cover opacity-90 animate-kenBurnsBack"
+            className="w-full h-full object-cover opacity-90 animate-kenBurnsBack group-hover:scale-105 transition-all duration-300"
             draggable="false"
           />
+          {/* Subtle audio indicator layout overlay */}
+          {!isPlaying && (
+            <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
+              <div className="bg-amber-500 p-1.5 rounded-full shadow-lg border border-amber-300">
+                <Play className="w-4 h-4 text-slate-950 fill-slate-950" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
