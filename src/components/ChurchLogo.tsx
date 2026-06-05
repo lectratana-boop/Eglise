@@ -39,7 +39,7 @@ export default function ChurchLogo({ layout = 'horizontal', className = '', badg
         <div className={`transition-all duration-300 flex items-center justify-center bg-white ${sizeClass}`}>
           <img
             src={churchLogo}
-            alt="Fiangonana Protestante Fifohazana (F.P.Fi)"
+            alt="Fiangonana Protestanta Fihavaozana (F.P.Fi)"
             className="w-full h-full object-contain rounded-2xl bg-white"
           />
         </div>

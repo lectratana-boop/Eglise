@@ -114,10 +114,10 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
           <Sparkles className="w-3 h-3 text-sky-450 animate-spin" />
           <span>Fitaizana ara-panahy</span>
         </div>
-        <h1 className="text-2xl font-black tracking-[0.12em] text-white uppercase drop-shadow-lg">
+        <h1 className="text-2xl font-black tracking-[0.12em] text-white drop-shadow-lg">
           F.P.Fi
         </h1>
-        <p className="text-[10px] text-sky-305 font-mono tracking-wider uppercase font-bold">
+        <p className="text-[10px] text-sky-305 font-mono tracking-wider font-bold">
           Fiangonana Protestanta Fihavaozana
         </p>
       </div>
@@ -125,7 +125,7 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
       {/* 4. THE GLORIOUS CENTERPIECE IMAGE - JESUS CHRIST IN HIGHLIGHTED GLORY WITH ZOOM */}
       <div className="relative w-full flex items-center justify-center z-20 h-64 overflow-visible">
         <div 
-          style={{ transform: 'scale(4.0)' }}
+          style={{ transform: 'scale(2.0)' }}
           className="relative w-28 h-28 rounded-full overflow-hidden border border-sky-400/25 shadow-[0_0_40px_rgba(14,165,233,0.25)] bg-slate-950 flex items-center justify-center animate-kenBurnsBack origin-center"
         >
           <img 
