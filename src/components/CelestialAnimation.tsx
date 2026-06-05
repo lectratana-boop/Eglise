@@ -25,7 +25,7 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
 
     const timer = setTimeout(() => {
       onComplete();
-    }, 4500);
+    }, 45000);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
