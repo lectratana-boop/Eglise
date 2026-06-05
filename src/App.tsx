@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Church, Member, Announcement, ChurchEvent, Sermon, Donation } from './types';
+import { Church, Member, Announcement, ChurchEvent, Sermon, Donation, DailyMana } from './types';
 import {
   INITIAL_CHURCHES,
   INITIAL_MEMBERS,
@@ -65,6 +65,46 @@ const DAILY_PROMISES = [
   { text: "Jehovah no mpiandry ahy, tsy hanan-javaha-manantena aho. Mampandry ahy any amin'ny ahi-maitso Izy; mitondra ahy eo amin'ny rano mangina Izy.", ref: "Salamo 23:1-2" },
   { text: "Matokia an'i Jehovah amin'ny fonao rehetra, fa aza miantehitra amin'ny fahalalanao. Maneke Azy amin'ny alehanao rehetra, fa Izy handamina ny lalanao.", ref: "Ohabolana 3:5-6" }
 ];
+
+const INITIAL_DAILY_MANAS: DailyMana[] = [
+  {
+    id: "m-j1",
+    churchId: "fjkm-isotry",
+    code: "J1",
+    num: 1,
+    text: "Matokia an'i Jehovah amin'ny fonao rehetra, fa aza miantehitra amin'ny fahalalanao. Maneke Azy amin'ny alehanao rehetra, fa Izy handamina ny lalanao.",
+    ref: "Ohabolana 3:5-6",
+    commentary: "Ny fahatokiana an'Andriamanitra amin'ny fo rehetra no fototry ny fiainana kristiana vanona. Rehefa manolotra ny lalantsika ho Azy isika, dia Izy no hitantana sy handamina ny androm-piainantsika."
+  },
+  {
+    id: "m-j2",
+    churchId: "fjkm-isotry",
+    code: "J2",
+    num: 2,
+    text: "Fa mangataha aloha ny fanjakany sy ny fahamarinany, dia hanampy ho anareo izany rehetra izany.",
+    ref: "Matio 6:33",
+    commentary: "Aza manahy ny hohanina na ny hosotroina na ny hotafiana. Ny fitadiavana ny Fanjakan'Andriamanitra aloha no zava-dehibe indrindra, ary ny antsiny rehetra dia homeny ho fanampiny."
+  },
+  {
+    id: "m-j3",
+    churchId: "fjkm-isotry",
+    code: "J3",
+    num: 3,
+    text: "Fa Izaho mahalala ny hevitra eritreretiko ny aminere, hoy Jehovah, dia hevitra hahasoa, fa tsy hahamasina, hanome anareo fanantenana ny amin'ny ho avy.",
+    ref: "Jeremia 29:11",
+    commentary: "Na dia be aza ny fitsapana sy ny manjo, ny hevitry ny fona Andriamanitra dia feno fitiavana sy fanantenana ho antsika. Manana hoavy mamirapiratra isika ao Aminy."
+  },
+  {
+    id: "m-j4",
+    churchId: "fjkm-isotry",
+    code: "J4",
+    num: 4,
+    text: "Aza matahotra, fa momba anao Aho; aza miherikerika fotsiny, fa Izaho no Andriamanitrao; mampahery anao Aho sady mamonjy anao.",
+    ref: "Isaia 41:10",
+    commentary: "Tsy miala amintsika ny herin'i Jehovah. Na aiza na aiza alehantsika dia mampahery sy mitantana ary mamonjy isika raha mitoky Aminy."
+  }
+];
+
 
 export default function App() {
   const [isAppLoading, setIsAppLoading] = useState(true);
@@ -231,6 +271,44 @@ export default function App() {
   const [roleInputValue, setRoleInputValue] = useState('');
   const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
   const [showChurchSetup, setShowChurchSetup] = useState<boolean>(false);
+
+  // Daily Mana automatic scheduling states
+  const [dailyManas, setDailyManas] = useState<DailyMana[]>(() => {
+    const saved = localStorage.getItem('mifandray_daily_manas_v1');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return INITIAL_DAILY_MANAS;
+      }
+    }
+    return INITIAL_DAILY_MANAS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mifandray_daily_manas_v1', JSON.stringify(dailyManas));
+  }, [dailyManas]);
+
+  // Publication start date for automatic J1 publication
+  const [manaStartDate, setManaStartDate] = useState<string>(() => {
+    const saved = localStorage.getItem('mifandray_mana_start_date_v1');
+    return saved || '2026-06-05'; // default to June 5, 2026
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mifandray_mana_start_date_v1', manaStartDate);
+  }, [manaStartDate]);
+
+  const [showManaAdmin, setShowManaAdmin] = useState<boolean>(false);
+  const [newManaCode, setNewManaCode] = useState('J5');
+  const [newManaText, setNewManaText] = useState('');
+  const [newManaRef, setNewManaRef] = useState('');
+  const [newManaCommentary, setNewManaCommentary] = useState('');
+  const [editingManaId, setEditingManaId] = useState<string | null>(null);
+
+  const [selectedManaIndexOffset, setSelectedManaIndexOffset] = useState<number>(0);
+  const [showManaCommentary, setShowManaCommentary] = useState<boolean>(false);
+
 
   const addNewRole = () => {
     if (!roleInputValue.trim()) {
@@ -458,6 +536,132 @@ export default function App() {
     setPromiseIndex(nextIdx);
   };
 
+  // Madagascar timezone-aware automatic daily publication calculation (06:00 rollover)
+  const getMadagascarActiveMana = () => {
+    const churchManas = dailyManas.filter(m => m.churchId === activeChurchId);
+    if (churchManas.length === 0) {
+      return { 
+        mana: null, 
+        dayIndex: 0, 
+        isPublished: false,
+        debugTargetTimeStr: "",
+        elapsedDays: 0
+      };
+    }
+
+    // Sort by num ascending
+    const sortedManas = [...churchManas].sort((a, b) => a.num - b.num);
+
+    const now = new Date();
+    // UTC offset shift
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const madaTime = new Date(utcTime + (3 * 3600000)); // UTC+3 Madagascar
+
+    // Publish day rollover at 06:00
+    // If hour < 6, use yesterday's day number
+    const madaActiveDate = new Date(madaTime);
+    if (madaTime.getHours() < 6) {
+      madaActiveDate.setDate(madaActiveDate.getDate() - 1);
+    }
+
+    // Process Start Date
+    const startParts = manaStartDate.split('-');
+    // Month is 0-indexed in Date constructor
+    const startDate = new Date(
+      parseInt(startParts[0], 10), 
+      parseInt(startParts[1], 10) - 1, 
+      parseInt(startParts[2], 10)
+    );
+
+    // Normalize midnights to compute calendar date difference
+    const madaMidnight = new Date(madaActiveDate.getFullYear(), madaActiveDate.getMonth(), madaActiveDate.getDate());
+    const startMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+
+    const diffTime = madaMidnight.getTime() - startMidnight.getTime();
+    const elapsedDays = Math.floor(diffTime / (24 * 60 * 60 * 1000));
+    const dayIndex = elapsedDays + 1; // start index = 1 for the first day
+
+    const formattedTime = madaTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+    if (dayIndex <= 0) {
+      // Future start date
+      return {
+        mana: sortedManas[0],
+        dayIndex: 1,
+        isPublished: false,
+        debugTargetTimeStr: formattedTime,
+        elapsedDays: elapsedDays
+      };
+    }
+
+    // Cyclic publish using modulo
+    const sequenceIdx = (dayIndex - 1) % sortedManas.length;
+    return {
+      mana: sortedManas[sequenceIdx],
+      dayIndex: dayIndex,
+      isPublished: true,
+      debugTargetTimeStr: formattedTime,
+      elapsedDays: elapsedDays
+    };
+  };
+
+  const handleSaveMana = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newManaCode.trim() || !newManaText.trim() || !newManaRef.trim()) {
+      alert("Fenoy avokoa ny banga (Laharana, teny, andalan-tsoratra)!");
+      return;
+    }
+
+    const numMatch = newManaCode.match(/\d+/);
+    const parsedNum = numMatch ? parseInt(numMatch[0], 10) : (dailyManas.filter(m => m.churchId === activeChurchId).length + 1);
+
+    if (editingManaId) {
+      setDailyManas(prev => prev.map(m => m.id === editingManaId ? {
+        ...m,
+        code: newManaCode.trim().toUpperCase(),
+        num: parsedNum,
+        text: newManaText.trim(),
+        ref: newManaRef.trim(),
+        commentary: newManaCommentary.trim()
+      } : m));
+      setEditingManaId(null);
+      alert("Voasoratra soa aman-tsara ny fanovana momba ity Mana ity!");
+    } else {
+      const newM: DailyMana = {
+        id: `mana-${Date.now()}`,
+        churchId: activeChurchId,
+        code: newManaCode.trim().toUpperCase(),
+        num: parsedNum,
+        text: newManaText.trim(),
+        ref: newManaRef.trim(),
+        commentary: newManaCommentary.trim()
+      };
+      setDailyManas(prev => [...prev, newM]);
+      alert("Voampiditra soa aman-tsara ny Mana vaovao!");
+    }
+
+    // Auto-advance code number for typing productivity
+    setNewManaCode(`J${parsedNum + 1}`);
+    setNewManaText('');
+    setNewManaRef('');
+    setNewManaCommentary('');
+  };
+
+  const handleDeleteMana = (id: string) => {
+    if (confirm("Tena te-hamafa ity Mana ity tokoa ve ianao?")) {
+      setDailyManas(prev => prev.filter(m => m.id !== id));
+      alert("Voafafa soa aman-tsara!");
+    }
+  };
+
+  const handleEditManaClick = (m: DailyMana) => {
+    setEditingManaId(m.id);
+    setNewManaCode(m.code);
+    setNewManaText(m.text);
+    setNewManaRef(m.ref);
+    setNewManaCommentary(m.commentary || '');
+  };
+
   // Helper to resolve specific category announcement (Fivoriana, Hetsika, Sokajy Hafa)
   const getDisplayAnnouncement = (cat: 'fivoriana' | 'hetsika' | 'hafa') => {
     const customTitle = 
@@ -627,121 +831,190 @@ export default function App() {
           {/* View Tab Selector Gate */}
 
           {/* 1. TONGASOA (HOME SCREEN) */}
-          {activeTab === 'Accueil' && (
-            <div className="space-y-4 animate-fadeIn animate-duration-300">
+          {activeTab === 'Accueil' && (() => {
+            const madaManaInfo = getMadagascarActiveMana();
+            const sortedChurchManas = [...dailyManas.filter(m => m.churchId === activeChurchId)].sort((a, b) => a.num - b.num);
+            
+            let displayedMana = madaManaInfo.mana;
+            let displayedDayIndex = madaManaInfo.dayIndex;
+            
+            if (sortedChurchManas.length > 0) {
+              if (selectedManaIndexOffset !== 0) {
+                const activeIdx = sortedChurchManas.findIndex(m => m.id === madaManaInfo.mana?.id);
+                const targetIdx = (activeIdx === -1 ? 0 : activeIdx + selectedManaIndexOffset) % sortedChurchManas.length;
+                const safeIdx = (targetIdx + sortedChurchManas.length) % sortedChurchManas.length;
+                displayedMana = sortedChurchManas[safeIdx];
+                displayedDayIndex = displayedMana.num;
+              }
+            }
 
-              {/* Home main padded container */}
-              <div className="px-4 space-y-4 pt-4">
+            return (
+              <div className="space-y-4 animate-fadeIn animate-duration-300">
 
-                {/* Interactive greeting with dynamic island feel - enlarged to occupy the empty space */}
-                <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 rounded-3xl p-6 md:p-8 text-white shadow-md relative overflow-hidden flex flex-col justify-center min-h-[180px] md:min-h-[220px]">
-                  <div className="absolute -right-6 -bottom-6 text-white/5 pointer-events-none select-none">
-                    <BookOpen className="w-48 h-48" />
-                  </div>
-                  <p className={`${isElderlyMode ? 'text-2xl font-black' : 'text-base sm:text-lg md:text-xl font-extrabold leading-relaxed'} text-white text-center font-sans tracking-wide italic`}>
-                    "{activeChurch.description || DEFAULT_SLOGAN}"
-                  </p>
-                </div>
- 
-              {/* Dynamic Promise of today with robust design */}
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-900 dark:to-slate-900 border border-amber-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black uppercase bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400 py-0.5 px-2 rounded font-sans">
-                    Andininy anio
-                  </span>
-                  <button
-                    onClick={handleRandomPromise}
-                    className="py-1 px-2.5 bg-amber-500 border-b-[3px] border-amber-700 text-white text-[9px] font-black rounded-lg active:translate-y-[1px] active:border-b-[1px] cursor-pointer"
-                  >
-                    Hafa 🔄
-                  </button>
-                </div>
-                
-                <blockquote className={`${isElderlyMode ? 'text-lg font-black' : 'text-xs font-semibold'} text-slate-800 dark:text-slate-100 italic font-sans leading-relaxed`}>
-                  "{activeVerseText}"
-                </blockquote>
-                
-                <p className="text-[10px] font-mono font-black text-amber-700 dark:text-amber-450 text-right">
-                  — {activeVerseRef}
-                </p>
- 
+                {/* Home main padded container */}
+                <div className="px-4 space-y-4 pt-4">
 
-              </div>
- 
-              {/* Grid of latest News & Events inline preview */}
-              <div className="grid grid-cols-1 gap-3">
-                
-                {/* Expanded News preview (Annonces) utilizing empty screen space at bottom */}
-                <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3.5">
-                  <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base">📢</span>
-                      <span className="text-[11px] font-extrabold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Vaovao sy filazana</span>
+                  {/* Interactive greeting with dynamic island feel - enlarged to occupy the empty space */}
+                  <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 rounded-3xl p-6 md:p-8 text-white shadow-md relative overflow-hidden flex flex-col justify-center min-h-[180px] md:min-h-[220px]">
+                    <div className="absolute -right-6 -bottom-6 text-white/5 pointer-events-none select-none">
+                      <BookOpen className="w-48 h-48" />
                     </div>
-                    <button
-                      onClick={() => setActiveTab('Annonces')}
-                      className="text-[9.5px] font-extrabold text-violet-650 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300 px-2.5 py-1 rounded-lg cursor-pointer transition-all active:scale-95 border border-violet-100 dark:border-violet-900/40"
-                    >
-                      Hijery rehetra ➔
-                    </button>
+                    <p className={`${isElderlyMode ? 'text-2xl font-black' : 'text-base sm:text-lg md:text-xl font-extrabold leading-relaxed'} text-white text-center font-sans tracking-wide italic`}>
+                      "{activeChurch.description || DEFAULT_SLOGAN}"
+                    </p>
                   </div>
- 
-                  <div className="space-y-4 pt-1">
-                    {['fivoriana', 'hetsika', 'hafa'].map((cat) => {
-                      const ann = getDisplayAnnouncement(cat as 'fivoriana' | 'hetsika' | 'hafa');
-                      if (!ann) return null;
-
-                      const categoryColors = ann.category === 'fivoriana' 
-                        ? 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-350 border border-purple-200/50 dark:border-purple-800/40' 
-                        : ann.category === 'hetsika'
-                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-350 border border-amber-200/50 dark:border-amber-800/40'
-                        : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-805 dark:text-indigo-350 border border-indigo-200/50 dark:border-indigo-800/40';
-
-                      const categoryLabel = ann.category === 'fivoriana' 
-                        ? 'Fivoriana 🗓️' 
-                        : ann.category === 'hetsika'
-                        ? 'Hetsika 🌟'
-                        : 'Sokajy Hafa 📢';
-
-                      const dateParts = ann.date ? ann.date.split('-') : [];
-                      const formattedDate = dateParts.length === 3 
-                        ? `Alahady, ${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`
-                        : ann.date;
-
-                      return (
-                        <div
-                          key={ann.id}
-                          className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-slate-800/60 space-y-2 relative group overflow-hidden transition-all hover:shadow-xs"
+   
+                {/* Dynamic Promise of today with robust design */}
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-slate-900 dark:to-slate-900 border border-amber-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[9px] font-black uppercase bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400 py-0.5 px-2 rounded font-sans leading-none">
+                        {displayedMana ? `Mana Isan'andro (${displayedMana.code})` : "Andininy anio"}
+                      </span>
+                      {displayedMana && (
+                        <span className="text-[8px] font-black uppercase bg-violet-100 dark:bg-blue-950 text-violet-750 dark:text-blue-300 py-0.5 px-1.5 rounded leading-none flex items-center gap-0.5">
+                          <span>⏰ 06:00 Madagascar</span>
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      {selectedManaIndexOffset !== 0 && (
+                        <button
+                          onClick={() => setSelectedManaIndexOffset(0)}
+                          className="py-1 px-2 bg-indigo-600 border-b-[2.5px] border-indigo-805 hover:bg-indigo-705 text-white text-[8px] font-black rounded-lg cursor-pointer transition-all active:translate-y-[0.5px]"
+                          title="Hiverina amin'ny androany"
                         >
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className={`text-[8.5px] px-2 py-0.5 rounded-full font-black uppercase ${categoryColors}`}>
-                              {categoryLabel}
-                            </span>
-                            {formattedDate && (
-                              <span className="text-[8.5px] font-mono text-slate-400 dark:text-slate-500 font-bold">
-                                📅 {formattedDate}
-                              </span>
-                            )}
-                          </div>
-                          
-                          <h4 className="text-xs font-black text-slate-800 dark:text-white leading-snug group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                            {ann.title}
-                          </h4>
-                          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
-                            {ann.content}
-                          </p>
-                        </div>
-                      );
-                    })}
+                          Androany 📌
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (sortedChurchManas.length > 0) {
+                            setSelectedManaIndexOffset(prev => prev + 1);
+                          } else {
+                            handleRandomPromise();
+                          }
+                        }}
+                        className="py-1 px-2 bg-amber-500 border-b-[2.5px] border-amber-700 text-white text-[8px] font-black rounded-lg active:translate-y-[0.5px] cursor-pointer"
+                        title="Hijery teny hafa"
+                      >
+                        {sortedChurchManas.length > 0 ? "J-Hafa 🔄" : "Hafa 🔄"}
+                      </button>
+                    </div>
                   </div>
-                </div>
- 
-              </div>
+                  
+                  <blockquote className={`${isElderlyMode ? 'text-lg font-black' : 'text-xs font-semibold'} text-slate-800 dark:text-slate-100 italic font-sans leading-relaxed`}>
+                    "{displayedMana ? displayedMana.text : activeVerseText}"
+                  </blockquote>
+                  
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 font-mono">
+                      {displayedMana ? (
+                        <span>Ordre: {displayedMana.code} (Andro {displayedDayIndex})</span>
+                      ) : (
+                        <span>Tenin'ny Tompo</span>
+                      )}
+                    </div>
+                    <p className="text-[10px] font-mono font-black text-amber-700 dark:text-amber-400 text-right">
+                      — {displayedMana ? displayedMana.ref : activeVerseRef}
+                    </p>
+                  </div>
 
-              </div> {/* Close Home main padded container */}
- 
-            </div>
-          )}
+                  {/* Elegant Commentary / Fanazavana collapsing box if present */}
+                  {displayedMana?.commentary && (
+                    <div className="border-t border-amber-200/50 dark:border-slate-800/80 pt-2.5 mt-2 space-y-1.5">
+                      <button
+                        onClick={() => setShowManaCommentary(!showManaCommentary)}
+                        className="w-full flex items-center justify-between text-[10px] font-black uppercase text-amber-800 dark:text-amber-400 hover:text-amber-900 focus:outline-none py-1 hover:bg-amber-100/30 rounded px-1 transition-colors cursor-pointer select-none"
+                      >
+                        <span className="flex items-center gap-1">📖 Fanazavana sy Fampiharana</span>
+                        <span>{showManaCommentary ? 'Hiafina ✕' : 'Hamaky ➔'}</span>
+                      </button>
+                      {showManaCommentary && (
+                        <div className="bg-amber-100/20 dark:bg-slate-950/40 border border-amber-100/60 dark:border-slate-800/50 p-2.5 rounded-xl text-[11px] leading-relaxed text-slate-700 dark:text-slate-300 font-medium whitespace-pre-line animate-slideDown">
+                          {displayedMana.commentary}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+   
+                {/* Grid of latest News & Events inline preview */}
+                <div className="grid grid-cols-1 gap-3">
+                  
+                  {/* Expanded News preview (Annonces) utilizing empty screen space at bottom */}
+                  <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3.5">
+                    <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">📢</span>
+                        <span className="text-[11px] font-extrabold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Vaovao sy filazana</span>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab('Annonces')}
+                        className="text-[9.5px] font-extrabold text-violet-650 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300 px-2.5 py-1 rounded-lg cursor-pointer transition-all active:scale-95 border border-violet-100 dark:border-violet-900/40"
+                      >
+                        Hijery rehetra ➔
+                      </button>
+                    </div>
+   
+                    <div className="space-y-4 pt-1">
+                      {['fivoriana', 'hetsika', 'hafa'].map((cat) => {
+                        const ann = getDisplayAnnouncement(cat as 'fivoriana' | 'hetsika' | 'hafa');
+                        if (!ann) return null;
+  
+                        const categoryColors = ann.category === 'fivoriana' 
+                          ? 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-350 border border-purple-200/50 dark:border-purple-800/40' 
+                          : ann.category === 'hetsika'
+                          ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-350 border border-amber-200/50 dark:border-amber-805/40'
+                          : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-350 border border-indigo-200/50 dark:border-indigo-800/40';
+  
+                        const categoryLabel = ann.category === 'fivoriana' 
+                          ? 'Fivoriana 🗓️' 
+                          : ann.category === 'hetsika'
+                          ? 'Hetsika 🌟'
+                          : 'Sokajy Hafa 📢';
+  
+                        const dateParts = ann.date ? ann.date.split('-') : [];
+                        const formattedDate = dateParts.length === 3 
+                          ? `Alahady, ${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`
+                          : ann.date;
+  
+                        return (
+                          <div
+                            key={ann.id}
+                            className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-slate-800/60 space-y-2 relative group overflow-hidden transition-all hover:shadow-xs"
+                          >
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className={`text-[8.5px] px-2 py-0.5 rounded-full font-black uppercase ${categoryColors}`}>
+                                {categoryLabel}
+                              </span>
+                              {formattedDate && (
+                                <span className="text-[8.5px] font-mono text-slate-400 dark:text-slate-500 font-bold">
+                                  📅 {formattedDate}
+                                </span>
+                              )}
+                            </div>
+                            
+                            <h4 className="text-xs font-black text-slate-800 dark:text-white leading-snug group-hover:text-violet-650 dark:group-hover:text-violet-400 transition-colors">
+                              {ann.title}
+                            </h4>
+                            <p className="text-[11px] text-slate-605 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                              {ann.content}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+   
+                </div>
+  
+                </div> {/* Close Home main padded container */}
+   
+              </div>
+            );
+          })()}
 
           {/* 2. OVERHAULED BIBLE VIEWPORT */}
           {activeTab === 'Bible' && (
@@ -858,6 +1131,245 @@ export default function App() {
                       className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-805 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500 leading-snug"
                     />
                   </div>
+
+                  {/* MANA ISAN'ANDRO & ANDININY AUTOMATED PUBLISHER SYSTEM */}
+                  <div className="border-t border-slate-100 dark:border-slate-800/60 pt-3.5 mt-3.5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <span className="block text-[11px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-wider">
+                          📅 Fitantanana Mana Isan'andro
+                        </span>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500 max-w-md leading-normal">
+                          Fihodinana ho azy isan'andro amin'ny 06h00 maraina (heure de Madagascar) manaraka ny laharana J1, J2, J3...
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowManaAdmin(!showManaAdmin)}
+                        className="py-1 px-2.5 bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 text-[10px] font-black rounded-lg border border-violet-100 dark:border-violet-900/40 cursor-pointer active:scale-95 transition-all"
+                      >
+                        {showManaAdmin ? 'Hanidy ny tontonana ✕' : 'Hijery / Hikirakira ➔'}
+                      </button>
+                    </div>
+
+                    {showManaAdmin && (
+                      <div className="bg-slate-50 dark:bg-slate-950/60 rounded-xl p-3 border border-slate-205 dark:border-slate-800 space-y-4 animate-fadeIn">
+                        {/* 1. SCHEDULER DATE START */}
+                        <div className="bg-white dark:bg-slate-900 rounded-lg p-2.5 border border-slate-100 dark:border-slate-800/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="space-y-1">
+                            <span className="block text-[9.5px] font-extrabold text-slate-700 dark:text-slate-350">
+                              🚀 Datin'ny J1 (Datin'ny famoahana voalohany) :
+                            </span>
+                            <span className="block text-[8.5px] text-slate-450 dark:text-slate-550 italic leading-none">
+                              Raha voatendry ny 05 Jona, J1 no mivoaka amin'ny 05 Jona, J2 kosa amin'ny 06 Jona, sns.
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <input
+                              type="date"
+                              value={manaStartDate}
+                              onChange={(e) => setManaStartDate(e.target.value)}
+                              className="bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-white text-xs font-black p-1.5 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-violet-500 font-mono cursor-pointer"
+                            />
+                          </div>
+                        </div>
+
+                        {/* STATUS PREVIEW SUMMARY */}
+                        {(() => {
+                          const info = getMadagascarActiveMana();
+                          return (
+                            <div className="p-2.5 bg-indigo-50/50 dark:bg-blue-950/15 border border-indigo-100/50 dark:border-blue-900/40 rounded-lg flex items-center justify-between gap-2 text-[9.5px] text-indigo-900 dark:text-indigo-300">
+                              <div className="space-y-1">
+                                <span className="font-extrabold flex items-center gap-1">
+                                  <span>ℹ️ Statitikan'ny Famoahana Androany:</span>
+                                </span>
+                                <div className="space-y-0.5 font-medium text-slate-500 dark:text-slate-400">
+                                  <p>• Loko/Ora mada: <span className="font-mono text-slate-750 dark:text-slate-300 font-bold">{info.debugTargetTimeStr}</span></p>
+                                  <p>• Andro lasa teo zao: <span className="font-bold text-slate-700 dark:text-slate-300">{info.elapsedDays} andro</span></p>
+                                  <p>• Mana andrasana anio (Andro faha-{info.dayIndex}): <span className="font-bold text-violet-600 dark:text-violet-400">{info.mana ? info.mana.code : 'Tsy misy'}</span></p>
+                                </div>
+                              </div>
+                              <div className="bg-amber-100 dark:bg-amber-950/85 text-amber-800 dark:text-amber-400 p-1 px-2 rounded font-black text-center shrink-0 border border-amber-200/40">
+                                <span className="block text-[8px] uppercase tracking-wide">Aktiva Androany</span>
+                                <span className="text-xs font-mono">{info.mana ? info.mana.code : 'None'}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* 2. MANA MANAGE CONTAINER (Left: Create / Edit, Right: List) */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                          
+                          {/* FORM PANEL */}
+                          <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-lg p-3 border border-slate-150 dark:border-slate-800/80 space-y-3">
+                            <span className="block text-[9.5px] font-black uppercase text-violet-650 dark:text-violet-300 border-b border-slate-100 dark:border-slate-800/80 pb-1.5">
+                              {editingManaId ? '✏️ Hanova ity Mana ity' : '➕ Mana Vaovao'}
+                            </span>
+                            
+                            <form onSubmit={handleSaveMana} className="space-y-3">
+                              <div>
+                                <label className="block text-[8.5px] font-black text-slate-500 uppercase mb-0.5">
+                                  Laharana / Laharana filaharana (ex: J1, J2, J10...)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newManaCode}
+                                  onChange={(e) => setNewManaCode(e.target.value)}
+                                  placeholder="J1"
+                                  className="w-full bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-white text-xs font-black p-1.5 rounded-lg border border-slate-205 dark:border-slate-750 focus:ring-1 focus:ring-violet-500 focus:outline-none uppercase"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[8.5px] font-black text-slate-500 uppercase mb-0.5">
+                                  Soratra Masina (Teny fampanantenana / Mana)
+                                </label>
+                                <textarea
+                                  value={newManaText}
+                                  onChange={(e) => setNewManaText(e.target.value)}
+                                  placeholder="Aza matahotra na mivadi-po fa momba anao Izy..."
+                                  rows={4}
+                                  className="w-full bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-white text-xs p-1.5 rounded-lg border border-slate-205 dark:border-slate-750 focus:ring-1 focus:ring-violet-500 focus:outline-none leading-relaxed italic"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[8.5px] font-black text-slate-500 uppercase mb-0.5">
+                                  Andalan-tsoratra (Ref)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newManaRef}
+                                  onChange={(e) => setNewManaRef(e.target.value)}
+                                  placeholder="Isaia 41:10"
+                                  className="w-full bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-white text-xs p-1.5 rounded-lg border border-slate-205 dark:border-slate-750 focus:ring-1 focus:ring-violet-500 focus:outline-none font-semibold font-mono"
+                                />
+                              </div>
+
+                              <div>
+                                <div className="flex items-center justify-between mb-0.5">
+                                  <label className="block text-[8.5px] font-black text-slate-500 uppercase">
+                                    📖 Fanazavana fanampiny / Fampiharana (commentary - safidy)
+                                  </label>
+                                  <span className="text-[7.5px] px-1 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded">Ivelany</span>
+                                </div>
+                                <textarea
+                                  value={newManaCommentary}
+                                  onChange={(e) => setNewManaCommentary(e.target.value)}
+                                  placeholder="Ny andininy anio dia mampatsiahy antsika ny fitiavan'Andriamanitra..."
+                                  rows={3}
+                                  className="w-full bg-slate-50 dark:bg-slate-850 text-slate-800 dark:text-white text-[11px] p-1.5 rounded-lg border border-slate-205 dark:border-slate-750 focus:ring-1 focus:ring-violet-500 focus:outline-none leading-relaxed"
+                                />
+                              </div>
+
+                              <div className="flex items-center gap-1.5 pt-1">
+                                <button
+                                  type="submit"
+                                  className="flex-1 py-1 px-3 bg-violet-600 border-b-[2.5px] border-violet-850 hover:bg-violet-700 text-white text-[10px] font-black rounded-lg cursor-pointer transition-all active:translate-y-[0.5px]"
+                                >
+                                  {editingManaId ? 'Tehirizina 💾' : 'Ampidirina 🚀'}
+                                </button>
+                                {editingManaId && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingManaId(null);
+                                      setNewManaCode(`J${dailyManas.filter(m => m.churchId === activeChurchId).length + 1}`);
+                                      setNewManaText('');
+                                      setNewManaRef('');
+                                      setNewManaCommentary('');
+                                    }}
+                                    className="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black rounded-lg cursor-pointer"
+                                  >
+                                    Canselo
+                                  </button>
+                                )}
+                              </div>
+                            </form>
+                          </div>
+
+                          {/* LIST PANEL */}
+                          <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-lg p-3 border border-slate-150 dark:border-slate-800/80 space-y-2">
+                            <span className="block text-[9.5px] font-black uppercase text-slate-500 border-b border-slate-100 dark:border-slate-800/80 pb-1.5">
+                              📋 Lisitry ny Mana (Sorted J1, J2, J3...)
+                            </span>
+                            
+                            <div className="max-h-[380px] overflow-y-auto space-y-2 pr-1 scrollbar">
+                              {dailyManas.filter(m => m.churchId === activeChurchId).length === 0 ? (
+                                <p className="text-[10px] text-slate-400 text-center py-8 italic">
+                                  Tsy misy Mana mbola voasoratra. Mampidira vaovao ho an'ny fiangonanao.
+                                </p>
+                              ) : (
+                                [...dailyManas.filter(m => m.churchId === activeChurchId)]
+                                  .sort((a,b)=>a.num - b.num)
+                                  .map((m) => {
+                                    const isActiveNow = getMadagascarActiveMana().mana?.id === m.id;
+                                    return (
+                                      <div
+                                        key={m.id}
+                                        className={`p-2 rounded-lg border text-[10px] space-y-1.5 transition-all ${
+                                          isActiveNow 
+                                            ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/50' 
+                                            : 'bg-slate-50 dark:bg-slate-900/45 border-slate-200/60 dark:border-slate-800/40 hover:border-slate-350 dark:hover:border-slate-700'
+                                        }`}
+                                      >
+                                        <div className="flex items-center justify-between gap-2.5">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-extrabold text-[10.5px] text-violet-650 dark:text-violet-400 uppercase bg-violet-100/60 dark:bg-violet-950/40 px-1.5 rounded">
+                                              {m.code}
+                                            </span>
+                                            <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 font-mono">
+                                              (Lah: {m.num})
+                                            </span>
+                                            {isActiveNow && (
+                                              <span className="text-[8px] bg-amber-500 text-slate-950 font-black px-1 rounded animate-pulse">
+                                                Androany 🔥
+                                              </span>
+                                            )}
+                                          </div>
+
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                              type="button"
+                                              onClick={() => handleEditManaClick(m)}
+                                              className="p-1 px-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-violet-100 dark:hover:bg-violet-950 hover:text-violet-600 dark:hover:text-violet-400 text-slate-650 dark:text-slate-300 rounded cursor-pointer font-bold text-[9px]"
+                                            >
+                                              ✏️ Hanova
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleDeleteMana(m.id)}
+                                              className="p-1 px-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-605 text-slate-650 dark:text-slate-300 rounded cursor-pointer font-bold text-[9px]"
+                                            >
+                                              ✕ Fafana
+                                            </button>
+                                          </div>
+                                        </div>
+
+                                        <blockquote className="text-slate-700 dark:text-slate-300 italic font-medium leading-relaxed pl-1.5 border-l-2 border-slate-200 dark:border-slate-800">
+                                          "{m.text}"
+                                        </blockquote>
+
+                                        <div className="flex items-center justify-between text-[8px] pl-1 text-slate-400 dark:text-slate-500 font-medium">
+                                          <span className="truncate max-w-[160px]">
+                                            {m.commentary ? "📖 Misy Fanazavana" : "✕ Tsy misy fanazavana"}
+                                          </span>
+                                          <span className="font-mono font-bold text-slate-600 dark:text-slate-400">
+                                            — {m.ref}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                              )}
+                            </div>
+                          </div>
+                          
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
 
                   <div className="grid grid-cols-1 gap-2 border-t border-slate-100 dark:border-slate-800/60 pt-2.5">
                     <span className="block text-[10px] font-black text-slate-400 uppercase">Andininy anio an'ny Fiangonana</span>

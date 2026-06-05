@@ -137,3 +137,14 @@ export interface FinancialRecord {
   date: string;
   memberOrStaff: string;
 }
+
+export interface DailyMana {
+  id: string; 
+  churchId: string;
+  code: string; // J1, J2, J3, etc.
+  num: number; // 1, 2, 3 for indexing
+  text: string;
+  ref: string;
+  commentary?: string;
+}
+
