@@ -1,15 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+import { Sparkles, Star } from 'lucide-react';
 // @ts-ignore
-import churchLogo from '../assets/images/church_logo_1780395512214.png';
+import jesusGlorious from '../assets/images/jesus_glorious_1780573486313.png';
 
 interface CelestialAnimationProps {
   onComplete: () => void;
 }
 
 export default function CelestialAnimation({ onComplete }: CelestialAnimationProps) {
-  // Respect general user's custom splash duration, with convenient "Mandalo" skip button
+  const [stars, setStars] = useState<{ id: number; top: string; left: string; size: number; delay: string; duration: string }[]>([]);
+
   useEffect(() => {
+    // Generate star coordinates on mount to avoid hydration mismatch
+    const generated = Array.from({ length: 24 }).map((_, i) => ({
+      id: i,
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      size: Math.random() * 2 + 1,
+      delay: `${Math.random() * 3}s`,
+      duration: `${Math.random() * 4 + 2}s`
+    }));
+    setStars(generated);
+
     const timer = setTimeout(() => {
       onComplete();
     }, 4500);
@@ -17,9 +30,9 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 w-screen h-screen bg-white overflow-hidden select-none flex flex-col justify-between p-8 z-[9999] animate-fadeIn">
+    <div className="fixed inset-0 w-screen h-screen bg-slate-950 overflow-hidden select-none flex flex-col justify-between p-8 z-[9999] animate-fadeIn text-white">
       
-      {/* Style for clean loading animation bar */}
+      {/* CSS Keyframes for celestial and loading animations */}
       <style>{`
         @keyframes indeterminate-loading {
           0% { left: -35%; right: 100%; }
@@ -33,7 +46,7 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
         }
         .animate-load-bar {
           position: absolute;
-          background-color: #d97706; /* Golden amber matching the logo */
+          background-color: #38bdf8; /* sky-400 */
           top: 0;
           bottom: 0;
           will-change: left, right;
@@ -41,51 +54,122 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
         }
         .animate-load-bar-short {
           position: absolute;
-          background-color: #f59e0b;
+          background-color: #0284c7; /* sky-600 */
           top: 0;
           bottom: 0;
           will-change: left, right;
           animation: indeterminate-loading-short 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
           animation-delay: 1.15s;
         }
+        @keyframes star-twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        .animate-star {
+          animation: star-twinkle var(--duration, 3s) ease-in-out infinite;
+          animation-delay: var(--delay, 0s);
+        }
+        @keyframes slow-zoom {
+          0%, 100% { transform: scale(1.05); }
+          50% { transform: scale(1.15); }
+        }
+        .animate-kenBurnsBack {
+          animation: slow-zoom 12s ease-in-out infinite;
+        }
+        @keyframes breathe-glow {
+          0%, 100% { box-shadow: 0 0 30px rgba(14, 165, 233, 0.2); border-color: rgba(56, 189, 248, 0.15); }
+          50% { box-shadow: 0 0 60px rgba(14, 165, 233, 0.45); border-color: rgba(56, 189, 248, 0.35); }
+        }
+        .animate-glow {
+          animation: breathe-glow 4s ease-in-out infinite;
+        }
+        @keyframes float-gentle {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+          animation: float-gentle 6s ease-in-out infinite;
+        }
       `}</style>
 
-      {/* Spacer */}
-      <div className="w-full flex justify-end">
+      {/* 1. BACKGROUND STARS */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
+        {stars.map((star) => (
+          <div
+            key={star.id}
+            className="absolute rounded-full bg-white animate-star"
+            style={{
+              top: star.top,
+              left: star.left,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              '--delay': star.delay,
+              '--duration': star.duration,
+            } as any}
+          />
+        ))}
+      </div>
+
+      {/* 2. TOP ACTION BAR WITH SKIP BUTTON */}
+      <div className="w-full flex justify-end z-30">
         <button 
           onClick={onComplete}
-          className="bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-500 rounded-full px-4 py-1.5 text-[11px] uppercase font-bold tracking-widest border border-slate-200 transition-all cursor-pointer shadow-xs"
+          className="bg-slate-900/40 hover:bg-slate-800/60 active:scale-95 text-sky-200/80 hover:text-sky-100 rounded-full px-4 py-1.5 text-[10px] uppercase font-bold tracking-widest border border-sky-500/20 transition-all cursor-pointer shadow-[0_0_15px_rgba(14,165,233,0.1)] back-blur-xs"
         >
           Mandalo ➔
         </button>
       </div>
 
-      {/* Main Container - centering the EXACT, unmodified church logo */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="max-w-full max-h-[55vh] flex items-center justify-center bg-white"
-        >
-          <img 
-            src={churchLogo} 
-            alt="F.P.Fi" 
-            className="w-full h-full max-w-xs sm:max-w-sm object-contain"
-            draggable="false"
-          />
-        </motion.div>
+      {/* 3. BRANDING UPPER SECTION */}
+      <div className="w-full text-center flex flex-col items-center gap-2 z-20 pt-4">
+        <div className="flex items-center gap-1.5 px-3 py-1 bg-sky-950/40 border border-sky-500/15 rounded-full text-[9px] text-sky-400 font-mono tracking-widest uppercase font-black">
+          <Sparkles className="w-3 h-3 text-sky-400 animate-spin" style={{ animationDuration: '4s' }} />
+          <span>Fitaizana ara-panahy</span>
+        </div>
+        <h1 className="text-2xl font-black tracking-[0.12em] text-white drop-shadow-lg">
+          F.P.Fi
+        </h1>
+        <p className="text-[10px] text-sky-305 font-mono tracking-wider font-bold text-sky-300">
+          Fiangonana Protestanta Fifohazana
+        </p>
       </div>
 
-      {/* Minimalistic, clean loading progress bar at the bottom */}
-      <div className="w-full flex flex-col items-center justify-center gap-3 pb-8">
-        <div className="relative w-36 h-1 bg-slate-100 rounded-full overflow-hidden">
-          <div className="animate-load-bar rounded-full" />
-          <div className="animate-load-bar-short rounded-full" />
+      {/* 4. THE GLORIOUS CENTERPIECE IMAGE - JESUS CHRIST IN HIGHLIGHTED GLORY WITH ZOOM */}
+      <div className="relative w-full flex items-center justify-center z-20 h-64 overflow-visible animate-float">
+        <div 
+          style={{ transform: 'scale(2.0)' }}
+          className="relative w-28 h-28 rounded-full overflow-hidden border border-sky-400/25 bg-slate-950 flex items-center justify-center origin-center animate-glow"
+        >
+          <img 
+            src={jesusGlorious} 
+            alt="Jésus" 
+            className="w-full h-full object-cover opacity-90 animate-kenBurnsBack"
+            draggable="false"
+          />
         </div>
-        <span className="text-[9px] uppercase text-slate-400 font-bold tracking-widest block pt-0.5">
-          Andeha hidirana...
-        </span>
+      </div>
+
+      {/* 5. FOOTER MESSAGE & LOADING BAR */}
+      <div className="w-full text-center pb-8 z-20 max-w-xs mx-auto space-y-4">
+        <div className="space-y-1 px-3">
+          <p className="text-[11px] sm:text-xs font-black text-slate-200 italic leading-relaxed">
+            "Mifohaza ianareo izay matory ary mitsangana amin'ny maty dia hampahazava anao Kristy."
+          </p>
+          <p className="text-[9px] text-sky-400 uppercase tracking-widest font-bold font-mono">
+            Efesiana 5:14
+          </p>
+        </div>
+
+        {/* LOADING PROGRESS LOADER */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="relative w-36 h-1 bg-slate-900/60 rounded-full overflow-hidden border border-sky-950">
+            <div className="animate-load-bar rounded-full" />
+            <div className="animate-load-bar-short rounded-full" />
+          </div>
+          <span className="text-[9px] uppercase text-sky-400/60 font-black tracking-[0.15em] font-mono block pt-0.5">
+            Andeha hidirana...
+          </span>
+        </div>
       </div>
 
     </div>
