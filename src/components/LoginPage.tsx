@@ -35,21 +35,16 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Permanent Lock States stored in localStorage
-  const [attempts, setAttempts] = useState<number>(() => {
-    const saved = localStorage.getItem('mifandray_login_attempts');
-    return saved ? parseInt(saved, 10) : 0;
-  });
-  const [isLocked, setIsLocked] = useState<boolean>(() => {
-    return localStorage.getItem('mifandray_login_locked') === 'true';
-  });
+  // Session-only lock states (resets on page refresh as requested by the user)
+  const [attempts, setAttempts] = useState<number>(0);
+  const [isLocked, setIsLocked] = useState<boolean>(false);
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (isLocked) {
-      setError("Voasakana tanteraka ny fidiranao (Locked permanently due to 3 failed attempts). Mifandraisa amin'ny Mpitandrina!");
+      setError("⚠️ Efa nanao hadisoana in-3 ianao. Havaozy (Refresh / Reload) ny pejy raha hanandrana indray!");
       return;
     }
 
@@ -71,46 +66,37 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
     if (matched) {
       // Clean previous failed attempts
       setAttempts(0);
-      localStorage.setItem('mifandray_login_attempts', '0');
       onLogin(matched);
     } else {
       // Failed attempt
       const nextAttempts = attempts + 1;
       setAttempts(nextAttempts);
-      localStorage.setItem('mifandray_login_attempts', nextAttempts.toString());
 
       if (nextAttempts >= 3) {
         setIsLocked(true);
-        localStorage.setItem('mifandray_login_locked', 'true');
-        setError("⚠️ Efa nanao hadisoana in-3 ianao. Voasakana tanteraka ny fidiranao tamin'ny sehatra!");
+        setError("⚠️ Efa nanao hadisoana in-3 ianao. Tsy maintsy havaozina (Refresh) ny pejy vao afaka miditra indray!");
       } else {
-        setError(`⚠️ Tsy mifanaraka indrindra amin'ny anarana na laharana misy ao amin'ny rafitra ny fampahalalana nomenao. Sisa andrana: ${3 - nextAttempts}`);
+        setError(`⚠️ Tsy mifanaraka indrindra ny anarana na laharana. Sisa andrana: ${3 - nextAttempts}`);
       }
     }
   };
 
-  // Reset lock for developers/admins testing the application
-  const handleDevResetLock = () => {
-    setAttempts(0);
-    setIsLocked(false);
-    localStorage.setItem('mifandray_login_attempts', '0');
-    localStorage.removeItem('mifandray_login_locked');
-    setError('');
-    setSuccess('Efa nodiovina ny sakan-dalana. Azonao andramana indray!');
+  const handleReloadPage = () => {
+    window.location.reload();
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center text-white font-sans overflow-hidden p-4 relative">
+    <div className="min-h-screen flex flex-col justify-start pt-6 sm:pt-10 text-white font-sans overflow-hidden p-4 relative">
       
       {/* Dynamic Ken Burns Slideshow Keyframe Definitions */}
       <style>{`
         @keyframes slideshowKenBurns {
           0% { transform: scale(1.0) translate(0, 0); }
-          50% { transform: scale(1.16) translate(-1.5%, -0.8%); }
+          50% { transform: scale(1.12) translate(-1%, -0.5%); }
           100% { transform: scale(1.0) translate(0, 0); }
         }
         .animate-slideshowKenBurns {
-          animation: slideshowKenBurns 24s ease-in-out infinite;
+          animation: slideshowKenBurns 20s ease-in-out infinite;
         }
       `}</style>
 
@@ -118,27 +104,27 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
       <div className="absolute inset-0 z-0 select-none overflow-hidden bg-slate-950">
         <div
           style={{ backgroundImage: `url(${forestRiverLandscape})` }}
-          className="absolute inset-0 bg-cover bg-center opacity-[0.85] animate-slideshowKenBurns scale-100 z-10"
+          className="absolute inset-0 bg-cover bg-center opacity-[0.9] animate-slideshowKenBurns scale-100 z-10"
         />
         {/* Soft high-contrast vignette overlay to keep text fully legible without blurring the gorgeous image */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-slate-950/40 to-slate-950/85 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-slate-950/20 to-slate-950/85 z-10" />
       </div>
 
       {/* Main Login Card - Highly Translucent & Ultra Minimalist to emphasize Background Slideshow */}
-      <div className="w-full max-w-xs mx-auto bg-slate-950/35 backdrop-blur-[2px] border border-white/15 p-4 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.7)] space-y-4 my-2 relative z-10 animate-scaleIn">
+      <div className="w-full max-w-[250px] mx-auto bg-slate-950/45 backdrop-blur-[3px] border border-white/20 p-3 rounded-2xl shadow-[0_12px_30px_rgba(0,0,0,0.85)] space-y-3 mt-2 relative z-10 animate-scaleIn">
         
         {/* ERROR OR SUCCESS FLASHERS */}
         {error && (
-          <div className="p-2.5 bg-red-955/75 border border-red-800/80 text-red-100 text-[10.5px] rounded-xl font-bold flex flex-col items-center gap-1 text-center animate-shake leading-tight">
+          <div className="p-2.5 bg-red-955/75 border border-red-800/80 text-red-100 text-[10.5px] rounded-xl font-bold flex flex-col items-center gap-1.5 text-center animate-shake leading-tight">
             <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
             <span>{error}</span>
             {isLocked && (
               <button 
                 type="button" 
-                onClick={handleDevResetLock}
-                className="mt-1 px-2 py-0.5 bg-red-900/80 hover:bg-red-800 text-rose-100 text-[8.5px] rounded font-black uppercase cursor-pointer"
+                onClick={handleReloadPage}
+                className="mt-1 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 text-[9px] rounded-lg font-black uppercase cursor-pointer transition-all active:scale-95 flex items-center gap-1 shadow-sm"
               >
-                Fanalana sakana (Dev Reset)
+                <span>Havaozy 🔄</span>
               </button>
             )}
           </div>
