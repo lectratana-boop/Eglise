@@ -15,14 +15,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-// Explicit 5 image slideshow urls representing major christian aesthetics as requested
-const SLIDESHOW_IMAGES = [
-  "https://images.unsplash.com/photo-1438032005730-c779502df39b?auto=format&fit=crop&w=1200&q=80", // église (cathedral stone light rays)
-  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=80", // nature (sunlit forest stream)
-  "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1200&q=80", // prière (candlelit praying hands)
-  "https://images.unsplash.com/photo-1507434965515-61970f2bd7c6?auto=format&fit=crop&w=1200&q=80", // Bible (open scriptures scriptures open altar bg)
-  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80"  // paysage chrétien (majestic mountain peaks)
-];
+// @ts-ignore
+import forestRiverLandscape from '../assets/images/forest_river_landscape_1780658429510.png';
 
 interface LoginPageProps {
   members: Member[];
@@ -40,17 +34,6 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  // Slideshow state
-  const [activeImageIdx, setActiveImageIdx] = useState(0);
-
-  // Background slideshow timing loop
-  useEffect(() => {
-    const slideTimer = setInterval(() => {
-      setActiveImageIdx(prev => (prev + 1) % SLIDESHOW_IMAGES.length);
-    }, 4500); // Transitions to next landscape every 4.5 seconds
-    return () => clearInterval(slideTimer);
-  }, []);
 
   // Permanent Lock States stored in localStorage
   const [attempts, setAttempts] = useState<number>(() => {
@@ -131,21 +114,14 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
         }
       `}</style>
 
-      {/* 5-Image Slideshow Background Layer with Fade and Ken Burns Animated Motion */}
+      {/* Dynamic landscape background image (replacing the Unsplash slideshow and keeping high legibility) */}
       <div className="absolute inset-0 z-0 select-none overflow-hidden bg-slate-950">
-        {SLIDESHOW_IMAGES.map((imgUrl, idx) => (
-          <div
-            key={imgUrl}
-            style={{ backgroundImage: `url(${imgUrl})` }}
-            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[1800ms] ease-in-out ${
-              activeImageIdx === idx 
-                ? 'opacity-[0.82] animate-slideshowKenBurns scale-100 z-10' 
-                : 'opacity-0 scale-[1.04] z-0'
-            }`}
-          />
-        ))}
-        {/* Soft high-contrast vignette overlay to keep text fully legible without blurring the gorgeous images */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-slate-950/40 to-slate-950/85 z-10" />
+        <div
+          style={{ backgroundImage: `url(${forestRiverLandscape})` }}
+          className="absolute inset-0 bg-cover bg-center opacity-[0.85] animate-slideshowKenBurns scale-100 z-10"
+        />
+        {/* Soft high-contrast vignette overlay to keep text fully legible without blurring the gorgeous image */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-slate-950/40 to-slate-950/85 z-10" />
       </div>
 
       {/* Main Login Card - Highly Translucent & Ultra Minimalist to emphasize Background Slideshow */}
@@ -258,7 +234,7 @@ export default function LoginPage({ members, churchRoles, onLogin, onRegisterAnd
             }`}
           >
             <LogIn className="w-3.5 h-3.5 shrink-0" />
-            <span>Hiditra (entrer) ➔</span>
+            <span>Hiditra ➔</span>
           </button>
         </form>
 
