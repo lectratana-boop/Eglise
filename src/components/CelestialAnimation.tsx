@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Sparkles, Star, Volume2, VolumeX, Music, Play, Pause, Disc } from 'lucide-react';
+import { Sparkles, Volume2, VolumeX, Play, Pause } from 'lucide-react';
 // @ts-ignore
 import jesusGlorious from '../assets/images/jesus_glorious_1780573486313.png';
 
@@ -13,7 +13,19 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+
+  const audioUrlsRef = useRef<string[]>([
+    'https://archive.org/download/alexandra_202102/Alexandra%20Burke%20-%20Hallelujah.mp3',
+    'https://archive.org/download/hallelujah-alexandra-burke/Alexandra%20Burke%20-%20Hallelujah.mp3',
+    'https://archive.org/download/alexandra-burke-hallelujah/Alexandra%20Burke%20-%20Hallelujah.mp3',
+    'https://archive.org/download/alexandra_202102/Hallelujah.mp3',
+    'https://archive.org/download/hallelujah-alexandra-burke/Hallelujah.mp3',
+    'https://archive.org/download/hallelujah_201911/Alexandra%20Burke%20-%20Hallelujah.mp3',
+    'https://archive.org/download/hallelujah_201911/Hallelujah.mp3',
+    'https://archive.org/download/Hallelujah_703/Hallelujah.mp3',
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+  ]);
+  const currentAudioIndexRef = useRef<number>(0);
 
   useEffect(() => {
     // Generate star coordinates on mount to avoid hydration mismatch
@@ -27,11 +39,29 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
     }));
     setStars(generated);
 
-    // Initialize Alexandra Burke - Hallelujah Audio
-    const audio = new Audio('https://archive.org/download/hallelujah-alexandra-burke/Hallelujah.mp3');
+    const audio = new Audio();
     audio.loop = true;
     audio.volume = 0.85;
+    audio.src = audioUrlsRef.current[currentAudioIndexRef.current];
     audioRef.current = audio;
+
+    // Handle source load errors (404/503/CORS or failed resources)
+    const handleError = () => {
+      console.warn("Audio file failed to load:", audioUrlsRef.current[currentAudioIndexRef.current]);
+      if (currentAudioIndexRef.current < audioUrlsRef.current.length - 1) {
+        currentAudioIndexRef.current += 1;
+        console.log("Switching to fallback audio source index:", currentAudioIndexRef.current);
+        audio.src = audioUrlsRef.current[currentAudioIndexRef.current];
+        audio.load();
+        
+        // Auto-resume playing on fallback if it was already playing
+        audio.play()
+          .then(() => setIsPlaying(true))
+          .catch(() => setIsPlaying(false));
+      }
+    };
+
+    audio.addEventListener('error', handleError);
 
     // Fast autoplay attempt
     const attemptPlay = () => {
@@ -48,15 +78,16 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
     audio.addEventListener('canplaythrough', attemptPlay);
     
     // Play on load and user click fallback
-    const initTimer = setTimeout(attemptPlay, 1200);
+    const initTimer = setTimeout(attemptPlay, 1000);
 
     const timer = setTimeout(() => {
       onComplete();
-    }, 45000);
+    }, 45000); // 45 seconds
 
     return () => {
       audio.pause();
       audio.removeEventListener('canplaythrough', attemptPlay);
+      audio.removeEventListener('error', handleError);
       clearTimeout(timer);
       clearTimeout(initTimer);
       audioRef.current = null;
@@ -64,9 +95,9 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
   }, [onComplete]);
 
   // Audio control toggle handlers
-  const togglePlay = () => {
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!audioRef.current) return;
-    setHasUserInteracted(true);
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -75,7 +106,19 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
         .then(() => {
           setIsPlaying(true);
         })
-        .catch(err => console.error("Playback error: ", err));
+        .catch((err) => {
+          console.warn("Playback error, trying fallback source:", err);
+          if (currentAudioIndexRef.current < audioUrlsRef.current.length - 1) {
+            currentAudioIndexRef.current += 1;
+            audioRef.current.src = audioUrlsRef.current[currentAudioIndexRef.current];
+            audioRef.current.load();
+            audioRef.current.play()
+              .then(() => setIsPlaying(true))
+              .catch(e => console.error("Fallback target blocked:", e));
+          } else {
+            setIsPlaying(false);
+          }
+        });
     }
   };
 
@@ -185,13 +228,12 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
       </div>
 
       {/* 2. TOP ACTION BAR WITH AUDIO TOGGLE & SKIP BUTTON */}
-      <div className="w-full flex items-center justify-between z-30">
-        
+      <div className="w-full flex items-center justify-between z-30 pointer-events-auto">
         {/* Playback Control Trigger */}
         <div className="flex items-center gap-2">
           <button
             onClick={togglePlay}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider transition-all duration-300 pointer-events-auto shadow-md border ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider transition-all duration-300 pointer-events-auto shadow-md border cursor-pointer ${
               isPlaying 
                 ? 'bg-sky-500/20 text-sky-200 border-sky-400/30' 
                 : 'bg-amber-500/20 text-amber-300 border-amber-400/30 font-black animate-pulse'
@@ -219,8 +261,8 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
           {isPlaying && (
             <button
               onClick={toggleMute}
-              className="p-1.5 rounded-full bg-slate-900/60 border border-slate-800 text-slate-300 hover:text-white transition-all pointer-events-auto"
-              title={isMuted ? "Ampandehano feo" : "Hampialao feo"}
+              className="p-1.5 rounded-full bg-slate-900/60 border border-slate-800 text-slate-300 hover:text-white transition-all pointer-events-auto cursor-pointer"
+              title={isMuted ? "Mampihena ny feony" : "Mampiakatra ny feony"}
             >
               {isMuted ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 text-sky-400" />}
             </button>
@@ -264,10 +306,10 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
             className="w-full h-full object-cover opacity-90 animate-kenBurnsBack group-hover:scale-105 transition-all duration-300"
             draggable="false"
           />
-          {/* Subtle audio indicator layout overlay */}
+          {/* Subtle play indicator when paused */}
           {!isPlaying && (
             <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
-              <div className="bg-amber-500 p-1.5 rounded-full shadow-lg border border-amber-300">
+              <div className="bg-amber-500 p-1.5 rounded-full shadow-lg border border-amber-300 text-slate-950 transition-all duration-300 pr-1 pl-1.5">
                 <Play className="w-4 h-4 text-slate-950 fill-slate-950" />
               </div>
             </div>
