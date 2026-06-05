@@ -544,7 +544,7 @@ export default function App() {
                   F.P.Fi
                 </span>
                 <span className="font-sans text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block leading-tight pt-0.5">
-                  Fiangonana Protestanta Fihavaozana
+                  Fiangonana Protestanta Fifohazana
                 </span>
               </div>
               

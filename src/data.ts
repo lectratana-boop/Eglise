@@ -8,8 +8,8 @@ import { Church, Member, Announcement, ChurchEvent, Sermon, Donation, Song, Quiz
 export const INITIAL_CHURCHES: Church[] = [
   {
     id: "fjkm-isotry",
-    name: "Fiangonana Protestanta Fihavaozana (F.P.Fi)",
-    type: "Protestanta Fihavaozana",
+    name: "Fiangonana Protestanta Fifohazana (F.P.Fi)",
+    type: "Protestanta Fifohazana",
     location: "Antananarivo",
     logo: "dove",
     description: "Mifohaza ianareo izay matory ary mitsangana amin'ny maty dia hampahazava anao Kristy. Efesiana 5:14",

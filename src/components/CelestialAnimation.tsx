@@ -118,7 +118,7 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
           F.P.Fi
         </h1>
         <p className="text-[10px] text-sky-305 font-mono tracking-wider font-bold">
-          Fiangonana Protestanta Fihavaozana
+          Fiangonana Protestanta Fifohazana
         </p>
       </div>
 
@@ -141,12 +141,12 @@ export default function CelestialAnimation({ onComplete }: CelestialAnimationPro
 
       {/* FOOTER MESSAGE & LOADING BAR */}
       <div className="w-full text-center pb-8 z-20 max-w-xs mx-auto space-y-4">
-        <div className="space-y-1">
-          <p className="text-xs font-black text-slate-200 italic">
-            "Izaho no lalana sy fahamarinana ary fiainana"
+        <div className="space-y-1 px-2">
+          <p className="text-[11px] sm:text-xs font-black text-slate-200 italic leading-relaxed">
+            "Mifohaza ianareo izay matory ary mitsangana amin'ny maty dia hampahazava anao Kristy."
           </p>
           <p className="text-[9px] text-sky-300 uppercase tracking-wider font-bold">
-            Jaona 14:6
+            Efesiana 5:14
           </p>
         </div>
 
