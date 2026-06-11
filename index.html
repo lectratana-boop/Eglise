@@ -2,13 +2,70 @@
 <html lang="mg">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="/src/assets/images/church_logo_1780395512214.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#7c3aed" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1e1b4b" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Fiangonana" />
+    <meta name="application-name" content="Fiangonana" />
+    <meta name="msapplication-TileColor" content="#7c3aed" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Fampiharana ho an'ny Fiangonana eto Madagasikara - Baiboly Masina, Fihirana, Fandaharam-potoana, ary Fanomezana." />
+    <meta name="keywords" content="fiangonana, madagascar, baiboly, fihirana, fjk m, protestanta, katolika" />
+    <meta name="author" content="Fiangonana eto Madagascar" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Fiangonana eto Madagascar" />
+    <meta property="og:description" content="Fampiharana ho an'ny Fiangonana eto Madagasikara" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="mg_MG" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+    <link rel="mask-icon" href="/icons/icon.svg" color="#7c3aed" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Preconnect to important origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
     <title>Fiangonana eto Madagascar</title>
+
+    <!-- Register Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </head>
   <body>
+    <noscript>
+      <div style="padding: 20px; text-align: center; font-family: sans-serif;">
+        <h1>Fiangonana eto Madagascar</h1>
+        <p>Ampidiro ny JavaScript mba hampiasa ity fampiharana ity.</p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

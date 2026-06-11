@@ -1,0 +1,39 @@
+{
+  "name": "Fiangonana eto Madagascar",
+  "short_name": "Fiangonana",
+  "description": "Fampiharana ho an'ny Fiangonana eto Madagasikara - Baiboly Masina, Fihirana, Fandaharam-potoana, ary Fanomezana.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "mg",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["lifestyle", "education"],
+  "shortcuts": [
+    {
+      "name": "Baiboly Masina",
+      "short_name": "Baiboly",
+      "url": "/?tab=bible"
+    },
+    {
+      "name": "Fihirana",
+      "short_name": "Hira",
+      "url": "/?tab=songs"
+    }
+  ]
+}
